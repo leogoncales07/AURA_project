@@ -1,0 +1,200 @@
+.appContainer {
+    min-height: 100vh;
+    padding-bottom: 90px;
+    background: var(--color-background);
+}
+
+.header {
+    padding: 48px 24px 24px;
+}
+
+.headerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.date {
+    color: var(--color-text-light);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-pill);
+    background: var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+}
+
+.greeting {
+    font-size: 2.125rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+}
+
+.mainContent {
+    padding: 0 24px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.sectionTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+}
+
+.surfaceCard {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 0.5px solid var(--color-border);
+    margin-bottom: 40px;
+    animation: cardFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.surfaceCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.emotionRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.emotionSub {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.emotionTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+}
+
+.emotionRing {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emotionScore {
+    position: absolute;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.actionGrid {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.actionCard {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+    border-bottom: 0.5px solid var(--color-divider);
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.actionCard:hover {
+    background-color: var(--color-surface-hover);
+}
+
+.actionCard:hover .actionIconWrapper {
+    transform: scale(1.1);
+    transition: transform var(--transition-fast);
+}
+
+.actionIconWrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    transition: transform var(--transition-normal);
+}
+
+.actionCard:last-child {
+    border-bottom: none;
+}
+
+.actionCard:active {
+    background-color: var(--color-surface-hover);
+}
+
+.actionIconWrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+}
+
+.actionText {
+    flex: 1;
+}
+
+.actionText h3 {
+    font-size: 1.0625rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 2px;
+}
+
+.actionText p {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+}
+
+.actionArrow {
+    color: var(--color-text-tertiary);
+    margin-left: 12px;
+}

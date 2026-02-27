@@ -1,0 +1,25 @@
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.badge-mint {
+    background-color: rgba(167, 225, 196, 0.3);
+    color: #10B981;
+    /* Darker mint for text readability */
+}
+
+.badge-pink {
+    background-color: rgba(255, 197, 217, 0.3);
+    color: #EC4899;
+}
+
+.badge-blue {
+    background-color: rgba(167, 200, 242, 0.3);
+    color: #3B82F6;
+}

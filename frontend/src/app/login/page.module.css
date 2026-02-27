@@ -1,0 +1,119 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--color-background);
+}
+
+.loginWrapper {
+    width: 100%;
+    max-width: 400px;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logoArea {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.logoArea h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.04em;
+    color: var(--color-text);
+}
+
+.logoArea p {
+    color: var(--color-text-light);
+    font-size: 1.125rem;
+}
+
+.loginForm {
+    width: 100%;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputStack {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--color-border);
+    overflow: hidden;
+}
+
+.inputTop,
+.inputBottom {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-text);
+}
+
+.inputTop:focus,
+.inputBottom:focus {
+    outline: none;
+}
+
+.inputTop {
+    border-bottom: 0.5px solid var(--color-divider);
+}
+
+.forgotPasswordWrapper {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.forgotPassword {
+    font-size: 0.875rem;
+    color: var(--color-primary);
+    font-weight: 400;
+}
+
+.submitWrapper {
+    display: block;
+}
+
+.submitBtn {
+    width: 100%;
+    font-weight: 600;
+    border-radius: 14px;
+    /* iOS standard dense button radius */
+}
+
+.signupText {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+}
+
+.signupLink {
+    color: var(--color-primary);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
