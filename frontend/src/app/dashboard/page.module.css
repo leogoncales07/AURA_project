@@ -1,67 +1,82 @@
+/* --- MINIMAL ARCHITECTURAL DESIGN --- */
+
 .appContainer {
     min-height: 100vh;
-    padding-bottom: 90px;
+    padding-bottom: 120px;
     background: var(--color-background);
+    position: relative;
+    overflow-x: hidden;
 }
 
 .header {
-    padding: 48px 24px 24px;
+    padding: 64px 24px 32px;
 }
 
 .headerTop {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 24px;
 }
 
 .date {
-    color: var(--color-text-light);
-    font-size: 0.8125rem;
+    color: var(--color-text-tertiary);
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.12em;
 }
 
 .avatar {
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     border-radius: var(--radius-pill);
-    background: var(--color-border);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--color-text-secondary);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-normal);
+}
+
+.avatar:hover {
+    transform: scale(1.02);
 }
 
 .greeting {
-    font-size: 2.125rem;
-    font-weight: 700;
-    letter-spacing: -0.04em;
+    font-size: 2.15rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--color-text);
 }
 
 .mainContent {
     padding: 0 24px;
-    max-width: 800px;
+    max-width: 600px;
     margin: 0 auto;
 }
 
 .sectionTitle {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    letter-spacing: -0.02em;
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+    color: var(--color-text-secondary);
 }
 
+/* TACTILE SURFACE CARD */
 .surfaceCard {
     background: var(--color-surface);
     border-radius: var(--radius-lg);
-    padding: 24px;
+    padding: 32px;
     box-shadow: var(--shadow-sm);
-    border: 0.5px solid var(--color-border);
-    margin-bottom: 40px;
-    animation: cardFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+    border: 1px solid var(--color-border);
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .surfaceCard:hover {
@@ -69,7 +84,7 @@
     box-shadow: var(--shadow-md);
 }
 
-@keyframes cardFadeIn {
+@keyframes fadeUp {
     from {
         opacity: 0;
         transform: translateY(15px);
@@ -87,95 +102,163 @@
     align-items: center;
 }
 
+.emotionInfo {
+    flex: 1;
+}
+
 .emotionSub {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    color: var(--color-text-light);
+    color: var(--color-text-tertiary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     display: block;
-    margin-bottom: 4px;
 }
 
 .emotionTitle {
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.03em;
+    font-size: 1.75rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    margin-bottom: 12px;
+}
+
+.insightPills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
 }
 
 .emotionRing {
     position: relative;
-    width: 48px;
-    height: 48px;
+    width: 80px;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-left: 16px;
+}
+
+.emotionRing svg {
+    transform: rotate(-90deg);
 }
 
 .emotionScore {
     position: absolute;
-    font-size: 0.875rem;
-    font-weight: 700;
+    font-size: 1.25rem;
+    font-weight: 600;
     color: var(--color-text);
 }
 
+/* STATS GRID SECTION */
+.statsSection {
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
+    opacity: 0;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.statCard {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: 20px 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.statCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.statIcon {
+    color: var(--color-text-tertiary);
+    margin-bottom: 12px;
+}
+
+.statValue {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.statLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+
+/* ACTIONS SECTION */
 .actionGrid {
     display: flex;
     flex-direction: column;
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 0.5px solid var(--color-border);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
+    gap: 16px;
+    animation: fadeUp 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.2s forwards;
+    opacity: 0;
 }
 
 .actionCard {
     display: flex;
     align-items: center;
-    padding: 16px 20px;
+    padding: 24px;
     cursor: pointer;
-    border-bottom: 0.5px solid var(--color-divider);
-    transition: background-color var(--transition-fast), transform var(--transition-fast);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
 }
 
 .actionCard:hover {
-    background-color: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.actionIconWrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-pill);
+    background: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    transition: all 0.25s ease;
 }
 
 .actionCard:hover .actionIconWrapper {
-    transform: scale(1.1);
-    transition: transform var(--transition-fast);
-}
-
-.actionIconWrapper {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--color-background);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 16px;
-    transition: transform var(--transition-normal);
-}
-
-.actionCard:last-child {
-    border-bottom: none;
-}
-
-.actionCard:active {
-    background-color: var(--color-surface-hover);
-}
-
-.actionIconWrapper {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--color-background);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 16px;
+    background: var(--color-primary);
+    color: var(--color-surface);
+    border-color: var(--color-primary);
 }
 
 .actionText {
@@ -186,15 +269,40 @@
     font-size: 1.0625rem;
     font-weight: 500;
     color: var(--color-text);
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .actionText p {
     font-size: 0.875rem;
-    color: var(--color-text-light);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
 }
 
 .actionArrow {
-    color: var(--color-text-tertiary);
-    margin-left: 12px;
+    color: var(--color-text-light);
+    margin-left: 16px;
+    transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.actionCard:hover .actionArrow {
+    transform: translateX(4px);
+    color: var(--color-primary);
+}
+
+.pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
 }

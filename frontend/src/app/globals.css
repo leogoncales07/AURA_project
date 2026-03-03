@@ -1,133 +1,129 @@
 :root {
-  /* Apple-inspired Light Palette */
-  --color-primary: #007AFF;
-  /* iOS Blue */
-  --color-primary-hover: #0062CC;
-  --color-accent-mint: #34C759;
-  /* iOS Green */
-  --color-accent-pink: #FF2D55;
-  /* iOS Pink */
-  --color-accent-blue: #5AC8FA;
-  /* iOS Light Blue */
+  /* Minimal Editorial & Architectural Palette */
+  --color-primary: #1D2330;
+  /* Deep Slate Navy */
+  --color-primary-hover: #0F131A;
+  --color-accent-mint: #4A5B75;
+  /* Subdued Steel Blue */
+  --color-accent-pink: #A8B1C2;
+  /* Soft Cool Grey */
+  --color-accent-blue: #707E94;
+  /* Slate */
 
-  --color-background: #F2F2F7;
-  /* iOS grouped background light */
+  --color-background: #F9FAFC;
+  /* Crisp, slightly cool stark white */
   --color-surface: #FFFFFF;
-  /* Pure white cards */
-  --color-surface-hover: #F2F2F7;
-  --color-surface-translucent: rgba(255, 255, 255, 0.85);
+  /* Pure white */
+  --color-surface-hover: #F1F3F7;
+  --color-surface-translucent: rgba(255, 255, 255, 0.96);
 
-  --color-text: #000000;
-  --color-text-secondary: #3C3C43;
-  /* iOS secondary label */
-  --color-text-tertiary: rgba(60, 60, 67, 0.6);
-  --color-text-light: #8E8E93;
+  --color-text: #05060A;
+  /* Stark, high-contrast onyx */
+  --color-text-secondary: #3D4452;
+  /* Deep charcoal */
+  --color-text-tertiary: #6E7787;
+  /* Medium silver */
+  --color-text-light: #94A0B2;
+  /* Light silver */
 
-  --color-border: rgba(60, 60, 67, 0.18);
-  /* Thin, crisp borders */
-  --color-divider: rgba(60, 60, 67, 0.29);
-  /* Thicker structural dividers */
+  --color-border: #E5E8F0;
+  /* Pure structural lines */
+  --color-divider: #E5E8F0;
 
-  /* UI Gradients - Subtler, more organic */
+  /* UI Gradients - Very delicate */
   --gradient-bg: var(--color-background);
-  /* Solid, clean bg */
-  --gradient-primary: linear-gradient(180deg, #1A85FF 0%, #007AFF 100%);
+  --gradient-primary: linear-gradient(135deg, #2D3445 0%, #1D2330 100%);
 
-  /* Shadows - Extremely subtle, diffuse, low opacity */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04);
+  /* Shadows - Razor-sharp, architectural lighting */
+  --shadow-sm: 0 1px 3px rgba(5, 6, 10, 0.05), 0 1px 2px rgba(5, 6, 10, 0.03);
+  --shadow-md: 0 6px 14px rgba(5, 6, 10, 0.06), 0 2px 4px rgba(5, 6, 10, 0.04);
+  --shadow-lg: 0 18px 36px rgba(5, 6, 10, 0.08), 0 6px 12px rgba(5, 6, 10, 0.05);
 
-  /* Radii - Continuous Squircle illusion */
-  --radius-sm: 10px;
-  --radius-md: 18px;
-  --radius-lg: 28px;
+  /* Radii - Sharp and precise */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
   --radius-pill: 9999px;
 
   /* Transitions */
-  --transition-fast: 0.2s cubic-bezier(0.2, 0, 0, 1);
-  --transition-normal: 0.3s cubic-bezier(0.2, 0, 0, 1);
+  --transition-fast: 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  --transition-normal: 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Apple-inspired Dark Palette */
-    --color-primary: #0A84FF;
-    /* iOS Blue Dark Mode */
-    --color-primary-hover: #007AFF;
-    --color-accent-mint: #30D158;
-    /* iOS Green Dark */
-    --color-accent-pink: #FF375F;
-    /* iOS Pink Dark */
-    --color-accent-blue: #64D2FF;
-    /* iOS Light Blue Dark */
+    /* Minimal Dark Palette */
+    --color-primary: #C5D0E6;
+    /* Ice blue for dark mode contrast */
+    --color-primary-hover: #E2E8F4;
+    --color-accent-mint: #8695AA;
+    --color-accent-pink: #A8B1C2;
+    --color-accent-blue: #94A0B2;
 
-    --color-background: #000000;
-    /* True black saves battery, massive contrast */
-    --color-surface: #1C1C1E;
-    /* iOS secondary grouped background */
-    --color-surface-hover: #2C2C2E;
-    --color-surface-translucent: rgba(28, 28, 30, 0.85);
+    --color-background: #0A0C10;
+    /* Void black */
+    --color-surface: #12151C;
+    /* Onyx surface */
+    --color-surface-hover: #191D26;
+    --color-surface-translucent: rgba(18, 21, 28, 0.96);
 
     --color-text: #FFFFFF;
-    --color-text-secondary: rgba(235, 235, 245, 0.85);
-    /* iOS secondary label dark */
-    --color-text-tertiary: rgba(235, 235, 245, 0.5);
-    /* iOS tertiary label dark */
-    --color-text-light: #98989D;
+    --color-text-secondary: #B6BDCA;
+    --color-text-tertiary: #818A99;
+    --color-text-light: #5A6373;
 
-    --color-border: rgba(84, 84, 88, 0.65);
-    /* Crisp dark mode borders */
-    --color-divider: #38383A;
+    --color-border: #1F2430;
+    /* Crisp structural lines */
+    --color-divider: #1F2430;
 
     --gradient-bg: var(--color-background);
-    --gradient-primary: linear-gradient(180deg, #0A84FF 0%, #006FFD 100%);
+    --gradient-primary: linear-gradient(135deg, #C5D0E6 0%, #A6B4CF 100%);
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.7), 0 4px 8px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.8), 0 12px 24px rgba(0, 0, 0, 0.6);
   }
 }
 
 /* Manual Dark Mode Override */
 [data-theme='dark'] {
-  --color-primary: #0A84FF;
-  --color-primary-hover: #007AFF;
-  --color-accent-mint: #30D158;
-  --color-accent-pink: #FF375F;
-  --color-accent-blue: #64D2FF;
-  --color-background: #000000;
-  --color-surface: #1C1C1E;
-  --color-surface-hover: #2C2C2E;
-  --color-surface-translucent: rgba(28, 28, 30, 0.85);
+  --color-primary: #C5D0E6;
+  --color-primary-hover: #E2E8F4;
+  --color-accent-mint: #8695AA;
+  --color-accent-pink: #A8B1C2;
+  --color-accent-blue: #94A0B2;
+  --color-background: #0A0C10;
+  --color-surface: #12151C;
+  --color-surface-hover: #191D26;
+  --color-surface-translucent: rgba(18, 21, 28, 0.96);
   --color-text: #FFFFFF;
-  --color-text-secondary: rgba(235, 235, 245, 0.85);
-  --color-text-tertiary: rgba(235, 235, 245, 0.5);
-  --color-text-light: #98989D;
-  --color-border: rgba(84, 84, 88, 0.65);
-  --color-divider: #38383A;
+  --color-text-secondary: #B6BDCA;
+  --color-text-tertiary: #818A99;
+  --color-text-light: #5A6373;
+  --color-border: #1F2430;
+  --color-divider: #1F2430;
   --gradient-bg: var(--color-background);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.8);
 }
 
 [data-theme='light'] {
-  --color-primary: #007AFF;
-  --color-primary-hover: #0062CC;
-  --color-accent-mint: #34C759;
-  --color-accent-pink: #FF2D55;
-  --color-accent-blue: #5AC8FA;
-  --color-background: #F2F2F7;
+  --color-primary: #1D2330;
+  --color-primary-hover: #0F131A;
+  --color-accent-mint: #4A5B75;
+  --color-accent-pink: #A8B1C2;
+  --color-accent-blue: #707E94;
+  --color-background: #F9FAFC;
   --color-surface: #FFFFFF;
-  --color-surface-hover: #F2F2F7;
-  --color-surface-translucent: rgba(255, 255, 255, 0.85);
-  --color-text: #000000;
-  --color-text-secondary: #3C3C43;
-  --color-text-tertiary: rgba(60, 60, 67, 0.6);
-  --color-text-light: #8E8E93;
-  --color-border: rgba(60, 60, 67, 0.18);
-  --color-divider: rgba(60, 60, 67, 0.29);
+  --color-surface-hover: #F1F3F7;
+  --color-surface-translucent: rgba(255, 255, 255, 0.96);
+  --color-text: #05060A;
+  --color-text-secondary: #3D4452;
+  --color-text-tertiary: #6E7787;
+  --color-text-light: #94A0B2;
+  --color-border: #E5E8F0;
+  --color-divider: #E5E8F0;
 }
 
 html,
@@ -141,7 +137,7 @@ body {
 body {
   color: var(--color-text);
   background: var(--color-background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-outfit), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
@@ -168,4 +164,26 @@ a {
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--color-border);
   /* iOS hairline border */
+}
+
+/* Premium Glassmorphism */
+.glass {
+  background: var(--color-surface-translucent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .glass {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Stunning text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

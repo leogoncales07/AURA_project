@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path='backend/.env')
 
-api_key = os.getenv("GOOGLE_API_KEY")
+api_key = os.getenv("G_KEY")
 if not api_key:
-    print("No JAVA_HOME or GOOGLE_API_KEY?")
+    print("No G_KEY found in .env?")
     # Check if we can just set it
     
 genai.configure(api_key=api_key)

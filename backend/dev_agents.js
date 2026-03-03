@@ -21,7 +21,7 @@ class DevTeam {
         this.llm = new ChatGoogleGenerativeAI({
             modelName: modelName,
             temperature: 0.7,
-            apiKey: process.env.GOOGLE_API_KEY
+            apiKey: process.env.G_KEY
         });
 
         // --- Prompts ---
@@ -95,8 +95,8 @@ class DevTeam {
 
 // Main execution
 async function main() {
-    if (!process.env.GOOGLE_API_KEY) {
-        console.error(`${colors.red}ERROR: GOOGLE_API_KEY not found in .env file.${colors.reset}`);
+    if (!process.env.G_KEY) {
+        console.error(`${colors.red}ERROR: G_KEY not found in .env file.${colors.reset}`);
         console.log("Please create a .env file in the backend directory with your key.");
         process.exit(1);
     }

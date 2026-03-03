@@ -1,26 +1,37 @@
 .navBar {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--color-surface-translucent);
-    /* iOS translucent bar */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 0.5px solid var(--color-border);
-    padding: 8px 16px;
-    padding-bottom: env(safe-area-inset-bottom, 16px);
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 440px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    padding: 10px 24px;
     z-index: 50;
+    box-shadow: var(--shadow-md);
+    animation: slideUpNav 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes slideUpNav {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
 }
 
 .navList {
     list-style: none;
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
-    max-width: 600px;
-    /* Keep it constrained like a phone even on desktop */
-    margin: 0 auto;
+    width: 100%;
 }
 
 .navItem {
@@ -28,26 +39,28 @@
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    padding: 4px 8px;
-    color: var(--color-text-light);
+    padding: 8px 12px;
+    color: var(--color-text-tertiary);
     font-size: 0.65rem;
     font-weight: 500;
-    transition: color var(--transition-fast);
+    transition: all 0.25s ease;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
 }
 
 .navItem:hover {
-    color: var(--color-primary);
+    color: var(--color-text);
+    background: var(--color-surface-hover);
 }
 
 .icon {
     font-size: 1.5rem;
-    filter: grayscale(100%);
-    opacity: 0.6;
+    transition: transform 0.25s ease, color 0.25s ease;
 }
 
 .navItem:hover .icon {
-    filter: grayscale(0%);
-    opacity: 1;
+    transform: translateY(-2px);
+    color: var(--color-text);
 }
 
 .navItemActive {
@@ -55,20 +68,39 @@
 }
 
 .navItemActive .icon {
-    filter: grayscale(0%);
-    opacity: 1;
+    color: var(--color-primary);
 }
 
 .centralButton {
-    /* Removed floating background to keep the nav bar completely flush and native */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    background: var(--color-primary);
+    color: var(--color-surface);
+    border-radius: var(--radius-pill);
+    padding: 12px 24px;
+    box-shadow: 0 4px 12px rgba(74, 103, 91, 0.2);
+    transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+    cursor: pointer;
+}
+
+.centralButton:hover {
+    transform: translateY(-2px);
+    background: var(--color-primary-hover);
+    box-shadow: 0 6px 16px rgba(74, 103, 91, 0.3);
+}
+
+.centralButton .icon {
+    color: var(--color-surface);
+}
+
+.centralButton:hover .icon {
+    transform: none;
+    /* Keep icon static inside button */
 }
 
 .iconWhite {
     font-size: 1.5rem;
-    color: var(--color-primary);
-    /* Use primary color instead of white since we removed background */
+    color: var(--color-surface);
 }

@@ -1,12 +1,14 @@
 """
-Rate Limiter — Token Bucket Algorithm
-=======================================
+Rate Limiter — Async Token Bucket Algorithm
+=============================================
 Prevents exceeding API quotas (Gemini free tier, Supabase, etc.)
 with automatic retry and exponential backoff.
+
+Fully async — does NOT block the FastAPI event loop.
 """
 
+import asyncio
 import time
-import threading
 import functools
 from colorama import Fore, init
 
@@ -15,8 +17,8 @@ init(autoreset=True)
 
 class TokenBucket:
     """
-    Thread-safe Token Bucket rate limiter.
-    
+    Async-friendly Token Bucket rate limiter.
+
     - max_tokens: max burst capacity
     - refill_rate: tokens added per second
     """
@@ -27,7 +29,7 @@ class TokenBucket:
         self.name = name
         self._tokens = max_tokens
         self._last_refill = time.monotonic()
-        self._lock = threading.Lock()
+        self._lock = asyncio.Lock()
 
     def _refill(self):
         now = time.monotonic()
@@ -35,22 +37,20 @@ class TokenBucket:
         self._tokens = min(self.max_tokens, self._tokens + elapsed * self.refill_rate)
         self._last_refill = now
 
-    def acquire(self, tokens: int = 1, timeout: float = 60.0) -> bool:
+    async def acquire(self, tokens: int = 1, timeout: float = 60.0) -> bool:
         """
-        Block until tokens are available or timeout is reached.
+        Non-blocking wait until tokens are available or timeout is reached.
         Returns True if tokens were acquired, False on timeout.
         """
         deadline = time.monotonic() + timeout
         while True:
-            with self._lock:
+            async with self._lock:
                 self._refill()
                 if self._tokens >= tokens:
                     self._tokens -= tokens
                     return True
-
-            # Calculate wait time
-            with self._lock:
                 wait = (tokens - self._tokens) / self.refill_rate
+
             wait = min(wait, deadline - time.monotonic())
 
             if wait <= 0:
@@ -58,11 +58,11 @@ class TokenBucket:
                 return False
 
             print(f"{Fore.YELLOW}[RateLimit:{self.name}] Waiting {wait:.1f}s for capacity...")
-            time.sleep(min(wait, 1.0))  # Sleep in 1s increments for responsiveness
+            await asyncio.sleep(min(wait, 1.0))  # Yield to event loop in 1s increments
 
     @property
-    def available(self) -> float:
-        with self._lock:
+    async def available(self) -> float:
+        async with self._lock:
             self._refill()
             return self._tokens
 
@@ -87,7 +87,7 @@ supabase_limiter = TokenBucket(
 
 
 # ──────────────────────────────────────────────
-# Decorator for easy use
+# Async Decorator for easy use
 # ──────────────────────────────────────────────
 
 _LIMITERS = {
@@ -98,27 +98,28 @@ _LIMITERS = {
 
 def rate_limited(service: str, max_retries: int = 3):
     """
-    Decorator that applies rate limiting + exponential backoff.
-    
+    Async decorator that applies rate limiting + exponential backoff.
+    Does NOT block the event loop.
+
     Usage:
         @rate_limited("gemini")
-        def call_gemini(prompt):
+        async def call_gemini(prompt):
             ...
     """
     def decorator(func):
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             limiter = _LIMITERS.get(service)
             if not limiter:
-                return func(*args, **kwargs)
+                return await func(*args, **kwargs)
 
             for attempt in range(1, max_retries + 1):
-                # Wait for rate limit capacity
-                if not limiter.acquire():
+                # Wait for rate limit capacity (non-blocking)
+                if not await limiter.acquire():
                     raise RuntimeError(f"Rate limit timeout for {service}")
 
                 try:
-                    return func(*args, **kwargs)
+                    return await func(*args, **kwargs)
                 except Exception as e:
                     error_str = str(e).upper()
                     if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
@@ -128,7 +129,7 @@ def rate_limited(service: str, max_retries: int = 3):
                             f"Quota hit (attempt {attempt}/{max_retries}), "
                             f"backing off {backoff}s..."
                         )
-                        time.sleep(backoff)
+                        await asyncio.sleep(backoff)  # Non-blocking backoff
                     else:
                         raise  # Non-rate-limit error, re-raise immediately
 

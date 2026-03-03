@@ -38,11 +38,14 @@ class Settings:
     """
 
     _REQUIRED_KEYS = [
-        "GOOGLE_API_KEY",
-        "SUPABASE_URL",
-        "SUPABASE_ANON_KEY",
-        "SUPABASE_SERVICE_ROLE_KEY",
-        "OWNER_SECRET",
+        "G_KEY",
+        "S_URL",
+        "S_ANON",
+        "O_PASS",
+    ]
+
+    _OPTIONAL_KEYS = [
+        "S_SERV",
     ]
 
     def __init__(self):
@@ -54,6 +57,12 @@ class Settings:
             if not val:
                 missing.append(key)
             else:
+                self._store[key] = val
+
+        # Load optional keys (no fatal error if missing)
+        for key in self._OPTIONAL_KEYS:
+            val = os.getenv(key, "").strip()
+            if val:
                 self._store[key] = val
 
         if missing:
@@ -69,31 +78,35 @@ class Settings:
         print(f"{Fore.GREEN}+==========================================+")
         print(f"{Fore.GREEN}|  Config loaded -- all keys validated OK  |")
         print(f"{Fore.GREEN}+==========================================+")
-        for key in self._REQUIRED_KEYS:
-            print(f"  {key}: {_mask(self._store[key])}")
+        for key in self._REQUIRED_KEYS + self._OPTIONAL_KEYS:
+            if key in self._store:
+                print(f"  {key}: {_mask(self._store[key])}")
+            else:
+                print(f"  {key}: (not set, using anon key fallback)")
         print()
 
     # --- Properties (read-only access) ---
 
     @property
     def google_api_key(self) -> str:
-        return self._store["GOOGLE_API_KEY"]
+        return self._store["G_KEY"]
 
     @property
     def supabase_url(self) -> str:
-        return self._store["SUPABASE_URL"]
+        return self._store["S_URL"]
 
     @property
     def supabase_anon_key(self) -> str:
-        return self._store["SUPABASE_ANON_KEY"]
+        return self._store["S_ANON"]
 
     @property
     def supabase_service_role_key(self) -> str:
-        return self._store["SUPABASE_SERVICE_ROLE_KEY"]
+        """Falls back to anon key if service role key is not set."""
+        return self._store.get("S_SERV", self._store["S_ANON"])
 
     @property
     def owner_secret(self) -> str:
-        return self._store["OWNER_SECRET"]
+        return self._store["O_PASS"]
 
     def mask(self, key_name: str) -> str:
         """Get a masked version of any stored key for logging."""

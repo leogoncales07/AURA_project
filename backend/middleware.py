@@ -25,7 +25,7 @@ class OwnerAuthMiddleware(BaseHTTPMiddleware):
     """
 
     # Paths that don't require auth (health checks, docs)
-    PUBLIC_PATHS = {"/health", "/docs", "/openapi.json", "/redoc", "/favicon.ico"}
+    PUBLIC_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/favicon.ico"}
 
     def __init__(self, app, owner_secret: str):
         super().__init__(app)
@@ -44,9 +44,9 @@ class OwnerAuthMiddleware(BaseHTTPMiddleware):
         if provided_hash != self._secret_hash:
             client_ip = request.client.host if request.client else "unknown"
             print(f"{Fore.RED}[AUTH] ✗ Rejected request from {client_ip} → {request.url.path}")
-            raise HTTPException(
+            return JSONResponse(
                 status_code=403,
-                detail="Forbidden — invalid or missing owner secret."
+                content={"detail": "Forbidden — invalid or missing owner secret."}
             )
 
         return await call_next(request)
@@ -58,17 +58,35 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     Prevents brute-force attacks on your endpoints.
     """
 
+    # Cleanup stale client entries older than 5 minutes
+    STALE_ENTRY_TIMEOUT = 300  # seconds
+
     def __init__(self, app, requests_per_minute: int = 30):
         super().__init__(app)
         self.rpm = requests_per_minute
         self._clients: dict[str, list[float]] = {}
+
+    def _cleanup_stale_entries(self):
+        """Remove client entries that haven't been used recently to prevent memory leaks."""
+        now = time.time()
+        # Find entries where the most recent request is older than the timeout
+        stale_ips = [
+            ip for ip, timestamps in self._clients.items()
+            if not timestamps or now - max(timestamps) > self.STALE_ENTRY_TIMEOUT
+        ]
+        for ip in stale_ips:
+            del self._clients[ip]
 
     async def dispatch(self, request: Request, call_next):
         client_ip = request.client.host if request.client else "unknown"
         now = time.time()
         window = 60.0  # 1 minute
 
-        # Clean old entries
+        # Periodically cleanup stale entries (every ~100 requests)
+        if len(self._clients) > 100:
+            self._cleanup_stale_entries()
+
+        # Clean old entries for this client
         if client_ip not in self._clients:
             self._clients[client_ip] = []
         self._clients[client_ip] = [
