@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/Button';
 import { api } from '@/lib/api';
+import { useI18n } from '@/i18n';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -13,6 +15,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { t } = useI18n();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -22,18 +25,17 @@ export default function LoginPage() {
         const { data, error: apiError } = await api.login(email, password);
 
         if (apiError) {
-            setError(apiError === 'Invalid login credentials' ? 'Credenciais inválidas. Tente novamente.' : apiError);
+            setError(apiError === 'Invalid login credentials' ? t('login.invalidCredentials') : apiError);
             setLoading(false);
             return;
         }
 
         if (data && data.access_token) {
-            // Store token and user data
             localStorage.setItem('aura_token', data.access_token);
             localStorage.setItem('aura_user', JSON.stringify(data.user));
             router.push('/dashboard');
         } else {
-            setError('Erro inesperado no servidor.');
+            setError(t('login.serverError'));
             setLoading(false);
         }
     };
@@ -43,7 +45,11 @@ export default function LoginPage() {
             <div className={styles.loginWrapper}>
                 <div className={styles.logoArea}>
                     <h2>AURA</h2>
-                    <p>O seu refúgio digital.</p>
+                    <p>{t('login.subtitle')}</p>
+                </div>
+
+                <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
+                    <LanguageSwitcher />
                 </div>
 
                 <div className={styles.loginForm}>
@@ -53,7 +59,7 @@ export default function LoginPage() {
                                 <input
                                     type="email"
                                     id="email"
-                                    placeholder="Email"
+                                    placeholder={t('login.emailPlaceholder')}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className={styles.inputTop}
@@ -62,7 +68,7 @@ export default function LoginPage() {
                                 <input
                                     type="password"
                                     id="password"
-                                    placeholder="Palavra-passe"
+                                    placeholder={t('login.passwordPlaceholder')}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className={styles.inputBottom}
@@ -80,7 +86,7 @@ export default function LoginPage() {
                             type="submit"
                             disabled={loading}
                         >
-                            {loading ? 'A processar...' : 'Iniciar Sessão'}
+                            {loading ? t('login.loading') : t('login.submit')}
                         </Button>
 
                         <div style={{ marginTop: '16px', textAlign: 'center' }}>
@@ -103,23 +109,23 @@ export default function LoginPage() {
                                         localStorage.setItem('aura_user', JSON.stringify(data.user));
                                         router.push('/dashboard');
                                     } else {
-                                        setError('Acesso de demonstração falhou. Verifique o backend.');
+                                        setError(t('login.demoFailed'));
                                         setLoading(false);
                                     }
                                 }}
                             >
-                                Entrar no Modo de Apresentação
+                                {t('login.demoButton')}
                             </Button>
                         </div>
 
 
                         <div className={styles.forgotPasswordWrapper}>
-                            <Link href="#" className={styles.forgotPassword}>Esqueceu-se da Palavra-passe?</Link>
+                            <Link href="#" className={styles.forgotPassword}>{t('login.forgotPassword')}</Link>
                         </div>
                     </form>
 
                     <p className={styles.signupText}>
-                        Não tem uma conta AURA? <Link href="#" className={styles.signupLink}>Crie a sua agora.</Link>
+                        {t('login.noAccount')} <Link href="#" className={styles.signupLink}>{t('login.createAccount')}</Link>
                     </p>
                 </div>
 

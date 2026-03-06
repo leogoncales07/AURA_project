@@ -1,21 +1,26 @@
+'use client';
+
 import Link from 'next/link';
 import { Home, ClipboardList, MessageCircle, Wind, BarChart2 } from 'lucide-react';
 import styles from './BottomNav.module.css';
+import { useI18n } from '@/i18n';
 
 export default function BottomNav() {
+    const { t } = useI18n();
+
     return (
         <nav className={styles.navBar}>
             <ul className={styles.navList}>
                 <li>
                     <Link href="/dashboard" className={styles.navItem}>
                         <Home className={styles.icon} strokeWidth={2} size={24} />
-                        <span>Início</span>
+                        <span>{t('nav.home')}</span>
                     </Link>
                 </li>
                 <li>
                     <Link href="/assessment" className={styles.navItem}>
                         <ClipboardList className={styles.icon} strokeWidth={2} size={24} />
-                        <span>Testes</span>
+                        <span>{t('nav.tests')}</span>
                     </Link>
                 </li>
                 <li>
@@ -28,13 +33,13 @@ export default function BottomNav() {
                 <li>
                     <Link href="/meditations" className={styles.navItem}>
                         <Wind className={styles.icon} strokeWidth={2} size={24} />
-                        <span>Pausar</span>
+                        <span>{t('nav.pause')}</span>
                     </Link>
                 </li>
                 <li>
                     <Link href="/reports" className={styles.navItem}>
                         <BarChart2 className={styles.icon} strokeWidth={2} size={24} />
-                        <span>Progresso</span>
+                        <span>{t('nav.progress')}</span>
                     </Link>
                 </li>
             </ul>
