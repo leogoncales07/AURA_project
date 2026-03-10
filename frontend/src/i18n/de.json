@@ -31,6 +31,17 @@
         "noAccount": "Noch kein AURA-Konto?",
         "createAccount": "Jetzt erstellen."
     },
+    "signup": {
+        "title": "Treten Sie AURA bei",
+        "subtitle": "Beginnen Sie Ihre Reise zum Wohlbefinden.",
+        "namePlaceholder": "Vollständiger Name",
+        "emailPlaceholder": "E-Mail",
+        "passwordPlaceholder": "Passwort",
+        "submit": "Konto erstellen",
+        "loading": "Wird erstellt...",
+        "hasAccount": "Sie haben bereits ein Konto?",
+        "signIn": "Anmelden"
+    },
     "dashboard": {
         "syncing": "Dein Bereich wird synchronisiert...",
         "greeting": "Hallo, {name}.",

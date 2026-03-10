@@ -10,7 +10,8 @@ import { api } from '@/lib/api';
 import { useI18n } from '@/i18n';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
-export default function LoginPage() {
+export default function SignUpPage() {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -18,15 +19,15 @@ export default function LoginPage() {
     const router = useRouter();
     const { t } = useI18n();
 
-    const handleLogin = async (e) => {
+    const handleSignUp = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        const { data, error: apiError } = await api.login(email, password);
+        const { data, error: apiError } = await api.signup(email, password, name);
 
         if (apiError) {
-            setError(apiError === 'Invalid login credentials' ? t('login.invalidCredentials') : apiError);
+            setError(apiError);
             setLoading(false);
             return;
         }
@@ -36,7 +37,7 @@ export default function LoginPage() {
             localStorage.setItem('aura_user', JSON.stringify(data.user));
             router.push('/dashboard');
         } else {
-            setError(t('login.serverError'));
+            setError(t('login.serverError') || 'Unexpected server error.');
             setLoading(false);
         }
     };
@@ -47,7 +48,7 @@ export default function LoginPage() {
                 <div className={styles.logoArea}>
                     <AuraLogo size={96} style={{ marginBottom: '16px' }} />
                     <h2 className={styles.logoTitle}>AURA</h2>
-                    <p>{t('login.subtitle')}</p>
+                    <p>{t('signup.subtitle') || 'Begin your journey.'}</p>
                 </div>
 
                 <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
@@ -55,22 +56,31 @@ export default function LoginPage() {
                 </div>
 
                 <div className={styles.loginForm}>
-                    <form className={styles.form} onSubmit={handleLogin}>
+                    <form className={styles.form} onSubmit={handleSignUp}>
                         <div className={styles.inputGroup}>
                             <div className={styles.inputStack}>
                                 <input
+                                    type="text"
+                                    id="name"
+                                    placeholder={t('signup.namePlaceholder') || 'Full Name'}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className={styles.inputTop}
+                                    required
+                                />
+                                <input
                                     type="email"
                                     id="email"
-                                    placeholder={t('login.emailPlaceholder')}
+                                    placeholder={t('signup.emailPlaceholder') || 'Email'}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className={styles.inputTop}
+                                    className={styles.inputMiddle}
                                     required
                                 />
                                 <input
                                     type="password"
                                     id="password"
-                                    placeholder={t('login.passwordPlaceholder')}
+                                    placeholder={t('signup.passwordPlaceholder') || 'Password'}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className={styles.inputBottom}
@@ -88,46 +98,12 @@ export default function LoginPage() {
                             type="submit"
                             disabled={loading}
                         >
-                            {loading ? t('login.loading') : t('login.submit')}
+                            {loading ? (t('signup.loading') || 'Creating...') : (t('signup.submit') || 'Create Account')}
                         </Button>
-
-                        <div style={{ marginTop: '16px', textAlign: 'center' }}>
-                            <Button
-                                variant="outline"
-                                size="md"
-                                style={{
-                                    width: '100%',
-                                    borderColor: 'var(--accent-primary)',
-                                    color: 'var(--accent-primary)',
-                                    fontWeight: '600'
-                                }}
-                                type="button"
-                                onClick={async () => {
-                                    setLoading(true);
-                                    setError('');
-                                    const { data, error: apiError } = await api.login('demo@aura.com', 'demo123456');
-                                    if (data && data.access_token) {
-                                        localStorage.setItem('aura_token', data.access_token);
-                                        localStorage.setItem('aura_user', JSON.stringify(data.user));
-                                        router.push('/dashboard');
-                                    } else {
-                                        setError(t('login.demoFailed'));
-                                        setLoading(false);
-                                    }
-                                }}
-                            >
-                                {t('login.demoButton')}
-                            </Button>
-                        </div>
-
-
-                        <div className={styles.forgotPasswordWrapper}>
-                            <Link href="#" className={styles.forgotPassword}>{t('login.forgotPassword')}</Link>
-                        </div>
                     </form>
 
                     <p className={styles.signupText}>
-                        {t('login.noAccount')} <Link href="/signup" className={styles.signupLink}>{t('login.createAccount')}</Link>
+                        {(t('signup.hasAccount') || 'Already have an account?')} <Link href="/login" className={styles.signupLink}>{(t('signup.signIn') || 'Sign In')}</Link>
                     </p>
                 </div>
 

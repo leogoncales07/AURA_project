@@ -59,7 +59,7 @@ export default function DashboardPage() {
         setStats({
             streak: streakCount,
             sessions: sessionCount,
-            tasks: '3/5'
+            tasks: sessionCount > 0 ? `${sessionCount}` : '0'
         });
 
         setLoading(false);
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                                     <span className={styles.emotionSub} style={{ marginBottom: 0 }}>{t('dashboard.statusLabel')}</span>
                                 </div>
                                 <div className={styles.emotionTitle}>
-                                    {latestLog?.mood_score > 7 ? t('dashboard.moodHigh') : latestLog?.mood_score > 4 ? t('dashboard.moodMid') : t('dashboard.moodLow')}
+                                    {!latestLog?.mood_score ? 'No data yet' : latestLog?.mood_score > 7 ? t('dashboard.moodHigh') : latestLog?.mood_score > 4 ? t('dashboard.moodMid') : t('dashboard.moodLow')}
                                 </div>
                                 <div className={styles.insightPills}>
                                     {latestLog?.sleep_hours && <span className={styles.pill}><Zap size={12} /> {t('dashboard.sleep', { hours: latestLog.sleep_hours })}</span>}
@@ -119,9 +119,9 @@ export default function DashboardPage() {
                             <div className={styles.emotionRing}>
                                 <svg width="80" height="80" viewBox="0 0 80 80">
                                     <circle cx="40" cy="40" r="36" fill="none" stroke="var(--color-border)" strokeWidth="6" />
-                                    <circle cx="40" cy="40" r="36" fill="none" stroke="var(--color-primary)" strokeWidth="6" strokeDasharray="226" strokeDashoffset={226 - (226 * (latestLog?.mood_score || 7) / 10)} strokeLinecap="round" transform="rotate(-90 40 40)" />
+                                    <circle cx="40" cy="40" r="36" fill="none" stroke="var(--color-primary)" strokeWidth="6" strokeDasharray="226" strokeDashoffset={226 - (226 * (latestLog?.mood_score || 0) / 10)} strokeLinecap="round" transform="rotate(-90 40 40)" />
                                 </svg>
-                                <span className={styles.emotionScore}>{latestLog?.mood_score ? latestLog.mood_score * 10 : 70}</span>
+                                <span className={styles.emotionScore}>{latestLog?.mood_score ? latestLog.mood_score * 10 : '--'}</span>
                             </div>
                         </div>
                     </div>

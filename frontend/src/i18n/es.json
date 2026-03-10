@@ -31,6 +31,17 @@
         "noAccount": "¿No tienes una cuenta AURA?",
         "createAccount": "Crea la tuya ahora."
     },
+    "signup": {
+        "title": "Únete a AURA",
+        "subtitle": "Comienza tu viaje hacia el bienestar.",
+        "namePlaceholder": "Nombre Completo",
+        "emailPlaceholder": "Email",
+        "passwordPlaceholder": "Contraseña",
+        "submit": "Crear Cuenta",
+        "loading": "Creando...",
+        "hasAccount": "¿Ya tienes una cuenta?",
+        "signIn": "Iniciar Sesión"
+    },
     "dashboard": {
         "syncing": "Sincronizando tu espacio...",
         "greeting": "Hola, {name}.",
