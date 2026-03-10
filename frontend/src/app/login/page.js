@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AuraLogo from '@/components/AuraLogo';
 import styles from './page.module.css';
 import Button from '@/components/Button';
 import { api } from '@/lib/api';
@@ -44,7 +45,8 @@ export default function LoginPage() {
         <div className={styles.container}>
             <div className={styles.loginWrapper}>
                 <div className={styles.logoArea}>
-                    <h2>AURA</h2>
+                    <AuraLogo size={96} style={{ marginBottom: '16px' }} />
+                    <h2 className={styles.logoTitle}>AURA</h2>
                     <p>{t('login.subtitle')}</p>
                 </div>
 

@@ -52,7 +52,7 @@
     flex: 1;
     padding: 24px 16px;
     overflow-y: auto;
-    padding-bottom: 240px;
+    padding-bottom: 260px;
     /* Space for input and bottom nav combined */
     max-width: 800px;
     width: 100%;

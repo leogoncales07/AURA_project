@@ -32,4 +32,9 @@ def get_db(token: str = None):
     key = token if token else settings.supabase_anon_key
     return _create_async_client(key)
 
+def get_service_db():
+    """Returns a client with the SERVICE ROLE key to bypass RLS."""
+    return _create_async_client(settings.supabase_service_role_key)
+
+
 print(f"[Supabase] Async database layer initialized.")

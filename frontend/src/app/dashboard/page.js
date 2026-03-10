@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
+import AuraLogo from '@/components/AuraLogo';
 import BottomNav from '@/components/BottomNav';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -81,8 +82,11 @@ export default function DashboardPage() {
         <div className={styles.appContainer}>
             <header className={styles.header}>
                 <div className={styles.headerTop}>
-                    <div className={styles.date}>
-                        {new Date().toLocaleDateString(dateLocaleMap[locale] || 'pt-PT', { weekday: 'long', day: 'numeric', month: 'short' })}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <AuraLogo size={48} />
+                        <div className={styles.date}>
+                            {new Date().toLocaleDateString(dateLocaleMap[locale] || 'pt-PT', { weekday: 'long', day: 'numeric', month: 'short' })}
+                        </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <LanguageSwitcher />

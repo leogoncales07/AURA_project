@@ -79,10 +79,12 @@ class SuggestTasksRequest(BaseModel):
 class CompanionMessageRequest(BaseModel):
     user_id: str
     message: str
+    language: str = "en"
 
 class CompanionMeditationRequest(BaseModel):
     user_id: str
     request: str = "I'm feeling stressed, can you guide me through a quick meditation?"
+    language: str = "en"
 
 # -- Daily Logs --
 class DailyLogRequest(BaseModel):
@@ -96,6 +98,7 @@ class AssessmentSubmitRequest(BaseModel):
     user_id: str
     questionnaire_id: str
     answers: List[int]
+    language: str = "en"
 
 # -- Users --
 class UserProfileUpdate(BaseModel):
@@ -323,13 +326,13 @@ async def companion_chat(req: CompanionMessageRequest, authorization: Optional[s
 
     # 2. Get AI response
     bot = CompanionBot()
-    response = await bot.chat(req.message, history)
+    response = await bot.chat(req.message, history, language=req.language)
 
     # 3. Save conversation
     try:
-        token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
-        await db.from_("conversations").insert([
+        from db import get_service_db
+        db_admin = get_service_db()
+        await db_admin.from_("conversations").insert([
             {"user_id": req.user_id, "agent_type": "CompanionBot", "role": "user", "message": req.message},
             {"user_id": req.user_id, "agent_type": "CompanionBot", "role": "assistant", "message": response}
         ]).execute()
@@ -342,8 +345,9 @@ async def companion_chat(req: CompanionMessageRequest, authorization: Optional[s
 async def companion_meditation(req: CompanionMeditationRequest):
     """Get a guided meditation from CompanionBot."""
     from agents import CompanionBot
+    # 2. Get AI response
     bot = CompanionBot()
-    response = await bot.get_meditation(req.request)
+    response = await bot.get_meditation(req.request, language=req.language)
     return {"meditation": response}
 
 @app.post("/companion/log")

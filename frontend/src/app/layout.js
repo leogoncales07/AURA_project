@@ -1,6 +1,11 @@
-import { Outfit } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/i18n";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -8,14 +13,14 @@ const outfit = Outfit({
 });
 
 export const metadata = {
-  title: "AURA - Cuida da tua saúde mental",
-  description: "A premium companion for your mental health journey.",
+  title: "AURA | Personal Mental Health Companion",
+  description: "A premium, AI-powered companion for your mental health journey. Experience calm, clarity, and growth.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt" suppressHydrationWarning>
-      <body className={`${outfit.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} ${outfit.variable}`}>
         <I18nProvider>
           {children}
         </I18nProvider>

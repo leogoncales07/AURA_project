@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import styles from './page.module.css';
+import AuraLogo from '@/components/AuraLogo';
 import BottomNav from '@/components/BottomNav';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { api } from '@/lib/api';
 
@@ -85,7 +86,7 @@ export default function ChatPage() {
                 </div>
                 <div className={styles.chatHeaderContent}>
                     <div className={styles.botAvatar}>
-                        <Sparkles size={24} style={{ color: 'var(--color-primary)' }} />
+                        <AuraLogo size={40} />
                     </div>
                     <div>
                         <h2 className={styles.botName}>{t('chat.botName')}</h2>
@@ -97,7 +98,7 @@ export default function ChatPage() {
             <main className={styles.chatArea}>
                 {messages.length === 0 && (
                     <div className={styles.emptyState}>
-                        <Sparkles size={40} style={{ color: 'var(--color-primary)', opacity: 0.3 }} />
+                        <AuraLogo size={96} style={{ marginBottom: '20px', opacity: 0.8 }} />
                         <p>{t('chat.emptyState')}</p>
                     </div>
                 )}

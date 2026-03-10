@@ -37,13 +37,18 @@ class ClinicalBot:
     async def generate_summary(self, questionnaire_name: str, total_score: float, risk_level: str, responses: List[dict]) -> str:
         """Generates an AI summary for a completed assessment."""
         responses_text = "\n".join([f"Q: {r['question']}\nA: {r['answer']}" for r in responses])
+        import asyncio
         chain = self.summary_prompt | self.llm
-        response = await chain.ainvoke({
-            "questionnaire_name": questionnaire_name,
-            "total_score": total_score,
-            "risk_level": risk_level,
-            "responses_text": responses_text
-        })
+        
+        response = await asyncio.to_thread(
+            chain.invoke,
+            {
+                "questionnaire_name": questionnaire_name,
+                "total_score": total_score,
+                "risk_level": risk_level,
+                "responses_text": responses_text
+            }
+        )
         return response.content
 
 
@@ -93,16 +98,22 @@ class CompanionBot:
             elif msg["role"] == "assistant":
                 langchain_history.append(AIMessage(content=msg["content"]))
 
+        import asyncio
         chain = self.chat_prompt | self.llm
-        response = await chain.ainvoke({
-            "message": message,
-            "history": langchain_history
-        })
+        
+        response = await asyncio.to_thread(
+            chain.invoke,
+            {
+                "message": message,
+                "history": langchain_history
+            }
+        )
         return response.content
 
     @rate_limited("gemini")
     async def get_meditation(self, request: str = "I'm feeling stressed, can you guide me through a quick meditation?") -> str:
         """Generates a personalized meditation exercise."""
+        import asyncio
         chain = self.meditation_prompt | self.llm
-        response = await chain.ainvoke({"request": request})
+        response = await asyncio.to_thread(chain.invoke, {"request": request})
         return response.content

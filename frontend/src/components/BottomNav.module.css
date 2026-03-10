@@ -1,17 +1,27 @@
 .navBar {
     position: fixed;
     bottom: 24px;
+    /* Docked slightly closer to the bottom */
     left: 50%;
     transform: translateX(-50%);
     width: 90%;
-    max-width: 440px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
+    max-width: 400px;
+    /* More compact */
+    background: var(--color-surface-translucent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-pill);
-    padding: 10px 24px;
+    padding: 6px 20px;
+    /* Reduced padding */
     z-index: 50;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-xl);
     animation: slideUpNav 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+[data-theme='dark'] .navBar {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 @keyframes slideUpNav {
@@ -41,26 +51,26 @@
     gap: 4px;
     padding: 8px 12px;
     color: var(--color-text-tertiary);
-    font-size: 0.65rem;
-    font-weight: 500;
-    transition: all 0.25s ease;
+    font-size: 0.7rem;
+    font-weight: 600;
+    transition: all var(--transition-normal);
     border-radius: var(--radius-lg);
     cursor: pointer;
 }
 
 .navItem:hover {
-    color: var(--color-text);
+    color: var(--color-primary);
     background: var(--color-surface-hover);
 }
 
 .icon {
     font-size: 1.5rem;
-    transition: transform 0.25s ease, color 0.25s ease;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.25s ease;
 }
 
 .navItem:hover .icon {
-    transform: translateY(-2px);
-    color: var(--color-text);
+    transform: translateY(-4px) scale(1.1);
+    color: var(--color-primary);
 }
 
 .navItemActive {
@@ -69,6 +79,7 @@
 
 .navItemActive .icon {
     color: var(--color-primary);
+    transform: translateY(-2px);
 }
 
 .centralButton {
@@ -76,31 +87,35 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--color-primary);
-    color: var(--color-surface);
+    background: var(--gradient-primary);
+    color: white;
     border-radius: var(--radius-pill);
-    padding: 12px 24px;
-    box-shadow: 0 4px 12px rgba(74, 103, 91, 0.2);
-    transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+    padding: 12px;
+    width: 56px;
+    height: 56px;
+    margin-top: -24px;
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+    transition: all var(--transition-normal);
     cursor: pointer;
+    border: 4px solid var(--color-surface);
 }
 
 .centralButton:hover {
-    transform: translateY(-2px);
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.5);
     background: var(--color-primary-hover);
-    box-shadow: 0 6px 16px rgba(74, 103, 91, 0.3);
 }
 
 .centralButton .icon {
-    color: var(--color-surface);
+    color: white;
+    font-size: 1.75rem;
 }
 
 .centralButton:hover .icon {
-    transform: none;
-    /* Keep icon static inside button */
+    transform: rotate(5deg);
 }
 
 .iconWhite {
     font-size: 1.5rem;
-    color: var(--color-surface);
+    color: white;
 }
