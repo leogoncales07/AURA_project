@@ -12,11 +12,8 @@ def run_command(command, cwd, label, color):
         command,
         cwd=cwd,
         shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
-        universal_newlines=True
+        stdout=sys.stdout,
+        stderr=sys.stderr
     )
 
 def main():
@@ -24,7 +21,7 @@ def main():
     backend_dir = os.path.join(root, "backend")
     frontend_dir = os.path.join(root, "frontend")
 
-    print(f"\n{Fore.CYAN}🚀 Launching Mental Health App Stack...{Style.RESET_ALL}")
+    print(f"\n{Fore.CYAN}Launching Mental Health App Stack...{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}-----------------------------------------{Style.RESET_ALL}")
 
     # 1. Start Backend
@@ -36,10 +33,10 @@ def main():
     # 2. Start Frontend
     frontend_proc = run_command("npm run dev", frontend_dir, "FRONTEND", Fore.BLUE)
 
-    print(f"\n{Fore.GREEN}✅ Servers are starting up!{Style.RESET_ALL}")
-    print(f"{Fore.MAGENTA}🌐 App (Local): http://localhost:3000{Style.RESET_ALL}")
-    print(f"{Fore.MAGENTA}🌐 App (Network): Look at the FRONTEND terminal output for the Network URL (usually http://<Your-IP>:3000){Style.RESET_ALL}")
-    print(f"{Fore.CYAN}🔗 API Docs: http://localhost:8000/docs{Style.RESET_ALL}")
+    print(f"\n{Fore.GREEN}Servers are starting up!{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}App (Local): http://localhost:3000{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}App (Network): Look at the FRONTEND terminal output for the Network URL (usually http://<Your-IP>:3000){Style.RESET_ALL}")
+    print(f"{Fore.CYAN}API Docs: http://localhost:8000/docs{Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW}Keep this window open. Press Ctrl+C to stop both.{Style.RESET_ALL}\n")
 
     try:

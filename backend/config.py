@@ -101,8 +101,12 @@ class Settings:
 
     @property
     def supabase_service_role_key(self) -> str:
-        """Falls back to anon key if service role key is not set."""
-        return self._store.get("S_SERV", self._store["S_ANON"])
+        """Falls back to anon key if service role key is not set or invalid."""
+        key = self._store.get("S_SERV", "").strip()
+        # Basic JWT validation: must contain dots. If it's a random string like 'sb_publishable...', it's wrong.
+        if not key or "." not in key:
+            return self._store["S_ANON"]
+        return key
 
     @property
     def owner_secret(self) -> str:

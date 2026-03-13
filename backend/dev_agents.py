@@ -3,7 +3,7 @@ import sys
 from typing import Optional
 from config import settings
 from rate_limiter import rate_limited
-from db import get_db
+from db import get_db, get_service_db
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from colorama import Fore, Style, init
@@ -45,7 +45,7 @@ class DevTeam:
     async def _create_task_record(self, task: str) -> Optional[str]:
         """Insert a new task row and return its UUID."""
         try:
-            db = get_db()
+            db = get_service_db()
             result = await db.from_("agent_tasks").insert({
                 "task": task,
                 "status": "in_progress",
@@ -62,7 +62,7 @@ class DevTeam:
         """Log a single coder→reviewer iteration."""
         if not task_id: return
         try:
-            db = get_db()
+            db = get_service_db()
             await db.from_("agent_iterations").insert({
                 "task_id": task_id,
                 "iteration": iteration,
@@ -78,7 +78,7 @@ class DevTeam:
         """Mark the task as completed/failed."""
         if not task_id: return
         try:
-            db = get_db()
+            db = get_service_db()
             await db.from_("agent_tasks").update({
                 "final_code": final_code,
                 "iterations": iterations,
