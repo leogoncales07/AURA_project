@@ -1,4 +1,9 @@
 {
+    "common": {
+        "error": "Ocorreu um erro. Tente novamente.",
+        "cancel": "Cancelar",
+        "save": "Guardar"
+    },
     "app": {
         "name": "AURA",
         "tagline": "O seu refúgio digital."
@@ -59,7 +64,9 @@
         "weeklyAssessment": "Avaliação Semanal",
         "weeklyAssessmentDesc": "O seu check-in estruturado está pronto.",
         "breathingPause": "Pausa Respiratória",
-        "breathingPauseDesc": "3 minutos para regulação do sistema nervoso."
+        "breathingPauseDesc": "3 minutos para regulação do sistema nervoso.",
+        "noData": "Sem dados ainda",
+        "total": "Total"
     },
     "chat": {
         "botName": "AURA AI",
@@ -99,7 +106,13 @@
         "sleepPrep": "Preparação para o Sono",
         "sleepPrepMeta": "12 min • Ondas Delta",
         "deepFocus": "Foco Profundo",
-        "deepFocusMeta": "15 min • Ruído Castanho"
+        "deepFocusMeta": "15 min • Ruído Castanho",
+        "meditations_title": "Meditações Baseadas em Evidências",
+        "sleep_title": "Métodos Científicos de Sono",
+        "validatedTechnique": "Técnica Validada",
+        "sourceLabel": "Fonte:",
+        "followSteps": "Siga estes passos:",
+        "done": "Concluído"
     },
     "reports": {
         "headerLabel": "O Teu Progresso",

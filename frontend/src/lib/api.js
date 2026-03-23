@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8000` : 'http://127.0.0.1:8000');
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8000` : 'http://localhost:8000');
 const OWNER_SECRET = process.env.NEXT_PUBLIC_DEV_KEY;
 
 /**
@@ -21,12 +21,16 @@ async function fetchApi(endpoint, options = {}) {
         }
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for dev stability
+
     const config = {
         method,
         headers: {
             ...defaultHeaders,
             ...headers,
         },
+        signal: controller.signal,
         ...rest,
     };
 
@@ -36,16 +40,19 @@ async function fetchApi(endpoint, options = {}) {
 
     try {
         const response = await fetch(`${API_URL}${endpoint}`, config);
-        const data = await response.json();
+        clearTimeout(timeoutId);
+        
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            return { error: data.detail || 'API Error', status: response.status };
+            return { error: data?.detail || data?.message || 'API Error', status: response.status };
         }
 
         return { data, status: response.status };
     } catch (err) {
-        console.error('Fetch error:', err);
-        return { error: 'Network mismatch or server down', status: 500 };
+        clearTimeout(timeoutId);
+        console.warn(`[API] Fetch failed for ${endpoint}:`, err.message);
+        return { error: err.name === 'AbortError' ? 'Request timed out' : 'Network mismatch or server down', status: 500 };
     }
 }
 

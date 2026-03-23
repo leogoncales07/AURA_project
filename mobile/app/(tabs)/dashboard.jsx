@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     View, Text, ScrollView, TouchableOpacity,
-    StyleSheet, ActivityIndicator, RefreshControl,
+    StyleSheet, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -86,9 +86,22 @@ export default function DashboardScreen() {
                 </View>
                 <TouchableOpacity
                     style={styles.avatarBtn}
-                    onPress={async () => {
-                        await AsyncStorage.multiRemove(['aura_token', 'aura_user']);
-                        router.replace('/(auth)/login');
+                    onPress={() => {
+                        Alert.alert(
+                            t('dashboard.profileTitle') || 'Profile',
+                            `${user?.name || t('login.demoButton')}\n${user?.email || 'demo@aura.com'}`,
+                            [
+                                { text: t('common.cancel') || 'Cancel', style: 'cancel' },
+                                {
+                                    text: t('dashboard.logout') || 'Sign Out',
+                                    style: 'destructive',
+                                    onPress: async () => {
+                                        await AsyncStorage.multiRemove(['aura_token', 'aura_user']);
+                                        router.replace('/(auth)/login');
+                                    }
+                                }
+                            ]
+                        );
                     }}
                 >
                     <Text style={styles.avatarText}>{user?.name?.[0] || 'U'}</Text>
@@ -123,7 +136,7 @@ export default function DashboardScreen() {
                 <View style={styles.statCard}>
                     <Text style={styles.statValue}>{stats.sessions}</Text>
                     <Text style={styles.statLabel}>{t('dashboard.sessions')}</Text>
-                    <Text style={styles.statSub}>Total</Text>
+                    <Text style={styles.statSub}>{t('dashboard.total')}</Text>
                 </View>
             </View>
 

@@ -12,9 +12,9 @@ const AuraLogo = ({ size = 32, className = "", style = {} }) => {
             style={style}
         >
             <defs>
-                <linearGradient id="aura-luxury-purple" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#A855F7" /> {/* Amethyst */}
-                    <stop offset="100%" stopColor="#6366F1" /> {/* Indigo */}
+                <linearGradient id="aura-luxury-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" /> {/* Emerald 500 */}
+                    <stop offset="100%" stopColor="#06b6d4" /> {/* Cyan 500 */}
                 </linearGradient>
                 <filter id="aura-halo-glow" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur stdDeviation="3" result="blur" />
@@ -25,14 +25,14 @@ const AuraLogo = ({ size = 32, className = "", style = {} }) => {
             {/* The Halo - Ethereal, floating ring of light */}
             <ellipse
                 cx="50" cy="22" rx="22" ry="6"
-                stroke="#c084fc"
+                stroke="#14b8a6"
                 strokeWidth="1"
                 opacity="0.5"
                 filter="url(#aura-halo-glow)"
             />
             <ellipse
                 cx="50" cy="22" rx="22" ry="6"
-                stroke="url(#aura-luxury-purple)"
+                stroke="url(#aura-luxury-emerald)"
                 strokeWidth="0.5"
                 opacity="0.7"
             />
@@ -42,8 +42,8 @@ const AuraLogo = ({ size = 32, className = "", style = {} }) => {
             {/* Left structural path */}
             <path
                 d="M34 82C36 78 38 55 50 20"
-                stroke="url(#aura-luxury-purple)"
-                strokeWidth="2"
+                stroke="url(#aura-luxury-emerald)"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
@@ -51,8 +51,8 @@ const AuraLogo = ({ size = 32, className = "", style = {} }) => {
             {/* Right structural path */}
             <path
                 d="M50 20C62 55 64 78 66 82"
-                stroke="url(#aura-luxury-purple)"
-                strokeWidth="2"
+                stroke="url(#aura-luxury-emerald)"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
@@ -60,8 +60,8 @@ const AuraLogo = ({ size = 32, className = "", style = {} }) => {
             {/* The Ethereal Crossbar - A fluid, looping wave */}
             <path
                 d="M36 68C42 62 58 62 64 68"
-                stroke="url(#aura-luxury-purple)"
-                strokeWidth="1.8"
+                stroke="url(#aura-luxury-emerald)"
+                strokeWidth="2"
                 strokeLinecap="round"
                 opacity="0.9"
             />

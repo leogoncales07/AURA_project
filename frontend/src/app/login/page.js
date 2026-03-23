@@ -9,6 +9,7 @@ import Button from '@/components/Button';
 import { api } from '@/lib/api';
 import { useI18n } from '@/i18n';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -23,67 +24,92 @@ export default function LoginPage() {
         setError('');
         setLoading(true);
 
-        const { data, error: apiError } = await api.login(email, password);
+        try {
+            const { data, error: apiError } = await api.login(email, password);
 
-        if (apiError) {
-            setError(apiError === 'Invalid login credentials' ? t('login.invalidCredentials') : apiError);
-            setLoading(false);
-            return;
-        }
+            if (apiError) {
+                setError(apiError === 'Invalid login credentials' ? t('login.invalidCredentials') : apiError);
+                setLoading(false);
+                return;
+            }
 
-        if (data && data.access_token) {
-            localStorage.setItem('aura_token', data.access_token);
-            localStorage.setItem('aura_user', JSON.stringify(data.user));
-            router.push('/dashboard');
-        } else {
-            setError(t('login.serverError'));
+            if (data && data.access_token) {
+                localStorage.setItem('aura_token', data.access_token);
+                localStorage.setItem('aura_user', JSON.stringify(data.user));
+                router.push('/dashboard');
+            } else {
+                setError(t('login.serverError'));
+                setLoading(false);
+            }
+        } catch (err) {
+            console.error("[Login] Exception:", err);
+            setError(`Connection error: ${err.message}. Check if backend is running on port 8000.`);
             setLoading(false);
         }
     };
 
+    const handleDemoLogin = async () => {
+        setLoading(true);
+        setError('');
+        
+        console.log("Loading presentation demo user...");
+        const mockToken = "presentation-demo-token";
+        const mockUser = {
+            id: "demo-presenter-123",
+            email: "demo@aura.com",
+            name: "Demo User",
+            display_name: "Aura Demo"
+        };
+        
+        // Ensure data is saved before moving
+        localStorage.setItem('aura_token', mockToken);
+        localStorage.setItem('aura_user', JSON.stringify(mockUser));
+        
+        // Use hard navigation as a failsafe
+        window.location.href = '/dashboard';
+    };
+
     return (
         <div className={styles.container}>
-            <div className={styles.loginWrapper}>
-                <div className={styles.logoArea}>
-                    <AuraLogo size={96} style={{ marginBottom: '16px' }} />
-                    <h2 className={styles.logoTitle}>AURA</h2>
-                    <p>{t('login.subtitle')}</p>
+            <div className={`${styles.loginWrapper} fade-up-stagger`}>
+                <div style={{ position: 'fixed', top: '32px', right: '40px', display: 'flex', gap: '20px', zIndex: 100 }}>
+                    <LanguageSwitcher />
+                    <ThemeToggle />
                 </div>
 
-                <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-                    <LanguageSwitcher />
+                <div className={styles.logoArea}>
+                    <AuraLogo size={64} style={{ marginBottom: '24px' }} />
+                    <h2 className={styles.logoTitle}>{t('login.title')}</h2>
+                    <p>{t('login.subtitle')}</p>
                 </div>
 
                 <div className={styles.loginForm}>
                     <form className={styles.form} onSubmit={handleLogin}>
                         <div className={styles.inputGroup}>
-                            <div className={styles.inputStack}>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    placeholder={t('login.emailPlaceholder')}
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className={styles.inputTop}
-                                    required
-                                />
-                                <input
-                                    type="password"
-                                    id="password"
-                                    placeholder={t('login.passwordPlaceholder')}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className={styles.inputBottom}
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="email"
+                                placeholder={t('login.emailPlaceholder')}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className={styles.inputField}
+                                required
+                            />
+                        </div>
+                        <div className={styles.inputGroup}>
+                            <input
+                                type="password"
+                                placeholder={t('login.passwordPlaceholder')}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className={styles.inputField}
+                                required
+                            />
                         </div>
 
-                        {error && <div className={styles.errorMsg} style={{ color: '#ef4444', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center' }}>{error}</div>}
+                        {error && <div className={styles.errorMsg}>{error}</div>}
 
                         <Button
                             variant="primary"
-                            size="lg"
                             className={styles.submitBtn}
                             type="submit"
                             disabled={loading}
@@ -91,46 +117,24 @@ export default function LoginPage() {
                             {loading ? t('login.loading') : t('login.submit')}
                         </Button>
 
-                        <div style={{ marginTop: '16px', textAlign: 'center' }}>
-                            <Button
-                                variant="outline"
-                                size="md"
-                                style={{
-                                    width: '100%',
-                                    borderColor: 'var(--accent-primary)',
-                                    color: 'var(--accent-primary)',
-                                    fontWeight: '600'
-                                }}
-                                type="button"
-                                onClick={async () => {
-                                    setLoading(true);
-                                    setError('');
-                                    const { data, error: apiError } = await api.login('demo@aura.com', 'demo123456');
-                                    if (data && data.access_token) {
-                                        localStorage.setItem('aura_token', data.access_token);
-                                        localStorage.setItem('aura_user', JSON.stringify(data.user));
-                                        router.push('/dashboard');
-                                    } else {
-                                        setError(t('login.demoFailed'));
-                                        setLoading(false);
-                                    }
-                                }}
-                            >
-                                {t('login.demoButton')}
-                            </Button>
-                        </div>
-
+                        <button
+                            type="button"
+                            className={styles.demoBtn}
+                            onClick={handleDemoLogin}
+                            disabled={loading}
+                        >
+                            {t('login.demoButton')}
+                        </button>
 
                         <div className={styles.forgotPasswordWrapper}>
                             <Link href="#" className={styles.forgotPassword}>{t('login.forgotPassword')}</Link>
                         </div>
                     </form>
-
-                    <p className={styles.signupText}>
-                        {t('login.noAccount')} <Link href="/signup" className={styles.signupLink}>{t('login.createAccount')}</Link>
-                    </p>
                 </div>
 
+                <p className={styles.signupText}>
+                    {t('login.noAccount')} <Link href="/signup" className={styles.signupLink}>{t('login.createAccount')}</Link>
+                </p>
             </div>
         </div>
     );

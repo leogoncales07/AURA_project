@@ -27,11 +27,14 @@ def main():
     # 1. Start Backend
     backend_proc = run_command("python main.py", backend_dir, "BACKEND", Fore.GREEN)
     
-    # Wait a bit for backend to initialize
-    time.sleep(3)
+    # Wait for backend to be ready
+    time.sleep(4)
 
-    # 2. Start Frontend
-    frontend_proc = run_command("npm run dev", frontend_dir, "FRONTEND", Fore.BLUE)
+    # 2. Start Frontend with memory limits to prevent PC crash
+    # Setting max-old-space-size to 2GB which is usually enough for Next.js dev
+    node_opts = "--max-old-space-size=2048"
+    frontend_cmd = f"npx cross-env NODE_OPTIONS={node_opts} npm run dev"
+    frontend_proc = run_command(frontend_cmd, frontend_dir, "FRONTEND", Fore.BLUE)
 
     print(f"\n{Fore.GREEN}Servers are starting up!{Style.RESET_ALL}")
     print(f"{Fore.MAGENTA}App (Local): http://localhost:3000{Style.RESET_ALL}")

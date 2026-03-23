@@ -16,7 +16,7 @@ from rate_limiter import rate_limited
 class ReportGenerator:
     """Generates personalized mental health reports using AI."""
 
-    def __init__(self, model_name="gemini-2.5-flash"):
+    def __init__(self, model_name="gemini-2.0-flash"):
         self.llm = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=0.3,

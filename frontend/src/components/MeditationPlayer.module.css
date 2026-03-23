@@ -1,0 +1,205 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: #030405; /* Darker variant of aura-void */
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--aura-white);
+  overflow: hidden;
+}
+
+/* Background shader override for intensity */
+.background {
+  position: absolute;
+  inset: 0;
+  opacity: 0.8;
+  z-index: 0;
+}
+
+.header {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  right: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 10;
+}
+
+.sessionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sessionLabel {
+  font-size: var(--text-2xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--aura-muted);
+}
+
+.sessionTitle {
+  font-family: var(--font-fraunces), serif;
+  font-size: var(--text-lg);
+  font-weight: 400;
+}
+
+.exitButton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--aura-border);
+  color: var(--aura-white);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exitButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.playerCore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 64px;
+  z-index: 10;
+}
+
+/* Breathing Guide */
+.guideContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.breathingCircle {
+  width: 240px;
+  height: 240px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--aura-aurora-1), var(--aura-aurora-3));
+  box-shadow: 0 0 60px rgba(16, 185, 129, 0.4);
+  transition: transform 4s ease-in-out, box-shadow 4s ease-in-out;
+}
+
+.expanding {
+  transform: scale(1.15);
+  box-shadow: 0 0 100px rgba(16, 185, 129, 0.6);
+}
+
+.contracting {
+  transform: scale(0.85);
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.2);
+}
+
+.phaseInfo {
+  text-align: center;
+}
+
+.phaseLabel {
+  font-size: var(--text-2xs);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--aura-white);
+  font-weight: 500;
+  opacity: 0.8;
+  transition: opacity 0.4s ease;
+}
+
+/* Controls */
+.controlsWrapper {
+  position: absolute;
+  bottom: 64px;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  z-index: 10;
+  padding: 0 40px;
+}
+
+.mainControls {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.navButton {
+  background: transparent;
+  border: none;
+  color: var(--aura-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.navButton:hover {
+  color: var(--aura-white);
+}
+
+.playPauseButton {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: var(--aura-gradient-primary);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.4);
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.playPauseButton:active {
+  transform: scale(0.95);
+}
+
+.progressContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.waveform {
+  height: 20px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.waveBar {
+  flex: 1;
+  background: var(--aura-border);
+  border-radius: 1px;
+}
+
+.waveBarActive {
+  background: var(--aura-aurora-1);
+}
+
+.timeInfo {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.timeInfo span {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  color: var(--aura-muted);
+}

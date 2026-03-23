@@ -1,9 +1,9 @@
 'use client';
+import { Globe } from 'lucide-react';
 
 import { useState, useRef, useEffect } from 'react';
 import { useI18n, SUPPORTED_LOCALES } from '@/i18n';
 import styles from './LanguageSwitcher.module.css';
-import { Globe } from 'lucide-react';
 
 export default function LanguageSwitcher() {
     const { locale, setLocale } = useI18n();

@@ -1,7 +1,8 @@
 'use client';
+import { BarChart2, ClipboardList, Home, MessageCircle, Wind } from 'lucide-react';
 
 import Link from 'next/link';
-import { Home, ClipboardList, MessageCircle, Wind, BarChart2 } from 'lucide-react';
+
 import styles from './BottomNav.module.css';
 import { useI18n } from '@/i18n';
 

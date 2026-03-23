@@ -71,10 +71,10 @@ class TokenBucket:
 # Pre-configured limiters for each service
 # ──────────────────────────────────────────────
 
-# Gemini Free Tier: 15 RPM → 0.25 requests/sec
+# Gemini: 60 RPM
 gemini_limiter = TokenBucket(
-    max_tokens=5,         # burst of 5
-    refill_rate=15 / 60,  # 15 per minute = 0.25/sec
+    max_tokens=60,        # burst of 60
+    refill_rate=60 / 60,  # 60 per minute = 1/sec
     name="Gemini"
 )
 
@@ -96,7 +96,7 @@ _LIMITERS = {
 }
 
 
-def rate_limited(service: str, max_retries: int = 3):
+def rate_limited(service: str, max_retries: int = 5):
     """
     Async decorator that applies rate limiting + exponential backoff.
     Does NOT block the event loop.

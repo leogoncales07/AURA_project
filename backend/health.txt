@@ -1,0 +1,22 @@
+﻿[Config] Loading settings...
+  G_KEY: ***********************************xHaY
+  S_URL: ************************************e.co
+  S_ANON: ************************************************************************************************************************************************************************************************************aSAc
+  O_PASS: ************************************************************kZXN
+  S_SERV: ******************************************0iWD
+[Config] Done.
+
+[Supabase] Database layer initialized (Async).
+=== Supabase Connection Health Check ===
+
+[Auth] Testing GoTrue API (via requests)...
+ ÔÜá´©Å Auth API returned status 401
+
+[Database] Testing PostgREST API (read)...
+ Ô£à Database read successful. Found 0 users in 'users' table.
+
+[Database] Testing Write Access...
+ - Attempting dummy insert into 'daily_logs' (if table exists)...
+ ÔØî Write failed: {'message': 'new row violates row-level security policy for table "daily_logs"', 'code': '42501', 'hint': None, 'details': None}
+
+=== End of Health Check ===

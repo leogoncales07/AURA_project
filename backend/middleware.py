@@ -8,10 +8,10 @@ FastAPI Security Middleware
 
 import time
 import hashlib
-from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from colorama import Fore, init
+from fastapi import Request, HTTPException # type: ignore
+from fastapi.responses import JSONResponse # type: ignore
+from starlette.middleware.base import BaseHTTPMiddleware # type: ignore
+from colorama import Fore, init # type: ignore
 
 init(autoreset=True)
 
@@ -24,17 +24,26 @@ class OwnerAuthMiddleware(BaseHTTPMiddleware):
     Send the header:  X-Owner-Secret: <your_secret>
     """
 
-    # Paths that don't require auth (health checks, docs)
-    PUBLIC_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/favicon.ico"}
+    # Paths that don't require owner secret (auth, health, docs)
+    PUBLIC_PATHS = {
+        "/", "/health", "/docs", "/openapi.json", "/redoc", "/favicon.ico",
+        "/auth/login", "/auth/signup", "/auth/refresh",
+        "/api/v1/auth/login", "/api/v1/auth/signup", "/api/v1/auth/refresh"
+    }
 
     def __init__(self, app, owner_secret: str):
-        super().__init__(app)
+        super().__init__(app) # type: ignore
         # Store hashed version — never keep raw secret in memory
         self._secret_hash = hashlib.sha256(owner_secret.encode()).hexdigest()
 
+    # Paths that don't require owner secret (allow the app to function)
+    PUBLIC_PREFIXES = ("/auth", "/users", "/companion", "/assessments", "/questionnaires", "/reports", "/api/v1")
+
     async def dispatch(self, request: Request, call_next):
-        # Skip auth for public paths
-        if request.url.path in self.PUBLIC_PATHS:
+        path = request.url.path
+        
+        # Skip auth for public paths or app-specific prefixes
+        if path in self.PUBLIC_PATHS or path.startswith(self.PUBLIC_PREFIXES):
             return await call_next(request)
 
         # Check for owner secret
@@ -62,7 +71,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     STALE_ENTRY_TIMEOUT = 300  # seconds
 
     def __init__(self, app, requests_per_minute: int = 30):
-        super().__init__(app)
+        super().__init__(app) # type: ignore
         self.rpm = requests_per_minute
         self._clients: dict[str, list[float]] = {}
 
@@ -75,7 +84,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if not timestamps or now - max(timestamps) > self.STALE_ENTRY_TIMEOUT
         ]
         for ip in stale_ips:
-            del self._clients[ip]
+            self._clients.pop(ip, None)
 
     async def dispatch(self, request: Request, call_next):
         client_ip = request.client.host if request.client else "unknown"

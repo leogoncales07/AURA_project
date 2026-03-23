@@ -1,13 +1,14 @@
 "use client";
+import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from "react";
+
 import styles from "./ThemeToggle.module.css";
 
 export default function ThemeToggle() {
-    const [theme, setTheme] = useState("light");
+    const [theme, setTheme] = useState("dark"); // Default to dark for premium feel
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem("aura-theme") ||
-            (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        const savedTheme = localStorage.getItem("aura-theme") || "dark";
         setTheme(savedTheme);
         document.documentElement.setAttribute("data-theme", savedTheme);
     }, []);
@@ -23,9 +24,11 @@ export default function ThemeToggle() {
         <button
             onClick={toggleTheme}
             className={styles.toggle}
-            aria-label="Alternar modo escuro"
+            aria-label="Toggle theme"
         >
-            {theme === "light" ? "🌙" : "☀️"}
+            <div className={styles.iconWrapper}>
+                {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+            </div>
         </button>
     );
 }

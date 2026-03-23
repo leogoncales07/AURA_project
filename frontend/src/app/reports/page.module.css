@@ -1,0 +1,229 @@
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .dashboardGrid {
+    grid-template-columns: 1.6fr 1fr;
+  }
+}
+
+.mainCol {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Hero Metric */
+.heroCard {
+  padding: 40px;
+  background: var(--aura-depth);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--aura-aurora-1), transparent);
+  opacity: 0.4;
+}
+
+.heroLabel {
+  font-size: var(--text-2xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--aura-ghost);
+}
+
+.heroValue {
+  font-family: var(--font-fraunces), serif;
+  font-size: var(--text-display);
+  color: var(--aura-white);
+  line-height: 1;
+  font-weight: 400;
+}
+
+/* Line Chart */
+.chartContainer {
+  position: relative;
+  height: 240px;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.chartSvg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.baseline {
+  stroke: var(--aura-border);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.chartLabel {
+  font-size: 10px;
+  fill: var(--aura-ghost);
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  background: var(--aura-surface);
+  border: 1px solid var(--aura-border);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltipTitle {
+  font-size: 10px;
+  color: var(--aura-ghost);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tooltipValue {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: var(--text-sm);
+  color: var(--aura-white);
+}
+
+/* Streak Card */
+.streakCard {
+  background: var(--aura-depth);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 300ms ease;
+}
+
+.streakCard:hover {
+  border-color: var(--aura-border-hover);
+}
+
+.streakCard::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle, rgba(240, 160, 112, 0.06) 0%, transparent 70%);
+  z-index: 0;
+}
+
+.streakValue {
+  font-family: var(--font-fraunces), serif;
+  font-size: 4rem;
+  color: var(--aura-white);
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.flameIcon {
+  color: var(--aura-aurora-5);
+  filter: drop-shadow(0 0 12px rgba(240, 160, 112, 0.4));
+  position: relative;
+  z-index: 1;
+  animation: flameGlow 3s infinite alternate;
+}
+
+@keyframes flameGlow {
+  from { filter: drop-shadow(0 0 12px rgba(240, 160, 112, 0.3)); }
+  to { filter: drop-shadow(0 0 20px rgba(240, 160, 112, 0.5)); }
+}
+
+/* Insight Cards */
+.insightCard {
+  background: var(--aura-surface);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.insightCard:hover {
+  border-color: var(--aura-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.insightHeader {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--aura-white);
+  margin-bottom: 4px;
+}
+
+.insightBody {
+  font-size: var(--text-xs);
+  color: var(--aura-muted);
+  line-height: 1.6;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.statItem {
+  background: var(--aura-surface);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+  transition: all 300ms ease;
+}
+
+.statItem:hover {
+  border-color: var(--aura-border-hover);
+  transform: translateY(-2px);
+}
+
+.statLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--aura-ghost);
+  margin-bottom: 8px;
+}
+
+.statValue {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: var(--text-lg);
+  color: var(--aura-white);
+}

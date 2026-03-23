@@ -49,11 +49,12 @@ def main():
     # 2. Start Backend Tunnel
     api_tunnel = run_command(f"npx -y localtunnel --port 8000 --subdomain {api_subdomain}", root, "API-TUNNEL", Fore.CYAN)
     
-    time.sleep(3) # Wait for backend and tunnel to initialize
+    time.sleep(5) # Wait longer for backend and tunnel to initialize
 
-    # 3. Start Frontend Locally (Override physical environment with tunnel URL)
-    frontend_env = {"NEXT_PUBLIC_API_URL": api_url}
-    frontend_proc = run_command("npm run dev", frontend_dir, "FRONTEND", Fore.BLUE, env=frontend_env)
+    # 3. Start Frontend Locally with memory limits
+    node_opts = "--max-old-space-size=2048"
+    frontend_cmd = f"npx cross-env NODE_OPTIONS={node_opts} NEXT_PUBLIC_API_URL={api_url} npm run dev"
+    frontend_proc = run_command(frontend_cmd, frontend_dir, "FRONTEND", Fore.BLUE)
 
     # 4. Start Frontend Tunnel
     app_tunnel = run_command(f"npx -y localtunnel --port 3000 --subdomain {app_subdomain}", root, "APP-TUNNEL", Fore.MAGENTA)

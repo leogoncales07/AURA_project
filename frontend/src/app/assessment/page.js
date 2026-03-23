@@ -1,27 +1,28 @@
 'use client';
+import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, ClipboardList, FileText, Loader2, Sparkles } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '@/app/dashboard/page.module.css';
 import formStyles from './form.module.css';
-import BottomNav from '@/components/BottomNav';
-import ThemeToggle from '@/components/ThemeToggle';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { ClipboardList, FileText, CheckCircle2, ChevronRight, AlertCircle, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import AppShell from '@/components/AppShell';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+
 import { useI18n } from '@/i18n';
 import { api } from '@/lib/api';
 
 export default function AssessmentPage() {
-    const { t, locale } = useI18n();
+    const { t } = useI18n();
     const router = useRouter();
 
     // States
     const [questionnaires, setQuestionnaires] = useState([]);
-    const [activeForm, setActiveForm] = useState(null); // null = list view, object = form view
+    const [activeForm, setActiveForm] = useState(null); 
     const [answers, setAnswers] = useState([]);
     const [currentQ, setCurrentQ] = useState(0);
     const [submitting, setSubmitting] = useState(false);
-    const [result, setResult] = useState(null); // holds AI summary after submission
+    const [result, setResult] = useState(null); 
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState(null);
@@ -37,13 +38,18 @@ export default function AssessmentPage() {
 
     const loadData = async (uid) => {
         setLoading(true);
-        const [qRes, hRes] = await Promise.all([
-            api.listQuestionnaires(),
-            api.getHistory(uid),
-        ]);
-        if (qRes.data) setQuestionnaires(qRes.data.questionnaires || []);
-        if (hRes.data) setHistory(hRes.data.assessments || []);
-        setLoading(false);
+        try {
+            const [qRes, hRes] = await Promise.all([
+                api.listQuestionnaires(),
+                api.getHistory(uid),
+            ]);
+            if (qRes.data) setQuestionnaires(qRes.data.questionnaires || []);
+            if (hRes.data) setHistory(hRes.data.assessments || []);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const startForm = async (qId) => {
@@ -61,7 +67,6 @@ export default function AssessmentPage() {
         newAnswers[currentQ] = value;
         setAnswers(newAnswers);
 
-        // Auto-advance after a brief delay
         setTimeout(() => {
             if (currentQ < activeForm.questions.length - 1) {
                 setCurrentQ(currentQ + 1);
@@ -94,57 +99,50 @@ export default function AssessmentPage() {
     // ── RESULT VIEW ──
     if (result) {
         return (
-            <div className={styles.appContainer}>
-                <header className={styles.header}>
-                    <div className={styles.headerTop}>
-                        <button onClick={resetForm} className={formStyles.backBtn}>
-                            <ArrowLeft size={20} /> {t('assessment.backToList')}
-                        </button>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <LanguageSwitcher />
-                            <ThemeToggle />
-                        </div>
-                    </div>
-                    <h1 className={styles.greeting}>{t('assessment.results')}</h1>
-                </header>
+            <AppShell title={t('assessment.results')}>
+                <div className="fade-up-stagger" style={{ maxWidth: '640px', margin: '0 auto' }}>
+                    <button onClick={resetForm} className={formStyles.backBtn} style={{ marginBottom: '32px' }}>
+                        <ArrowLeft size={16} /> {t('assessment.backToList')}
+                    </button>
 
-                <main className={styles.mainContent}>
                     {result.error ? (
-                        <div className={formStyles.resultCard} style={{ borderColor: 'var(--color-accent-pink)' }}>
-                            <AlertCircle size={32} style={{ color: 'var(--color-accent-pink)' }} />
+                        <Card style={{ borderColor: 'var(--aura-aurora-4)' }}>
+                            <AlertCircle size={32} style={{ color: 'var(--aura-aurora-4)', marginBottom: '16px' }} />
                             <p>{result.error}</p>
-                        </div>
+                        </Card>
                     ) : (
                         <>
-                            <div className={formStyles.resultCard}>
+                            <Card className={formStyles.resultCard}>
                                 <div className={formStyles.scoreCircle}>
                                     <span className={formStyles.scoreValue}>{result.score_data?.total_score}</span>
                                     <span className={formStyles.scoreLabel}>{t('assessment.score')}</span>
                                 </div>
-                                <div className={formStyles.riskBadge} data-risk={result.score_data?.risk_level}>
+                                <div className={styles.pill} style={{ background: 'rgba(123, 110, 246, 0.12)', color: 'var(--aura-aurora-1)' }}>
                                     {result.score_data?.risk_level?.toUpperCase()}
                                 </div>
-                            </div>
+                            </Card>
 
                             {result.ai_summary && (
-                                <div className={formStyles.aiSummaryCard}>
-                                    <div className={formStyles.aiSummaryHeader}>
-                                        <Sparkles size={18} style={{ color: 'var(--color-primary)' }} />
-                                        <span>{t('assessment.aiAnalysis')}</span>
+                                <Card style={{ marginTop: '24px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--aura-aurora-1)' }}>
+                                        <Sparkles size={18} />
+                                        <span className="label-text" style={{ color: 'inherit' }}>{t('assessment.aiAnalysis')}</span>
                                     </div>
-                                    <p className={formStyles.aiSummaryText}>{result.ai_summary}</p>
-                                </div>
+                                    <p style={{ color: 'var(--aura-muted)', lineHeight: '1.6', fontSize: 'var(--text-base)' }}>{result.ai_summary}</p>
+                                </Card>
                             )}
 
-                            <button className={formStyles.doneBtn} onClick={resetForm}>
+                            <Button
+                                variant="primary"
+                                style={{ width: '100%', marginTop: '40px' }}
+                                onClick={resetForm}
+                            >
                                 {t('assessment.done')}
-                            </button>
+                            </Button>
                         </>
                     )}
-                </main>
-
-                <BottomNav />
-            </div>
+                </div>
+            </AppShell>
         );
     }
 
@@ -154,32 +152,24 @@ export default function AssessmentPage() {
         const allAnswered = !answers.includes(null);
 
         return (
-            <div className={styles.appContainer}>
-                <header className={styles.header}>
-                    <div className={styles.headerTop}>
-                        <button onClick={resetForm} className={formStyles.backBtn}>
-                            <ArrowLeft size={20} /> {t('assessment.backToList')}
-                        </button>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <LanguageSwitcher />
-                            <ThemeToggle />
-                        </div>
+            <AppShell title={activeForm.name.toLowerCase()}>
+                <div className="fade-up-stagger" style={{ maxWidth: '640px', margin: '0 auto' }}>
+                    <button onClick={resetForm} className={formStyles.backBtn} style={{ marginBottom: '32px' }}>
+                        <ArrowLeft size={16} /> {t('assessment.backToList')}
+                    </button>
+
+                    <div className={formStyles.progressBar}>
+                        <div className={formStyles.progressFill} style={{ width: `${progress}%`, background: 'var(--aura-gradient-primary)' }} />
                     </div>
-                    <h1 className={styles.greeting}>{activeForm.name}</h1>
-                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginTop: '4px' }}>
+
+                    <p className="label-text" style={{ marginBottom: '16px' }}>
                         {t('assessment.questionOf', { current: currentQ + 1, total: activeForm.questions.length })}
                     </p>
-                </header>
 
-                <main className={styles.mainContent}>
-                    {/* Progress bar */}
-                    <div className={formStyles.progressBar}>
-                        <div className={formStyles.progressFill} style={{ width: `${progress}%` }} />
-                    </div>
-
-                    {/* Question */}
-                    <div className={formStyles.questionCard}>
-                        <p className={formStyles.questionText}>{activeForm.questions[currentQ]}</p>
+                    <Card className={formStyles.questionCard}>
+                        <h2 style={{ fontFamily: 'var(--font-fraunces)', fontWeight: 400, fontSize: 'var(--text-xl)', marginBottom: '32px' }}>
+                            {activeForm.questions[currentQ]}
+                        </h2>
 
                         <div className={formStyles.optionsGrid}>
                             {activeForm.options.map((opt) => (
@@ -193,42 +183,32 @@ export default function AssessmentPage() {
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    </Card>
 
-                    {/* Navigation */}
                     <div className={formStyles.navRow}>
-                        <button
-                            className={formStyles.navBtn}
+                        <Button
+                            variant="outline"
                             onClick={() => setCurrentQ(Math.max(0, currentQ - 1))}
                             disabled={currentQ === 0}
+                            style={{ flex: 1 }}
                         >
                             {t('assessment.previous')}
-                        </button>
+                        </Button>
 
-                        {currentQ < activeForm.questions.length - 1 ? (
-                            <button
-                                className={`${formStyles.navBtn} ${formStyles.navBtnPrimary}`}
-                                onClick={() => setCurrentQ(currentQ + 1)}
-                                disabled={answers[currentQ] === null}
-                            >
-                                {t('assessment.next')}
-                            </button>
-                        ) : (
-                            <button
-                                className={`${formStyles.navBtn} ${formStyles.navBtnPrimary}`}
-                                onClick={handleSubmit}
-                                disabled={!allAnswered || submitting}
-                            >
-                                {submitting ? (
-                                    <><Loader2 size={16} className={formStyles.spin} /> {t('assessment.analyzing')}</>
-                                ) : (
-                                    t('assessment.submit')
-                                )}
-                            </button>
-                        )}
+                        <Button
+                            variant="primary"
+                            onClick={currentQ < activeForm.questions.length - 1 ? () => setCurrentQ(currentQ + 1) : handleSubmit}
+                            disabled={(currentQ < activeForm.questions.length - 1 && answers[currentQ] === null) || (currentQ === activeForm.questions.length - 1 && (!allAnswered || submitting))}
+                            style={{ flex: 2 }}
+                        >
+                            {submitting ? (
+                                <><Loader2 size={16} className={formStyles.spin} /> {t('assessment.analyzing')}</>
+                            ) : (
+                                currentQ < activeForm.questions.length - 1 ? t('assessment.next') : t('assessment.submit')
+                            )}
+                        </Button>
                     </div>
 
-                    {/* Question dots */}
                     <div className={formStyles.dotsRow}>
                         {activeForm.questions.map((_, i) => (
                             <button
@@ -238,83 +218,66 @@ export default function AssessmentPage() {
                             />
                         ))}
                     </div>
-                </main>
-
-                <BottomNav />
-            </div>
+                </div>
+            </AppShell>
         );
     }
 
-    // ── LIST VIEW ──
     return (
-        <div className={styles.appContainer}>
-            <header className={styles.header}>
-                <div className={styles.headerTop}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <ClipboardList size={20} style={{ color: 'var(--color-primary)' }} />
-                        <div className={styles.date}>{t('assessment.headerLabel')}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <LanguageSwitcher />
-                        <ThemeToggle />
-                    </div>
-                </div>
-                <h1 className={styles.greeting}>{t('assessment.title')}</h1>
-            </header>
-
-            <main className={styles.mainContent}>
-                {loading ? (
-                    <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                        <Loader2 size={32} className={formStyles.spin} style={{ color: 'var(--color-primary)' }} />
-                    </div>
-                ) : (
-                    <>
-                        <section className={styles.actionsSection}>
-                            <h2 className={styles.sectionTitle}>{t('assessment.available')}</h2>
-                            <div className={styles.actionGrid}>
-                                {questionnaires.map((q) => (
-                                    <div key={q.id} className={styles.actionCard} onClick={() => startForm(q.id)}>
-                                        <div className={styles.actionIconWrapper} style={{ color: 'var(--color-primary)' }}>
-                                            <ClipboardList size={22} strokeWidth={2} />
-                                        </div>
-                                        <div className={styles.actionText}>
-                                            <h3>{q.name}</h3>
-                                            <p>{q.description}</p>
-                                        </div>
-                                        <div className={styles.actionArrow}>
-                                            <ChevronRight size={20} strokeWidth={2} />
-                                        </div>
-                                    </div>
-                                ))}
+        <AppShell title={t('assessment.title')}>
+            <div className="fade-up-stagger">
+                <section className={styles.summarySection} style={{ marginBottom: '48px' }}>
+                    <Card style={{ background: 'var(--aura-gradient-calm)', border: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                            <div className={styles.iconCircle} style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>
+                                <ClipboardList size={24} />
                             </div>
-                        </section>
+                            <div>
+                                <h2 style={{ fontFamily: 'var(--font-fraunces)', fontSize: 'var(--text-xl)', color: 'white' }}>{t('assessment.howDeep')}</h2>
+                                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'var(--text-sm)' }}>{t('assessment.reflectSubtitle')}</p>
+                            </div>
+                        </div>
+                    </Card>
+                </section>
 
-                        {history.length > 0 && (
-                            <section className={styles.actionsSection} style={{ marginTop: '32px' }}>
-                                <h2 className={styles.sectionTitle}>{t('assessment.history')}</h2>
-                                <div className={styles.actionGrid}>
-                                    {history.slice(0, 5).map((h, i) => (
-                                        <div key={i} className={styles.actionCard}>
-                                            <div className={styles.actionIconWrapper} style={{ color: "var(--color-accent-mint)", background: 'none' }}>
-                                                <CheckCircle2 size={24} strokeWidth={2} />
-                                            </div>
-                                            <div className={styles.actionText}>
-                                                <h3>{h.questionnaire}</h3>
-                                                <p>{t('assessment.score')}: {h.total_score} — {h.risk_level?.toUpperCase()}</p>
-                                            </div>
-                                            <div className={styles.actionArrow}>
-                                                <FileText size={20} strokeWidth={2} style={{ color: 'var(--color-text-tertiary)' }} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+                <h2 className={styles.sectionTitle}>{t('assessment.available')}</h2>
+                <div className={styles.dashboardGrid}>
+                    {questionnaires.map((q) => (
+                        <Card key={q.id} className={styles.actionCard} onClick={() => startForm(q.id)}>
+                            <div className={styles.actionIcon}>
+                                <ClipboardList size={20} />
+                            </div>
+                            <div className={styles.actionContent}>
+                                <h3>{q.name.toLowerCase()}</h3>
+                                <p>{q.description.toLowerCase()}</p>
+                            </div>
+                            <ChevronRight size={18} style={{ marginLeft: 'auto', color: 'var(--aura-ghost)' }} />
+                        </Card>
+                    ))}
+                </div>
+
+                {history.length > 0 && (
+                    <>
+                        <h2 className={styles.sectionTitle}>{t('assessment.history')}</h2>
+                        <div className={styles.dashboardGrid}>
+                            {history.slice(0, 4).map((h, i) => (
+                                <Card key={i} className={styles.actionCard}>
+                                    <div className={styles.actionIcon} style={{ color: 'var(--aura-aurora-3)' }}>
+                                        <CheckCircle2 size={20} />
+                                    </div>
+                                    <div className={styles.actionContent}>
+                                        <h3>{h.questionnaire.toLowerCase()}</h3>
+                                        <p>{t('assessment.scoreLabel', { score: h.total_score, risk: h.risk_level?.toLowerCase() })}</p>
+                                    </div>
+                                    <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                                        <span className="label-text" style={{ fontSize: '10px' }}>{new Date(h.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
                     </>
                 )}
-            </main>
-
-            <BottomNav />
-        </div>
+            </div>
+        </AppShell>
     );
 }

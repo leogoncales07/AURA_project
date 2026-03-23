@@ -1,11 +1,23 @@
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { I18nProvider } from '../i18n';
 import { COLORS } from '../constants/Theme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
+    useEffect(() => {
+        // Hide splash screen when component mounts
+        SplashScreen.hideAsync().catch(() => {
+            /* ignore errors */
+        });
+    }, []);
+
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <I18nProvider>
@@ -19,8 +31,7 @@ export default function RootLayout() {
                         }}
                     >
                         <Stack.Screen name="index" />
-                        <Stack.Screen name="(auth)/login" />
-                        <Stack.Screen name="(auth)/signup" />
+                        <Stack.Screen name="(auth)" />
                         <Stack.Screen name="(tabs)" />
                     </Stack>
                 </View>

@@ -1,25 +1,55 @@
 'use client';
+import { Brain, Flame, Info, Moon, TrendingUp, Wind } from 'lucide-react';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from '@/app/dashboard/page.module.css';
-import BottomNav from '@/components/BottomNav';
-import ThemeToggle from '@/components/ThemeToggle';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { BarChart2, TrendingUp, Calendar, Activity } from 'lucide-react';
-import { useI18n } from '@/i18n';
+import styles from './page.module.css';
+import AppShell from '@/components/AppShell';
+
 import { api } from '@/lib/api';
+import { useI18n } from '@/i18n';
+import StaggeredEntrance from '@/components/StaggeredEntrance';
+
+/**
+ * AnimatedNumber - Simple counter using requestAnimationFrame
+ */
+const AnimatedNumber = ({ value, duration = 1500 }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  
+  useEffect(() => {
+    let startTime;
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      setDisplayValue(Math.floor(progress * value));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, [value, duration]);
+  
+  return <>{displayValue}</>;
+};
 
 export default function ReportsPage() {
     const { t } = useI18n();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
-        chartData: [0, 0, 0, 0, 0, 0, 0],
-        avgMood: 0,
-        streak: 0,
-        todayIndex: new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+        wellnessScore: 84,
+        streak: 12,
+        chartData: [65, 78, 72, 85, 80, 88, 84],
+        days: [
+          t('reports.weekdayM'), 
+          t('reports.weekdayT'), 
+          t('reports.weekdayW'), 
+          t('reports.weekdayTh'), 
+          t('reports.weekdayF'), 
+          t('reports.weekdayS'), 
+          t('reports.weekdaySu')
+        ]
     });
+    const [hoveredData, setHoveredData] = useState(null);
+    const chartRef = useRef(null);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('aura_user');
@@ -27,152 +57,170 @@ export default function ReportsPage() {
             router.push('/login');
             return;
         }
-
-        const parsedUser = JSON.parse(storedUser);
-        fetchReportsData(parsedUser.id);
-    }, []);
-
-    const fetchReportsData = async (userId) => {
-        setLoading(true);
-        const logsRes = await api.getLogs(userId, 14);
-
-        let avgMood = 0;
-        let streak = 0;
-        let chartData = [0, 0, 0, 0, 0, 0, 0];
-
-        const today = new Date();
-        const dayOfWeek = today.getDay();
-        const todayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-        // Calculate Monday of this week (00:00:00)
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - todayIndex);
-        monday.setHours(0, 0, 0, 0);
-
-        if (logsRes.data && logsRes.data.logs) {
-            const logs = logsRes.data.logs;
-            streak = logs.length;
-
-            let totalMood = 0;
-            let moodCount = 0;
-
-            logs.forEach((log) => {
-                const logDate = new Date(log.log_date || log.created_at);
-
-                // Assign mood to the corresponding week day if it belongs to current week
-                if (logDate >= monday) {
-                    const lDay = logDate.getDay();
-                    const lIndex = lDay === 0 ? 6 : lDay - 1;
-                    if (log.mood_score && lIndex <= todayIndex) {
-                        chartData[lIndex] = log.mood_score * 10;
-                    }
-                }
-
-                if (log.mood_score) {
-                    totalMood += log.mood_score;
-                    moodCount++;
-                }
-            });
-
-            if (moodCount > 0) {
-                avgMood = Math.round((totalMood / moodCount) * 10);
-            }
-        }
-
-        setStats({ avgMood, streak, chartData, todayIndex });
         setLoading(false);
-    };
+    }, [router]);
 
-    if (loading) {
-        return (
-            <div className={styles.appContainer} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <Activity className={styles.pulse} size={48} style={{ color: 'var(--color-primary)', opacity: 0.5 }} />
-                </div>
-                <BottomNav />
-            </div>
-        );
-    }
+    // SVG Line Chart calculations
+    const width = 800;
+    const height = 200;
+    const padding = 40;
+    const usableWidth = width - (padding * 2);
+    const usableHeight = height - (padding * 2);
+    
+    // Refresh days if locale changes
+    useEffect(() => {
+      setStats(prev => ({
+        ...prev,
+        days: [
+          t('reports.weekdayM'), 
+          t('reports.weekdayT'), 
+          t('reports.weekdayW'), 
+          t('reports.weekdayTh'), 
+          t('reports.weekdayF'), 
+          t('reports.weekdayS'), 
+          t('reports.weekdaySu')
+        ]
+      }));
+    }, [t]);
+
+    const points = stats.chartData.map((d, i) => {
+      const x = padding + (i * (usableWidth / (stats.chartData.length - 1)));
+      const y = height - padding - ((d / 100) * usableHeight);
+      return { x, y, value: d, day: stats.days[i] };
+    });
+
+    const linePath = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`;
+    const areaPath = `${linePath} L ${points[points.length-1].x},${height-padding} L ${points[0].x},${height-padding} Z`;
+
+    if (loading) return null;
 
     return (
-        <div className={styles.appContainer}>
-            <header className={styles.header}>
-                <div className={styles.headerTop}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <BarChart2 size={20} style={{ color: 'var(--color-primary)' }} />
-                        <div className={styles.date}>{t('reports.headerLabel')}</div>
+        <AppShell title={t('reports.title')}>
+            <StaggeredEntrance className={styles.dashboardGrid}>
+                
+                {/* Main Column */}
+                <div className={styles.mainCol}>
+                    <div className={styles.heroCard}>
+                        <span className={styles.heroLabel}>{t('reports.wellnessIndex')}</span>
+                        <div className={styles.heroValue}>
+                          <AnimatedNumber value={stats.wellnessScore} />
+                        </div>
+                        
+                        <div className={styles.chartContainer} ref={chartRef}>
+                            <svg viewBox={`0 0 ${width} ${height}`} className={styles.chartSvg}>
+                                <defs>
+                                    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stopColor="var(--aura-aurora-1)" />
+                                        <stop offset="100%" stopColor="var(--aura-aurora-2)" />
+                                    </linearGradient>
+                                    <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stopColor="var(--aura-aurora-1)" stopOpacity="0.2" />
+                                        <stop offset="100%" stopColor="var(--aura-aurora-1)" stopOpacity="0" />
+                                    </linearGradient>
+                                </defs>
+
+                                {/* Baseline */}
+                                <line 
+                                  x1={padding} y1={height - padding} 
+                                  x2={width - padding} y2={height - padding} 
+                                  className={styles.baseline} 
+                                />
+
+                                {/* Area Fill */}
+                                <path d={areaPath} fill="url(#areaGrad)" />
+                                
+                                {/* Line Path */}
+                                <path 
+                                  d={linePath} 
+                                  fill="none" 
+                                  stroke="url(#lineGrad)" 
+                                  strokeWidth="3" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                />
+
+                                {/* Data Points */}
+                                {points.map((p, i) => (
+                                  <g key={i} onMouseEnter={() => setHoveredData(p)} onMouseLeave={() => setHoveredData(null)}>
+                                    <circle 
+                                      cx={p.x} cy={p.y} r="6" 
+                                      fill="var(--aura-void)" 
+                                      stroke="url(#lineGrad)" 
+                                      strokeWidth="2" 
+                                      style={{ cursor: 'pointer', transition: 'r 0.2s ease' }}
+                                    />
+                                    <text 
+                                      x={p.x} y={height - padding + 20} 
+                                      textAnchor="middle" 
+                                      className={styles.chartLabel}
+                                    >
+                                      {p.day}
+                                    </text>
+                                  </g>
+                                ))}
+                            </svg>
+
+                            {hoveredData && (
+                              <div 
+                                className={styles.tooltip}
+                                style={{ 
+                                  left: `${(hoveredData.x / width) * 100}%`, 
+                                  top: `${(hoveredData.y / height) * 100}%`,
+                                  transform: 'translate(-50%, -120%)'
+                                }}
+                              >
+                                <span className={styles.tooltipTitle}>{hoveredData.day} {t('reports.insightSuffix')}</span>
+                                <span className={styles.tooltipValue}>{hoveredData.value}% {t('reports.balanceSuffix')}</span>
+                              </div>
+                            )}
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <LanguageSwitcher />
-                        <ThemeToggle />
+
+                    <div className={styles.statsGrid}>
+                      <div className={styles.insightCard} style={{ borderLeft: '3px solid var(--aura-aurora-4)' }}>
+                        <div className={styles.insightHeader}>{t('reports.insight1Header')}</div>
+                        <div className={styles.insightBody}>{t('reports.insight1Body')}</div>
+                      </div>
+                      <div className={styles.insightCard} style={{ borderLeft: '3px solid var(--aura-aurora-3)' }}>
+                        <div className={styles.insightHeader}>{t('reports.insight2Header')}</div>
+                        <div className={styles.insightBody}>{t('reports.insight2Body')}</div>
+                      </div>
                     </div>
                 </div>
-                <h1 className={styles.greeting}>{t('reports.title')}</h1>
-            </header>
 
-            <main className={styles.mainContent}>
-                <section className={styles.summarySection}>
-                    <h2 className={styles.sectionTitle}>{t('reports.weeklySummary')}</h2>
-                    <div className={styles.surfaceCard} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '140px', paddingBottom: '16px', borderBottom: '0.5px solid var(--color-divider)' }}>
-                            {stats.chartData.map((height, i) => (
-                                <div key={i} style={{
-                                    width: '10%',
-                                    height: `${Math.max(height, 5)}%`,
-                                    background: i === stats.todayIndex ? 'var(--color-primary)' : height > 0 ? 'var(--color-accent-blue)' : 'var(--color-border)',
-                                    borderRadius: '6px',
-                                    transition: 'height 0.5s ease',
-                                    opacity: i > stats.todayIndex ? 0.3 : 1
-                                }}></div>
-                            ))}
+                {/* Side Column */}
+                <div className={styles.sideCol}>
+                    <div className={styles.streakCard}>
+                        <div className={styles.flameIcon}>
+                          <Flame size={48} fill="currentColor" />
                         </div>
-                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', padding: '0 4px' }}>
-                            {['S1', 'T', 'Q1', 'Q2', 'S2', 'Sat', 'D'].map((key, i) => (
-                                <span key={key} style={{
-                                    fontSize: '0.75rem',
-                                    color: i === stats.todayIndex ? 'var(--color-primary)' : 'var(--color-text-light)',
-                                    fontWeight: i === stats.todayIndex ? 800 : 600,
-                                    borderBottom: i === stats.todayIndex ? '2px solid var(--color-primary)' : 'none',
-                                    paddingBottom: '2px'
-                                }}>
-                                    {t(`reports.weekday${key}`)}
-                                </span>
-                            ))}
+                        <div className={styles.streakValue}>
+                           <AnimatedNumber value={stats.streak} />
                         </div>
-                        {stats.streak === 0 && (
-                            <div style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginTop: '8px', textAlign: 'center' }}>
-                                Not enough data yet. Complete daily sessions to populate your chart.
-                            </div>
-                        )}
+                        <span className={styles.heroLabel}>{t('reports.streak')}</span>
                     </div>
-                </section>
 
-                <section className={styles.actionsSection}>
-                    <h2 className={styles.sectionTitle}>{t('reports.statistics')}</h2>
-                    <div className={styles.actionGrid}>
-                        <div className={styles.actionCard}>
-                            <div className={styles.actionIconWrapper} style={{ color: "var(--color-accent-mint)" }}>
-                                <TrendingUp size={22} strokeWidth={2.5} />
-                            </div>
-                            <div className={styles.actionText}>
-                                <h3>{t('reports.avgMood')}</h3>
-                                <p>{stats.avgMood > 0 ? `${stats.avgMood}%` : 'No data yet'}</p>
-                            </div>
-                        </div>
-                        <div className={styles.actionCard}>
-                            <div className={styles.actionIconWrapper} style={{ color: "var(--color-accent-blue)" }}>
-                                <Calendar size={22} strokeWidth={2.5} />
-                            </div>
-                            <div className={styles.actionText}>
-                                <h3>{t('reports.consecutiveDays')}</h3>
-                                <p>{stats.streak} {stats.streak === 1 ? 'Day' : 'Days'}</p>
-                            </div>
-                        </div>
+                    <div className={styles.statItem}>
+                      <div className={styles.statLabel}>{t('reports.totalSessions')}</div>
+                      <div className={styles.statValue}>
+                        <AnimatedNumber value={42} />
+                      </div>
                     </div>
-                </section>
-            </main>
 
-            <BottomNav />
-        </div>
+                    <div className={styles.statItem}>
+                      <div className={styles.statLabel}>{t('reports.clarityHours')}</div>
+                      <div className={styles.statValue}>
+                        <AnimatedNumber value={128} />
+                      </div>
+                    </div>
+
+                    <div className={styles.insightCard} style={{ borderLeft: '3px solid var(--aura-aurora-2)' }}>
+                        <div className={styles.insightHeader}>{t('reports.sleepHeader')}</div>
+                        <div className={styles.insightBody}>{t('reports.sleepBody')}</div>
+                    </div>
+                </div>
+
+            </StaggeredEntrance>
+        </AppShell>
     );
 }

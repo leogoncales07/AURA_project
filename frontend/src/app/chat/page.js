@@ -1,22 +1,31 @@
+
 'use client';
+import { Send, Sparkles } from 'lucide-react';
 
 import { useState, useRef, useEffect } from 'react';
 import styles from './page.module.css';
-import AuraLogo from '@/components/AuraLogo';
-import BottomNav from '@/components/BottomNav';
-import ThemeToggle from '@/components/ThemeToggle';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { Loader2 } from 'lucide-react';
+import AppShell from '@/components/AppShell';
+
+import { useRouter } from 'next/navigation';
 import { useI18n } from '@/i18n';
 import { api } from '@/lib/api';
 
+const QUICK_REPLIES = [
+  "how can i improve my sleep?",
+  "i'm feeling overwhelmed",
+  "daily breathwork session",
+  "check my progress"
+];
+
 export default function ChatPage() {
     const { t } = useI18n();
+    const router = useRouter();
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [sending, setSending] = useState(false);
     const [userId, setUserId] = useState(null);
     const messagesEndRef = useRef(null);
+    const textareaRef = useRef(null);
 
     useEffect(() => {
         const stored = localStorage.getItem('aura_user');
@@ -24,50 +33,86 @@ export default function ChatPage() {
             const user = JSON.parse(stored);
             setUserId(user.id);
             loadHistory(user.id);
+        } else {
+            router.push('/login');
         }
-    }, []);
+    }, [router]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    useEffect(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      }
+    }, [input]);
+
     const loadHistory = async (uid) => {
-        const { data } = await api.getConversations(uid, 20);
-        if (data && data.conversations) {
-            // conversations come newest-first from backend, reverse to chronological
-            const mapped = data.conversations.reverse().map((c, i) => ({
-                id: i,
-                role: c.role,
-                content: c.message,
-            }));
-            setMessages(mapped);
+        try {
+            const { data } = await api.getConversations(uid, 40);
+            if (data && data.conversations) {
+                const mapped = data.conversations.reverse().map((c, i) => ({
+                    id: i,
+                    role: c.role,
+                    content: c.message,
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }));
+                setMessages(mapped);
+            }
+        } catch (err) {
+            console.error("Failed to load history", err);
         }
     };
 
-    const handleSend = async () => {
-        const text = input.trim();
+    const handleSend = async (customText) => {
+        const text = (typeof customText === 'string' ? customText : input).trim();
         if (!text || sending || !userId) return;
 
-        const userMsg = { id: Date.now(), role: 'user', content: text };
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const userMsg = { id: Date.now(), role: 'user', content: text, timestamp };
         setMessages((prev) => [...prev, userMsg]);
         setInput('');
         setSending(true);
 
-        const { data, error } = await api.chat(userId, text);
+        try {
+            const { data, error } = await api.chat(userId, text);
 
-        if (data && data.response) {
+            if (data && data.response) {
+                setMessages((prev) => [
+                    ...prev,
+                    { 
+                      id: Date.now() + 1, 
+                      role: 'assistant', 
+                      content: data.response,
+                      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    },
+                ]);
+            } else {
+                setMessages((prev) => [
+                    ...prev,
+                    { 
+                      id: Date.now() + 1, 
+                      role: 'assistant', 
+                      content: error || t('chat.errorFallback'),
+                      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    },
+                ]);
+            }
+        } catch (err) {
             setMessages((prev) => [
                 ...prev,
-                { id: Date.now() + 1, role: 'assistant', content: data.response },
+                { 
+                  id: Date.now() + 1, 
+                  role: 'assistant', 
+                  content: t('chat.connectionError'),
+                  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                },
             ]);
-        } else {
-            setMessages((prev) => [
-                ...prev,
-                { id: Date.now() + 1, role: 'assistant', content: error || 'Something went wrong.' },
-            ]);
+        } finally {
+            setSending(false);
         }
-
-        setSending(false);
     };
 
     const handleKeyDown = (e) => {
@@ -78,92 +123,82 @@ export default function ChatPage() {
     };
 
     return (
-        <div className={styles.appContainer}>
-            <header className={styles.chatHeader}>
-                <div style={{ position: 'absolute', right: '16px', top: '16px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <LanguageSwitcher />
-                    <ThemeToggle />
-                </div>
-                <div className={styles.chatHeaderContent}>
-                    <div className={styles.botAvatar}>
-                        <AuraLogo size={40} />
-                    </div>
-                    <div>
-                        <h2 className={styles.botName}>{t('chat.botName')}</h2>
-                        <span className={styles.onlineStatus}>{t('chat.botStatus')}</span>
-                    </div>
-                </div>
-            </header>
+        <AppShell title={t('nav.chat')}>
+            <div className={`${styles.chatContainer} fade-up-stagger`}>
+                <header className={styles.chatHeader}>
+                  <div className={styles.avatar}>
+                    <div className={styles.statusDot} />
+                  </div>
+                  <div className={styles.headerInfo}>
+                    <h2>{t('chat.botName')}</h2>
+                    <p>{t('chat.botStatus')}</p>
+                  </div>
+                </header>
 
-            <main className={styles.chatArea}>
-                {messages.length === 0 && (
-                    <div className={styles.emptyState}>
-                        <AuraLogo size={96} style={{ marginBottom: '20px', opacity: 0.8 }} />
-                        <p>{t('chat.emptyState')}</p>
-                    </div>
-                )}
+                <main className={styles.chatArea}>
+                    {messages.length === 0 && !sending && (
+                        <div className={styles.emptyState}>
+                            <div style={{ marginBottom: '16px', opacity: 0.6 }}>
+                              <Sparkles size={40} color="var(--aura-aurora-1)" />
+                            </div>
+                            <p className="label-text">{t('chat.label')}</p>
+                            <h3 style={{ fontFamily: 'var(--font-fraunces)', fontSize: 'var(--text-xl)', color: 'white', fontWeight: 400 }}>{t('chat.emptyState')}</h3>
+                        </div>
+                    )}
 
-                <div className={styles.messageList}>
-                    {messages.map((msg) => (
-                        msg.role === 'user' ? (
-                            <div key={msg.id} className={styles.messageRowRight}>
-                                <div className={styles.messageUser}>
-                                    <p>{msg.content}</p>
+                    <div className={styles.messageList}>
+                        {messages.map((msg) => (
+                            <div key={msg.id} className={`${styles.messageRow} ${msg.role === 'user' ? styles.messageRowRight : styles.messageRowLeft}`}>
+                                <div className={styles.messageContent}>
+                                    <p>{msg.content.toLowerCase()}</p>
+                                    <div className={styles.timestamp}>{msg.timestamp}</div>
                                 </div>
                             </div>
-                        ) : (
-                            <div key={msg.id} className={styles.messageRow}>
-                                <div className={styles.messageBot}>
-                                    <p>{msg.content}</p>
-                                </div>
-                            </div>
-                        )
-                    ))}
+                        ))}
 
-                    {sending && (
-                        <div className={styles.messageRow}>
-                            <div className={styles.messageBot}>
+                        {sending && (
+                            <div className={`${styles.messageRow} ${styles.messageRowLeft}`}>
                                 <div className={styles.typingIndicator}>
                                     <span></span><span></span><span></span>
                                 </div>
                             </div>
-                        </div>
-                    )}
-
-                    <div ref={messagesEndRef} />
-                </div>
-            </main>
-
-            <div className={styles.inputArea}>
-                <div className={styles.inputWrapper}>
-                    <input
-                        type="text"
-                        placeholder={t('chat.placeholder')}
-                        className={styles.input}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        disabled={sending}
-                    />
-                    <button
-                        className={styles.sendBtn}
-                        onClick={handleSend}
-                        disabled={sending || !input.trim()}
-                        style={{ opacity: sending || !input.trim() ? 0.5 : 1 }}
-                    >
-                        {sending ? (
-                            <Loader2 size={16} className={styles.spin} />
-                        ) : (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                            </svg>
                         )}
-                    </button>
+
+                        <div ref={messagesEndRef} />
+                    </div>
+                </main>
+
+                <div className={styles.inputArea}>
+                    <div className={styles.quickReplies}>
+                      {QUICK_REPLIES.map((reply, i) => (
+                        <button key={i} className={styles.replyChip} onClick={() => handleSend(reply)}>
+                          {reply}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className={styles.inputContainer}>
+                        <textarea
+                            ref={textareaRef}
+                            rows={1}
+                            placeholder={t('chat.placeholder')}
+                            className={styles.textarea}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            disabled={sending}
+                        />
+                        <button
+                            className={styles.sendButton}
+                            onClick={() => handleSend()}
+                            disabled={sending || !input.trim()}
+                        >
+                            <Send size={18} />
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            <BottomNav />
-        </div>
+        </AppShell>
     );
 }
+

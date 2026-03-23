@@ -12,7 +12,7 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 class DevTeam:
-    def __init__(self, model_name="gemini-2.5-flash"):
+    def __init__(self, model_name="gemini-2.0-flash"):
         self.llm = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=0.7,
@@ -45,7 +45,7 @@ class DevTeam:
     async def _create_task_record(self, task: str) -> Optional[str]:
         """Insert a new task row and return its UUID."""
         try:
-            db = get_service_db()
+            db = await get_service_db()
             result = await db.from_("agent_tasks").insert({
                 "task": task,
                 "status": "in_progress",
@@ -62,7 +62,7 @@ class DevTeam:
         """Log a single coder→reviewer iteration."""
         if not task_id: return
         try:
-            db = get_service_db()
+            db = await get_service_db()
             await db.from_("agent_iterations").insert({
                 "task_id": task_id,
                 "iteration": iteration,
@@ -78,7 +78,7 @@ class DevTeam:
         """Mark the task as completed/failed."""
         if not task_id: return
         try:
-            db = get_service_db()
+            db = await get_service_db()
             await db.from_("agent_tasks").update({
                 "final_code": final_code,
                 "iterations": iterations,

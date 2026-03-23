@@ -1,4 +1,9 @@
 import sys
+import os
+import hashlib
+from typing import Dict, List, Optional
+from dotenv import load_dotenv
+from colorama import Fore, init
 
 # Force UTF-8 on Windows before any output happens
 if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
@@ -13,20 +18,24 @@ All environment variables are loaded, validated, and masked here.
 Import `settings` from this module instead of using os.getenv() directly.
 """
 
-import os
-import sys
-from dotenv import load_dotenv
-from colorama import Fore, init
-
 init(autoreset=True)
 
-# Load .env from the backend directory
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+# --- Path Discovery ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_PATH = os.path.join(BASE_DIR, ".env")
 
+# Try to load .env from several likely locations
+if os.path.exists(ENV_PATH):
+    load_dotenv(ENV_PATH)
+else:
+    # Try current working directory or parent
+    load_dotenv()
 
 def _mask(value: str, visible_chars: int = 4) -> str:
     """Mask a secret, showing only the last N characters."""
-    if not value or len(value) <= visible_chars:
+    if not value:
+        return "EMPTY"
+    if len(value) <= visible_chars:
         return "****"
     return "*" * (len(value) - visible_chars) + value[-visible_chars:]
 
@@ -46,10 +55,11 @@ class Settings:
 
     _OPTIONAL_KEYS = [
         "S_SERV",
+        "PORT",
     ]
 
     def __init__(self):
-        self._store: dict[str, str] = {}
+        self._store: Dict[str, str] = {}
         missing = []
 
         for key in self._REQUIRED_KEYS:
@@ -59,7 +69,7 @@ class Settings:
             else:
                 self._store[key] = val
 
-        # Load optional keys (no fatal error if missing)
+        # Load optional keys
         for key in self._OPTIONAL_KEYS:
             val = os.getenv(key, "").strip()
             if val:
@@ -71,19 +81,21 @@ class Settings:
             print(f"{Fore.RED}+==========================================+")
             for k in missing:
                 print(f"{Fore.RED}  X {k}")
-            print(f"\n{Fore.YELLOW}  Copy backend/.env.example -> backend/.env and fill in your keys.")
+            print(f"\n{Fore.YELLOW}  Please ensure {ENV_PATH} exists and contains these keys.")
+            print(f"{Fore.YELLOW}  You can use .env.example as a template.")
+            # We exit because the app cannot function without these keys
             sys.exit(1)
 
         # Startup confirmation (masked)
-        print(f"{Fore.GREEN}+==========================================+")
-        print(f"{Fore.GREEN}|  Config loaded -- all keys validated OK  |")
-        print(f"{Fore.GREEN}+==========================================+")
-        for key in self._REQUIRED_KEYS + self._OPTIONAL_KEYS:
-            if key in self._store:
-                print(f"  {key}: {_mask(self._store[key])}")
-            else:
-                print(f"  {key}: (not set, using anon key fallback)")
-        print()
+        print(f"{Fore.CYAN}[Config] Loading settings...")
+        for key in self._REQUIRED_KEYS:
+            print(f"  {key}: {Fore.GREEN}{_mask(self._store[key])}")
+        
+        if "S_SERV" in self._store:
+            print(f"  S_SERV: {Fore.GREEN}{_mask(self._store['S_SERV'])}")
+        else:
+            print(f"  S_SERV: {Fore.YELLOW}(Optional) Not set, using anon key fallback")
+        print(f"{Fore.CYAN}[Config] Done.\n")
 
     # --- Properties (read-only access) ---
 
@@ -103,7 +115,7 @@ class Settings:
     def supabase_service_role_key(self) -> str:
         """Falls back to anon key if service role key is not set or invalid."""
         key = self._store.get("S_SERV", "").strip()
-        # Basic JWT validation: must contain dots. If it's a random string like 'sb_publishable...', it's wrong.
+        # Basic JWT validation: service role keys are usually JWTs
         if not key or "." not in key:
             return self._store["S_ANON"]
         return key
@@ -111,6 +123,10 @@ class Settings:
     @property
     def owner_secret(self) -> str:
         return self._store["O_PASS"]
+    
+    @property
+    def port(self) -> int:
+        return int(self._store.get("PORT", "8000"))
 
     def mask(self, key_name: str) -> str:
         """Get a masked version of any stored key for logging."""
@@ -118,4 +134,8 @@ class Settings:
 
 
 # Singleton -- import this everywhere
-settings = Settings()
+try:
+    settings = Settings()
+except Exception as e:
+    print(f"{Fore.RED}Critical error during configuration initialization: {e}")
+    sys.exit(1)

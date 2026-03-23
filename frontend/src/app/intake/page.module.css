@@ -1,0 +1,206 @@
+.container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--aura-void);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.progressBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--aura-aurora-1);
+  transition: width 0.6s var(--ease-out-expo);
+  z-index: 110;
+}
+
+.contentWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  position: relative;
+}
+
+/* Question Slide Animations */
+.slideIn {
+  animation: slideInRight 0.8s var(--ease-out-expo) forwards;
+}
+
+.slideOut {
+  animation: slideOutLeft 0.6s var(--ease-out-expo) forwards;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100vw); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100vw); opacity: 0; }
+}
+
+.slideContainer {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  height: max-content;
+  will-change: transform, opacity;
+}
+
+.questionText {
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  color: var(--aura-white);
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.optionsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .optionsGrid {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.optionCard {
+  background: transparent;
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-lg);
+  padding: 24px 32px;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-spring);
+  text-align: left;
+  flex: 1;
+  min-width: 280px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  outline: none;
+}
+
+.optionCard:hover, .optionCard:focus {
+  border-color: var(--aura-border-hover);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.optionSelected {
+  border-color: var(--aura-aurora-1) !important;
+  background: rgba(123, 110, 246, 0.08) !important;
+  transform: scale(1.02);
+}
+
+.optionKey {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  color: var(--aura-ghost);
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--aura-border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.optionSelected .optionKey {
+  background: var(--aura-aurora-1);
+  border-color: var(--aura-aurora-1);
+  color: white;
+}
+
+.optionText {
+  font-size: var(--text-lg);
+  color: var(--aura-white);
+  font-weight: 400;
+}
+
+.navHint {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--aura-ghost);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.6;
+}
+
+/* Final Reveal Animation */
+.finalReveal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--aura-void);
+  z-index: 200;
+  clip-path: circle(0% at 50% 50%);
+  animation: radialReveal 1.2s var(--ease-out-expo) forwards;
+}
+
+@keyframes radialReveal {
+  to {
+    clip-path: circle(150% at 50% 50%);
+  }
+}
+
+.summaryCard {
+  background: var(--aura-depth);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-xl);
+  padding: 48px;
+  max-width: 540px;
+  width: 90%;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slideUp 0.8s 0.3s var(--ease-out-expo) forwards;
+}
+
+@keyframes slideUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.summaryTitle {
+  font-family: var(--font-fraunces), serif;
+  font-size: var(--text-2xl);
+  color: var(--aura-white);
+  margin-bottom: 16px;
+}
+
+.summaryDesc {
+  color: var(--aura-muted);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}

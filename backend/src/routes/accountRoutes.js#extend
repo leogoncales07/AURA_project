@@ -1,0 +1,19 @@
+import express from 'express';
+import * as twoFactorController from '../controllers/twoFactorController.js';
+import * as sessionController from '../controllers/sessionController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
+const router = express.Router();
+
+router.use(protect);
+
+// 2FA
+router.post('/2fa/setup', twoFactorController.setup2FA);
+router.post('/2fa/verify-setup', twoFactorController.verifySetup2FA);
+
+// Sessions
+router.get('/sessions', sessionController.getSessions);
+router.delete('/sessions/:sessionId', sessionController.revokeSession);
+router.delete('/sessions', sessionController.revokeAllOtherSessions);
+
+export default router;

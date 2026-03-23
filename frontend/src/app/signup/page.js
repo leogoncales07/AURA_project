@@ -9,6 +9,7 @@ import Button from '@/components/Button';
 import { api } from '@/lib/api';
 import { useI18n } from '@/i18n';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function SignUpPage() {
     const [name, setName] = useState('');
@@ -24,76 +25,85 @@ export default function SignUpPage() {
         setError('');
         setLoading(true);
 
-        const { data, error: apiError } = await api.signup(email, password, name);
+        try {
+            const { data, error: apiError } = await api.signup(email, password, name);
 
-        if (apiError) {
-            setError(apiError);
-            setLoading(false);
-            return;
-        }
+            if (apiError) {
+                setError(apiError);
+                setLoading(false);
+                return;
+            }
 
-        if (data && data.access_token) {
-            localStorage.setItem('aura_token', data.access_token);
-            localStorage.setItem('aura_user', JSON.stringify(data.user));
-            router.push('/dashboard');
-        } else {
-            setError(t('login.serverError') || 'Unexpected server error.');
+            if (data && data.access_token) {
+                localStorage.setItem('aura_token', data.access_token);
+                localStorage.setItem('aura_user', JSON.stringify(data.user));
+                router.push('/dashboard');
+            } else {
+                setError(t('login.serverError') || 'Unexpected server error.');
+                setLoading(false);
+            }
+        } catch (err) {
+            console.error("[Signup] Exception:", err);
+            setError(`Connection error: ${err.message}. Check if backend is running.`);
             setLoading(false);
         }
     };
 
     return (
         <div className={styles.container}>
-            <div className={styles.loginWrapper}>
-                <div className={styles.logoArea}>
-                    <AuraLogo size={96} style={{ marginBottom: '16px' }} />
-                    <h2 className={styles.logoTitle}>AURA</h2>
-                    <p>{t('signup.subtitle') || 'Begin your journey.'}</p>
+            <div className={`${styles.loginWrapper} fade-up-stagger`}>
+                <div style={{ position: 'fixed', top: '32px', right: '40px', display: 'flex', gap: '20px', zIndex: 100 }}>
+                    <LanguageSwitcher />
+                    <ThemeToggle />
                 </div>
 
-                <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-                    <LanguageSwitcher />
+                <div className={styles.logoArea}>
+                    <AuraLogo size={64} style={{ marginBottom: '24px' }} />
+                    <h2 className={styles.logoTitle}>{t('signup.title') || 'Create Account'}</h2>
+                    <p>{t('signup.subtitle') || 'Begin your wellness journey.'}</p>
                 </div>
 
                 <div className={styles.loginForm}>
                     <form className={styles.form} onSubmit={handleSignUp}>
                         <div className={styles.inputGroup}>
-                            <div className={styles.inputStack}>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    placeholder={t('signup.namePlaceholder') || 'Full Name'}
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className={styles.inputTop}
-                                    required
-                                />
-                                <input
-                                    type="email"
-                                    id="email"
-                                    placeholder={t('signup.emailPlaceholder') || 'Email'}
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className={styles.inputMiddle}
-                                    required
-                                />
-                                <input
-                                    type="password"
-                                    id="password"
-                                    placeholder={t('signup.passwordPlaceholder') || 'Password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className={styles.inputBottom}
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="text"
+                                id="name"
+                                placeholder={t('signup.namePlaceholder') || 'Full Name'}
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className={styles.inputField}
+                                required
+                            />
+                        </div>
+                        <div className={styles.inputGroup}>
+                            <input
+                                type="email"
+                                id="email"
+                                placeholder={t('signup.emailPlaceholder') || 'Email'}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className={styles.inputField}
+                                required
+                            />
+                        </div>
+                        <div className={styles.inputGroup}>
+                            <input
+                                type="password"
+                                id="password"
+                                placeholder={t('signup.passwordPlaceholder') || 'Password (min 6 characters)'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className={styles.inputField}
+                                required
+                                minLength={6}
+                            />
                         </div>
 
-                        {error && <div className={styles.errorMsg} style={{ color: '#ef4444', fontSize: '0.85rem', marginBottom: '16px', textAlign: 'center' }}>{error}</div>}
+                        {error && <div className={styles.errorMsg}>{error}</div>}
 
                         <Button
                             variant="primary"
-                            size="lg"
                             className={styles.submitBtn}
                             type="submit"
                             disabled={loading}
@@ -101,12 +111,11 @@ export default function SignUpPage() {
                             {loading ? (t('signup.loading') || 'Creating...') : (t('signup.submit') || 'Create Account')}
                         </Button>
                     </form>
-
-                    <p className={styles.signupText}>
-                        {(t('signup.hasAccount') || 'Already have an account?')} <Link href="/login" className={styles.signupLink}>{(t('signup.signIn') || 'Sign In')}</Link>
-                    </p>
                 </div>
 
+                <p className={styles.signupText}>
+                    {(t('signup.hasAccount') || 'Already have an account?')} <Link href="/login" className={styles.signupLink}>{(t('signup.signIn') || 'Sign In')}</Link>
+                </p>
             </div>
         </div>
     );

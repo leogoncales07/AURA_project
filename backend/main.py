@@ -12,13 +12,18 @@ Complete API with:
 """
 
 import asyncio
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from config import settings
 from middleware import OwnerAuthMiddleware, RateLimitMiddleware
-from db import get_db
+from db import get_db, get_service_db
+from auth import auth
+from questionnaires import QUESTIONNAIRES, get_questionnaire as get_q, score_assessment
+from agents import ClinicalBot, CompanionBot
+from content_library import MEDITATION_EXERCISES, SLEEP_METHODS
+from reports import ReportGenerator
 
 # ── Create App ──
 app = FastAPI(
@@ -28,8 +33,8 @@ app = FastAPI(
 )
 
 # ── Security Middleware (order matters: rate limit first, then auth) ──
-# app.add_middleware(RateLimitMiddleware, requests_per_minute=30)
-# app.add_middleware(OwnerAuthMiddleware, owner_secret=settings.owner_secret)
+app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
+app.add_middleware(OwnerAuthMiddleware, owner_secret=settings.owner_secret)
 
 # ── CORS (allow your frontends) ──
 app.add_middleware(
@@ -41,7 +46,9 @@ app.add_middleware(
         "exp://localhost:8081",    # Expo Go
         "http://10.20.40.45:8081", # Expo on LAN
         "http://10.20.40.45:3000", # Next.js on LAN
-        "*",                       # Allow all (for mobile)
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -132,6 +139,14 @@ async def health():
     """Public health check (no auth required)."""
     return {"status": "ok", "version": "0.3.0", "supabase": True}
 
+@app.get("/library/content")
+async def get_library_content():
+    """Returns the library of evidence-based meditations and sleep methods."""
+    return {
+        "meditations": MEDITATION_EXERCISES,
+        "sleep_methods": SLEEP_METHODS
+    }
+
 
 # ═══════════════════════════════════════════════════════
 # ── Auth Routes (Supabase GoTrue) ─────────────────────
@@ -140,7 +155,6 @@ async def health():
 @app.post("/auth/signup")
 async def signup(req: SignupRequest):
     """Register a new user. Returns access_token + user object."""
-    from auth import auth
     result = await auth.signup(req.email, req.password, req.name)
     if "error" in result:
         raise HTTPException(status_code=result.get("status", 400), detail=result["error"])
@@ -152,13 +166,14 @@ async def signup(req: SignupRequest):
             for k, v in session.items():
                 result[k] = v
 
-    # Also extract user_id and access_token properly
     user_id = result.get("user", {}).get("id") if isinstance(result.get("user"), dict) else result.get("id")
     access_token = result.get("access_token")
-
+    
+    print(f"[AUTH] Signup success: user_id={user_id}, token_present={bool(access_token)}")
+    
     if user_id and access_token:
         try:
-            db = get_db(access_token)
+            db = await get_db(access_token)
             # Check if exists first to avoid conflict errors
             check = await db.from_("users").select("id").eq("id", user_id).execute()
             if not check.data:
@@ -174,16 +189,19 @@ async def signup(req: SignupRequest):
 @app.post("/auth/login")
 async def login(req: LoginRequest):
     """Login with email/password. Returns access_token, refresh_token, user."""
-    from auth import auth
     result = await auth.login(req.email, req.password)
+    
     if "error" in result:
+        print(f"[AUTH] Login failed for {req.email}: {result['error']}")
         raise HTTPException(status_code=result.get("status", 401), detail=result["error"])
+        
+    user_id = result.get("user", {}).get("id") if isinstance(result.get("user"), dict) else "unknown"
+    print(f"[AUTH] Login success for {req.email}: user_id={user_id}")
     return result
 
 @app.post("/auth/refresh")
 async def refresh(req: RefreshRequest):
     """Refresh an expired access token."""
-    from auth import auth
     result = await auth.refresh_token(req.refresh_token)
     if "error" in result:
         raise HTTPException(status_code=result.get("status", 401), detail=result["error"])
@@ -192,7 +210,6 @@ async def refresh(req: RefreshRequest):
 @app.get("/auth/me")
 async def get_me(authorization: str = Header(...)):
     """Get the current user from their Bearer token."""
-    from auth import auth
     token = authorization.replace("Bearer ", "")
     result = await auth.get_user(token)
     if "error" in result:
@@ -202,7 +219,6 @@ async def get_me(authorization: str = Header(...)):
 @app.post("/auth/logout")
 async def logout(authorization: str = Header(...)):
     """Invalidate the current session."""
-    from auth import auth
     token = authorization.replace("Bearer ", "")
     result = await auth.logout(token)
     if "error" in result:
@@ -219,14 +235,13 @@ async def get_user_profile(user_id: str, authorization: Optional[str] = Header(N
     """Get a user's profile."""
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
+        db = await get_db(token)
         result = await db.from_("users").select("*").eq("id", user_id).execute()
         
         if not result.data:
             # Maybe the user exists in Supabase Auth but not in our 'public.users' table?
             # Let's verify their token and try to auto-create the profile.
             if token:
-                from auth import auth
                 auth_user = await auth.get_user(token)
                 if "error" not in auth_user:
                     # Token is valid! Let's create the profile.
@@ -258,7 +273,7 @@ async def get_user_profile(user_id: str, authorization: Optional[str] = Header(N
 @app.patch("/users/{user_id}")
 async def update_user_profile(user_id: str, req: UserProfileUpdate, authorization: Optional[str] = Header(None)):
     """Update a user's profile (name, preferences)."""
-    update_data = {}
+    update_data: dict = {}
     if req.name is not None:
         update_data["name"] = req.name
     if req.preferences is not None:
@@ -267,7 +282,7 @@ async def update_user_profile(user_id: str, req: UserProfileUpdate, authorizatio
         raise HTTPException(status_code=400, detail="Nothing to update")
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
+        db = await get_db(token)
         result = await db.from_("users").update(update_data).eq("id", user_id).execute()
         if not result.data:
             raise HTTPException(status_code=404, detail="User not found")
@@ -310,7 +325,7 @@ async def agent_suggest(req: SuggestTasksRequest):
 async def list_agent_tasks(limit: int = 20):
     """List recent agent tasks from Supabase."""
     try:
-        db = get_db()
+        db = await get_db()
         result = await db.from_("agent_tasks") \
             .select("*") \
             .order("created_at", desc=True) \
@@ -324,7 +339,7 @@ async def list_agent_tasks(limit: int = 20):
 async def get_agent_task(task_id: str):
     """Get a specific task and its iterations."""
     try:
-        db = get_db()
+        db = await get_db()
         task = await db.from_("agent_tasks") \
             .select("*") \
             .eq("id", task_id) \
@@ -347,12 +362,11 @@ async def get_agent_task(task_id: str):
 @app.post("/companion/chat")
 async def companion_chat(req: CompanionMessageRequest, authorization: Optional[str] = Header(None)):
     """Chat with the CompanionBot. Persists conversation history."""
-    from agents import CompanionBot
 
     # 1. Fetch recent history
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
+        db = await get_db(token)
         history_res = await db.from_("conversations") \
             .select("role, message") \
             .eq("user_id", req.user_id) \
@@ -374,8 +388,7 @@ async def companion_chat(req: CompanionMessageRequest, authorization: Optional[s
 
     # 3. Save conversation
     try:
-        from db import get_service_db
-        db_admin = get_service_db()
+        db_admin = await get_service_db()
         await db_admin.from_("conversations").insert([
             {"user_id": req.user_id, "agent_type": "CompanionBot", "role": "user", "message": req.message},
             {"user_id": req.user_id, "agent_type": "CompanionBot", "role": "assistant", "message": response}
@@ -388,7 +401,6 @@ async def companion_chat(req: CompanionMessageRequest, authorization: Optional[s
 @app.post("/companion/meditation")
 async def companion_meditation(req: CompanionMeditationRequest):
     """Get a guided meditation from CompanionBot."""
-    from agents import CompanionBot
     # 2. Get AI response
     bot = CompanionBot()
     response = await bot.get_meditation(req.request, language=req.language)
@@ -399,7 +411,7 @@ async def log_daily(req: DailyLogRequest, authorization: Optional[str] = Header(
     """Log daily mood and sleep."""
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
+        db = await get_db(token)
         result = await db.from_("daily_logs").insert({
             "user_id": req.user_id,
             "mood_score": req.mood_score,
@@ -415,7 +427,7 @@ async def get_logs(user_id: str, limit: int = 14, authorization: Optional[str] =
     """Get recent mood and sleep logs."""
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
+        db = await get_db(token)
         result = await db.from_("daily_logs") \
             .select("*") \
             .eq("user_id", user_id) \
@@ -431,7 +443,7 @@ async def get_conversations(user_id: str, limit: int = 50, authorization: Option
     """Get conversation history with CompanionBot."""
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
+        db = await get_db(token)
         result = await db.from_("conversations") \
             .select("*") \
             .eq("user_id", user_id) \
@@ -451,7 +463,6 @@ async def get_conversations(user_id: str, limit: int = 50, authorization: Option
 @app.get("/questionnaires")
 async def list_questionnaires():
     """List available questionnaires."""
-    from questionnaires import QUESTIONNAIRES
     return {"questionnaires": [
         {"id": q.id, "name": q.name, "description": q.description}
         for q in QUESTIONNAIRES.values()
@@ -460,7 +471,6 @@ async def list_questionnaires():
 @app.get("/questionnaires/{q_id}")
 async def get_questionnaire(q_id: str):
     """Get the full form for a specific questionnaire."""
-    from questionnaires import get_questionnaire as get_q
     q = get_q(q_id)
     if not q:
         raise HTTPException(status_code=404, detail="Questionnaire not found")
@@ -475,8 +485,6 @@ async def get_questionnaire(q_id: str):
 @app.post("/assessments/submit")
 async def submit_assessment(req: AssessmentSubmitRequest, authorization: Optional[str] = Header(None)):
     """Submit answers, auto-score, get AI risk summary, and save to DB."""
-    from questionnaires import get_questionnaire as get_q, score_assessment
-    from agents import ClinicalBot
 
     q = get_q(req.questionnaire_id)
     if not q:
@@ -506,7 +514,7 @@ async def submit_assessment(req: AssessmentSubmitRequest, authorization: Optiona
     # Save to Supabase using user's own token
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
+        db = await get_db(token)
         result = await db.from_("assessments").insert({
             "user_id": req.user_id,
             "questionnaire": req.questionnaire_id,
@@ -528,7 +536,7 @@ async def get_assessment_history(user_id: str, questionnaire: Optional[str] = No
     """Get assessment history for a user."""
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
-        db = get_db(token)
+        db = await get_db(token)
         query = db.from_("assessments") \
             .select("*") \
             .eq("user_id", user_id) \
@@ -548,10 +556,9 @@ async def get_assessment_history(user_id: str, questionnaire: Optional[str] = No
 @app.post("/reports/generate")
 async def generate_report(req: ReportRequest, authorization: Optional[str] = Header(None)):
     """Generate a personalized mental health report using AI."""
-    from reports import ReportGenerator
 
     token = authorization.replace("Bearer ", "") if authorization else None
-    db = get_db(token)
+    db = await get_db(token)
 
     # Fetch assessments + mood logs in PARALLEL
     async def fetch_assessments():
@@ -568,7 +575,7 @@ async def generate_report(req: ReportRequest, authorization: Optional[str] = Hea
 
     async def fetch_mood_logs():
         try:
-            db2 = get_db(token)  # Separate client for parallel request
+            db2 = await get_db(token)  # Separate client for parallel request
             res = await db2.from_("daily_logs") \
                 .select("*") \
                 .eq("user_id", req.user_id) \

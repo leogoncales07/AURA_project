@@ -10,7 +10,7 @@ import { COLORS, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChatScreen() {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const insets = useSafeAreaInsets();
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
@@ -49,11 +49,11 @@ export default function ChatScreen() {
         setInput('');
         setSending(true);
 
-        const { data, error } = await api.chat(userId, text);
+        const { data, error } = await api.chat(userId, text, locale);
         const botMsg = {
             id: String(Date.now() + 1),
             role: 'assistant',
-            content: data?.response || error || 'Something went wrong.',
+            content: data?.response || error || t('common.error'),
         };
         setMessages((prev) => [...prev, botMsg]);
         setSending(false);

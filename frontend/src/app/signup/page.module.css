@@ -1,106 +1,110 @@
 .container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: var(--color-background);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--aura-void);
+  padding: 24px;
 }
 
 .loginWrapper {
-    width: 100%;
-    max-width: 400px;
-    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .logoArea {
-    text-align: center;
-    margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 48px;
 }
 
-.logoArea h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-    letter-spacing: -0.04em;
-    color: var(--color-text);
+.logoTitle {
+  font-family: var(--font-fraunces), serif;
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  color: var(--aura-white);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
 .logoArea p {
-    color: var(--color-text-light);
-    font-size: 1.125rem;
+  color: var(--aura-muted);
+  font-size: var(--text-base);
 }
 
 .loginForm {
-    width: 100%;
+  width: 100%;
+  padding: 40px;
+  background: var(--aura-depth);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .form {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .inputGroup {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.inputStack {
-    background: var(--color-surface);
-    border-radius: var(--radius-md);
-    border: 0.5px solid var(--color-border);
-    overflow: hidden;
+.inputField {
+  width: 100%;
+  background: var(--aura-surface);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  color: var(--aura-white);
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: var(--text-sm);
+  outline: none;
+  transition: all 200ms ease;
 }
 
-.inputTop,
-.inputMiddle,
-.inputBottom {
-    width: 100%;
-    padding: 16px;
-    border: none;
-    background: transparent;
-    font-family: inherit;
-    font-size: 1rem;
-    color: var(--color-text);
+.inputField:focus {
+  border-color: var(--aura-aurora-1);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.inputTop:focus,
-.inputMiddle:focus,
-.inputBottom:focus {
-    outline: none;
+.inputField::placeholder {
+  color: var(--aura-ghost);
 }
 
-.inputTop,
-.inputMiddle {
-    border-bottom: 0.5px solid var(--color-divider);
+.errorMsg {
+  color: #F87171;
+  font-size: var(--text-xs);
+  text-align: center;
+  margin-top: -8px;
 }
 
 .submitBtn {
-    width: 100%;
-    font-weight: 600;
-    border-radius: 14px;
+  width: 100%;
+  margin-top: 8px;
 }
 
 .signupText {
-    margin-top: 32px;
-    text-align: center;
-    font-size: 0.875rem;
-    color: var(--color-text-light);
+  margin-top: 32px;
+  color: var(--aura-muted);
+  font-size: var(--text-sm);
+  text-align: center;
 }
 
 .signupLink {
-    color: var(--color-primary);
+  color: var(--aura-aurora-2);
+  font-weight: 600;
+  text-decoration: none;
 }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.signupLink:hover {
+  text-decoration: underline;
 }

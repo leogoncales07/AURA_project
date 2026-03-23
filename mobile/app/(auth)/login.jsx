@@ -22,18 +22,25 @@ export default function LoginScreen() {
         if (!email || !password) return;
         setError('');
         setLoading(true);
-        const { data, error: apiError } = await api.login(email, password);
-        if (apiError) {
-            setError(apiError === 'Invalid login credentials' ? t('login.invalidCredentials') : apiError);
-            setLoading(false);
-            return;
-        }
-        if (data?.access_token) {
-            await AsyncStorage.setItem('aura_token', data.access_token);
-            await AsyncStorage.setItem('aura_user', JSON.stringify(data.user));
-            router.replace('/(tabs)/dashboard');
-        } else {
-            setError(t('login.serverError'));
+        try {
+            const { data, error: apiError } = await api.login(email, password);
+            if (apiError) {
+                setError(apiError === 'Invalid login credentials' ? t('login.invalidCredentials') : apiError);
+                setLoading(true); // Keep spinner for a moment to avoid jump
+                setTimeout(() => setLoading(false), 1000);
+                return;
+            }
+            if (data?.access_token) {
+                await AsyncStorage.setItem('aura_token', data.access_token);
+                await AsyncStorage.setItem('aura_user', JSON.stringify(data.user));
+                router.replace('/(tabs)/dashboard');
+            } else {
+                setError(t('login.serverError'));
+                setLoading(false);
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError(t('login.networkError') || 'Network error connecting to backend');
             setLoading(false);
         }
     };
@@ -41,13 +48,27 @@ export default function LoginScreen() {
     const handleDemo = async () => {
         setError('');
         setDemoLoading(true);
-        const { data, error: apiError } = await api.login('demo@aura.com', 'demo123456');
-        if (data?.access_token) {
-            await AsyncStorage.setItem('aura_token', data.access_token);
-            await AsyncStorage.setItem('aura_user', JSON.stringify(data.user));
-            router.replace('/(tabs)/dashboard');
-        } else {
-            setError(t('login.demoFailed'));
+        try {
+            const { data, error: apiError } = await api.login('demo@aura.com', 'demo123456');
+            if (data?.access_token) {
+                await AsyncStorage.setItem('aura_token', data.access_token);
+                // Ensure the demo user has an 'id' property so the rest of the app doesn't break
+                const demoUser = data.user || { 
+                    id: 'demo-user-id', 
+                    name: 'Demo User', 
+                    email: 'demo@aura.com' 
+                };
+                await AsyncStorage.setItem('aura_user', JSON.stringify(demoUser));
+                router.replace('/(tabs)/dashboard');
+            } else {
+                // If backend fails but we are in a presentation, we can optionally bypass
+                // For now, let's show the error but allow a "magic" bypass if it's explicitly for a presentation
+                setError(t('login.demoFailed') + ' (Network issue)');
+                setDemoLoading(false);
+            }
+        } catch (err) {
+            console.error('Demo login error:', err);
+            setError('Could not reach backend for Demo. Please check internet connection.');
             setDemoLoading(false);
         }
     };
