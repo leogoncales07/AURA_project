@@ -1,7 +1,8 @@
 {
     "app": {
-        "name": "AURA",
-        "tagline": "o teu refúgio para clareza."
+        "title": "Aura",
+        "description": "A tua companheira de saúde mental",
+        "daily_quote": "o teu santuário de paz."
     },
     "landing": {
         "login": "entrar",

@@ -36,7 +36,7 @@ export default function Header({ title, scrolled }) {
                 alignItems: 'center',
             }}>
                 <h1 style={{
-                    fontFamily: 'var(--font-dm-sans), sans-serif',
+                    fontFamily: 'var(--aura-font-sans)',
                     fontSize: '16px',
                     fontWeight: 600,
                     color: 'var(--fg-foreground)',
