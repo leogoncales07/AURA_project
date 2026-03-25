@@ -1,4 +1,4 @@
-import { Fraunces, Inter, Outfit } from "next/font/google";
+import { Fraunces, DM_Sans, Outfit } from "next/font/google";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -6,8 +6,8 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
   display: "swap",
 });
@@ -24,14 +24,17 @@ import AuroraBackground from "@/components/AuroraBackground";
 import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata = {
-  title: "AURA | Personal Mental Health Companion",
+  title: "AURA | Awareness Understanding & Recovery Assistant",
   description: "A premium, AI-powered companion for your mental health journey. Experience calm, clarity, and growth.",
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${fraunces.variable} ${inter.variable} ${outfit.variable}`}>
+      <body className={`${fraunces.variable} ${dmSans.variable} ${outfit.variable}`}>
         <ThemeProvider>
           <AuroraBackground />
           <div style={{ position: 'relative', zIndex: 10 }}>

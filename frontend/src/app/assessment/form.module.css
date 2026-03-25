@@ -16,7 +16,7 @@
 
 .backBtn:hover {
     color: var(--aura-white);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--bg-pill);
 }
 
 .progressBar {
@@ -60,7 +60,7 @@
 
 .optionBtn:hover {
     border-color: var(--aura-border-hover);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--bg-pill);
     color: var(--aura-white);
 }
 
@@ -78,7 +78,7 @@
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--bg-pill);
     font-size: var(--text-2xs);
     font-weight: 600;
     flex-shrink: 0;

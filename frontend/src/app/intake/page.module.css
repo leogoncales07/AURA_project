@@ -103,7 +103,7 @@
 
 .optionCard:hover, .optionCard:focus {
   border-color: var(--aura-border-hover);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-pill);
 }
 
 .optionSelected {

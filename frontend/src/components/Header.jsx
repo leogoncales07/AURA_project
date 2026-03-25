@@ -36,11 +36,10 @@ export default function Header({ title, scrolled }) {
                 alignItems: 'center',
             }}>
                 <h1 style={{
-                    fontFamily: 'var(--aura-font-sans)',
-                    fontSize: '16px',
-                    fontWeight: 600,
+                    fontFamily: 'var(--aura-font-serif)',
+                    fontSize: '18px',
+                    fontWeight: 500,
                     color: 'var(--fg-foreground)',
-                    opacity: 0.9,
                     letterSpacing: '-0.01em',
                     lineHeight: 1,
                     margin: 0,

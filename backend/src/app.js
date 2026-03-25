@@ -12,6 +12,7 @@ import { globalErrorHandler } from './middleware/errorHandler.js';
 import accountRouter from './routes/accountRoutes.js';
 import settingsRouter from './routes/settingsRoutes.js';
 import integrationRouter from './routes/integrationRoutes.js';
+import authRouter from './routes/authRoutes.js';
 
 const app = express();
 const logger = pino({
@@ -54,6 +55,7 @@ app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
 // 2) ROUTES
+app.use('/auth', authRouter);
 app.use('/api/v1/account', accountRouter);
 app.use('/api/v1/settings', settingsRouter);
 app.use('/api/v1/integrations', integrationRouter);

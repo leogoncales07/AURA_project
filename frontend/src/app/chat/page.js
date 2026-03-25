@@ -142,7 +142,7 @@ export default function ChatPage() {
                               <Sparkles size={40} color="var(--aura-aurora-1)" />
                             </div>
                             <p className="label-text">{t('chat.label')}</p>
-                            <h3 style={{ fontFamily: 'var(--font-fraunces)', fontSize: 'var(--text-xl)', color: 'white', fontWeight: 400 }}>{t('chat.emptyState')}</h3>
+                            <h3 style={{ fontFamily: 'var(--aura-font-serif)', fontSize: 'var(--text-xl)', color: 'white', fontWeight: 400 }}>{t('chat.emptyState')}</h3>
                         </div>
                     )}
 

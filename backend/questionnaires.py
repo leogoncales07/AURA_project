@@ -4,7 +4,7 @@ Mental Health Questionnaires & Scoring
 Definitions and scoring logic for PHQ-9, GAD-7, WHO-5, and PSS.
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class QuestionnaireDefinition:
     def __init__(self, id: str, name: str, description: str, questions: List[str], options: List[Dict[str, Any]]):
@@ -22,24 +22,24 @@ class PHQ9(QuestionnaireDefinition):
     def __init__(self):
         super().__init__(
             id="PHQ-9",
-            name="Patient Health Questionnaire-9",
-            description="Screening for depression severity.",
+            name="PHQ-9: Questionário de Saúde do Paciente",
+            description="Uma breve ferramenta de rastreio para gravidade da depressão.",
             questions=[
-                "1. Little interest or pleasure in doing things",
-                "2. Feeling down, depressed, or hopeless",
-                "3. Trouble falling or staying asleep, or sleeping too much",
-                "4. Feeling tired or having little energy",
-                "5. Poor appetite or overeating",
-                "6. Feeling bad about yourself - or that you are a failure or have let yourself or your family down",
-                "7. Trouble concentrating on things, such as reading the newspaper or watching television",
-                "8. Moving or speaking so slowly that other people could have noticed? Or the opposite - being so fidgety or restless that you have been moving around a lot more than usual",
-                "9. Thoughts that you would be better off dead or of hurting yourself in some way"
+                "Você tem sentido menos vontade ou prazer em fazer as coisas que normalmente gosta?",
+                "Você tem se sentido mais triste, desanimado(a) ou sem muita perspectiva ultimamente?",
+                "Como tem sido o seu sono? Tem sido difícil dormir ou você tem sentido necessidade de dormir em excesso?",
+                "Você tem se sentido muito cansado(a) ou notou que sua energia está mais baixa que o normal?",
+                "Você notou mudanças no apetite, como sentir pouca fome ou acabar comendo bem mais que o costume?",
+                "Você tem sido muito duro(a) consigo mesmo(a), sentindo-se um fracasso ou que decepcionou quem você ama?",
+                "Tem sido difícil manter o foco em atividades simples, como ler uma notícia ou assistir a algo na TV?",
+                "Você sentiu seu corpo mais lento para falar e agir, ou, ao contrário, uma agitação que não te deixa relaxar?",
+                "Você chegou a ter pensamentos de que seria melhor não estar mais aqui ou de se machucar de alguma forma?"
             ],
             options=[
-                {"text": "Not at all", "value": 0},
-                {"text": "Several days", "value": 1},
-                {"text": "More than half the days", "value": 2},
-                {"text": "Nearly every day", "value": 3}
+                {"text": "Nenhum dia", "value": 0},
+                {"text": "Em alguns dias", "value": 1},
+                {"text": "Na maioria dos dias", "value": 2},
+                {"text": "Quase todos os dias", "value": 3}
             ]
         )
 
@@ -57,22 +57,22 @@ class GAD7(QuestionnaireDefinition):
     def __init__(self):
         super().__init__(
             id="GAD-7",
-            name="Generalized Anxiety Disorder-7",
-            description="Screening for anxiety severity.",
+            name="GAD-7: Escala de Ansiedade Generalizada",
+            description="Uma breve ferramenta de rastreio para gravidade da ansiedade.",
             questions=[
-                "1. Feeling nervous, anxious or on edge",
-                "2. Not being able to stop or control worrying",
-                "3. Worrying too much about different things",
-                "4. Trouble relaxing",
-                "5. Being so restless that it is hard to sit still",
-                "6. Becoming easily annoyed or irritable",
-                "7. Feeling afraid as if something awful might happen"
+                "Tem sentido uma sensação de ansiedade e tensão constante?",
+                "Tem sido difícil desligar os pensamentos ou controlar a quantidade de preocupações que lhe vêm à cabeça?",
+                "Tem dado por si a preocupar-se excessivamente com vários assuntos diferentes do dia a dia ao mesmo tempo?",
+                "Tem sentido dificuldade em conseguir relaxar ou em ter um momento de verdadeira calma para si?",
+                "Tem sentido uma inquietação no corpo, daquelas em que se torna muito difícil conseguir estar quieto/a ou sossegado/a?",
+                "Tem notado que anda com menos paciência do que o habitual, aborrecendo-se ou irritando-se com facilidade?",
+                "Tem sentido um receio súbito ou uma sensação de alarme, como se algo de muito mau estivesse prestes a acontecer?"
             ],
             options=[
-                {"text": "Not at all", "value": 0},
-                {"text": "Several days", "value": 1},
-                {"text": "More than half the days", "value": 2},
-                {"text": "Nearly every day", "value": 3}
+                {"text": "Nunca", "value": 0},
+                {"text": "Em vários dias", "value": 1},
+                {"text": "Em mais de metade dos dias", "value": 2},
+                {"text": "Em quase todos os dias", "value": 3}
             ]
         )
 
@@ -174,7 +174,7 @@ QUESTIONNAIRES = {
     "PSS": PSS()
 }
 
-def get_questionnaire(q_id: str) -> QuestionnaireDefinition:
+def get_questionnaire(q_id: str) -> Optional[QuestionnaireDefinition]:
     return QUESTIONNAIRES.get(q_id.upper())
 
 def score_assessment(q_id: str, answers: List[int]) -> dict:

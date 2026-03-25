@@ -77,11 +77,11 @@ export default function MeditationsPage() {
                         padding: '48px'
                     }}>
                         <div style={{ position: 'relative', zIndex: 1, maxWidth: '440px' }}>
-                            <span className="label-text" style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '16px', display: 'block' }}>
+                            <span className="label-text" style={{ color: 'var(--bg-pill)', marginBottom: '16px', display: 'block' }}>
                                 {t('meditations.recommended')}
                             </span>
                             <h2 style={{ 
-                                fontFamily: 'var(--font-fraunces)', 
+                                fontFamily: 'var(--aura-font-serif)', 
                                 fontSize: 'var(--text-2xl)', 
                                 color: 'white',
                                 marginBottom: '12px',
@@ -89,7 +89,7 @@ export default function MeditationsPage() {
                             }}>
                                 {content?.meditations?.box_breathing?.name.toLowerCase() || t('meditations.featuredTitle')}
                             </h2>
-                            <p style={{ fontSize: 'var(--text-base)', color: 'rgba(255,255,255,0.8)', marginBottom: '32px', lineHeight: '1.6' }}>
+                            <p style={{ fontSize: 'var(--text-base)', color: 'var(--bg-pill)', marginBottom: '32px', lineHeight: '1.6' }}>
                                 {content?.meditations?.box_breathing?.description.toLowerCase() || t('meditations.featuredDesc')}
                             </p>
                             <Button 

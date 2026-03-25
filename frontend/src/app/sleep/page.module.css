@@ -135,7 +135,7 @@
 .phaseIcon {
   width: 48px;
   height: 48px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-pill);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;

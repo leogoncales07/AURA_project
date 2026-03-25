@@ -167,7 +167,7 @@ export default function AssessmentPage() {
                     </p>
 
                     <Card className={formStyles.questionCard}>
-                        <h2 style={{ fontFamily: 'var(--font-fraunces)', fontWeight: 400, fontSize: 'var(--text-xl)', marginBottom: '32px' }}>
+                        <h2 style={{ fontFamily: 'var(--aura-font-serif)', fontWeight: 400, fontSize: 'var(--text-xl)', marginBottom: '32px' }}>
                             {activeForm.questions[currentQ]}
                         </h2>
 
@@ -229,12 +229,12 @@ export default function AssessmentPage() {
                 <section className={styles.summarySection} style={{ marginBottom: '48px' }}>
                     <Card style={{ background: 'var(--aura-gradient-calm)', border: 'none' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                            <div className={styles.iconCircle} style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>
+                            <div className={styles.iconCircle} style={{ background: 'var(--bg-pill)', color: 'white' }}>
                                 <ClipboardList size={24} />
                             </div>
                             <div>
-                                <h2 style={{ fontFamily: 'var(--font-fraunces)', fontSize: 'var(--text-xl)', color: 'white' }}>{t('assessment.howDeep')}</h2>
-                                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'var(--text-sm)' }}>{t('assessment.reflectSubtitle')}</p>
+                                <h2 style={{ fontFamily: 'var(--aura-font-serif)', fontSize: 'var(--text-xl)', color: 'white' }}>{t('assessment.howDeep')}</h2>
+                                <p style={{ color: 'var(--bg-pill)', fontSize: 'var(--text-sm)' }}>{t('assessment.reflectSubtitle')}</p>
                             </div>
                         </div>
                     </Card>

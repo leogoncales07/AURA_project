@@ -43,6 +43,17 @@ export default function AuraSidebar() {
   ];
 
   const [open, setOpen] = React.useState(false);
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem('aura_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const userName = user?.display_name || user?.name || user?.user_metadata?.name || t('sidebar.profileName') || 'User';
+  const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <Sidebar open={open} setOpen={setOpen} animate={true}>
@@ -155,7 +166,7 @@ export default function AuraSidebar() {
 
           <SidebarLink
             link={{
-              label: "Matheus Silva",
+              label: userName,
               href: "/settings",
               icon: (
                 <div style={{
@@ -170,10 +181,10 @@ export default function AuraSidebar() {
                   fontWeight: 700,
                   color: '#fff',
                   flexShrink: 0,
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  border: '1px solid var(--border-pill)',
                   boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
                 }}>
-                  MS
+                   {userInitials || 'A'}
                 </div>
               ),
             }}
@@ -194,7 +205,7 @@ const Logo = () => (
       background: 'var(--brand-gradient)', 
       boxShadow: '0 2px 12px rgba(16, 185, 129, 0.35)', 
       flexShrink: 0,
-      border: '1px solid rgba(255,255,255,0.1)'
+      border: '1px solid var(--border-pill)'
     }} />
     <motion.span
       initial={{ opacity: 0 }}
@@ -216,7 +227,7 @@ const LogoIcon = () => (
       background: 'var(--brand-gradient)', 
       boxShadow: '0 2px 12px rgba(16, 185, 129, 0.35)', 
       flexShrink: 0,
-      border: '1px solid rgba(255,255,255,0.1)'
+      border: '1px solid var(--border-pill)'
     }} />
   </Link>
 );

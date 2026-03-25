@@ -7,15 +7,14 @@
     width: 90%;
     max-width: 400px;
     /* More compact */
-    background: var(--color-surface-translucent);
+    background: var(--bg-scrolled);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-full);
     padding: 6px 20px;
-    /* Reduced padding */
     z-index: 50;
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-lg);
     animation: slideUpNav 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
@@ -50,17 +49,17 @@
     align-items: center;
     gap: 4px;
     padding: 8px 12px;
-    color: var(--color-text-tertiary);
+    color: var(--fg-ghost);
     font-size: 0.7rem;
     font-weight: 600;
-    transition: all var(--transition-normal);
+    transition: all 0.3s var(--ease-spring);
     border-radius: var(--radius-lg);
     cursor: pointer;
 }
 
 .navItem:hover {
-    color: var(--color-primary);
-    background: var(--color-surface-hover);
+    color: var(--brand-primary);
+    background: var(--bg-pill);
 }
 
 .icon {
@@ -70,15 +69,15 @@
 
 .navItem:hover .icon {
     transform: translateY(-4px) scale(1.1);
-    color: var(--color-primary);
+    color: var(--brand-primary);
 }
 
 .navItemActive {
-    color: var(--color-primary);
+    color: var(--brand-primary);
 }
 
 .navItemActive .icon {
-    color: var(--color-primary);
+    color: var(--brand-primary);
     transform: translateY(-2px);
 }
 
@@ -87,7 +86,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--gradient-primary);
+    background: var(--brand-gradient);
     color: white;
     border-radius: var(--radius-pill);
     padding: 12px;
@@ -97,13 +96,13 @@
     box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
     transition: all var(--transition-normal);
     cursor: pointer;
-    border: 4px solid var(--color-surface);
+    border: 4px solid var(--bg-card);
 }
 
 .centralButton:hover {
     transform: translateY(-6px) scale(1.05);
-    box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.5);
-    background: var(--color-primary-hover);
+    box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.4);
+    background: var(--brand-primary);
 }
 
 .centralButton .icon {

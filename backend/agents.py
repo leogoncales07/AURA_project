@@ -24,18 +24,18 @@ class ClinicalBot:
         
         self.summary_prompt = ChatPromptTemplate.from_messages([
             ("system", "You are ClinicalBot, an empathetic, non-judgmental mental health AI "
-                       "assistant. The user has just completed the '{questionnaire_name}' "
+                       "assistant. The user, {user_name}, has just completed the '{questionnaire_name}' "
                        "assessment. Their total score is {total_score} indicating a '{risk_level}' "
                        "risk level.\n\n"
                        "Your task is to write a short, compassionate, and supportive summary "
                        "(2-3 sentences max) explaining their result and suggesting they reach "
                        "out for professional help if they are in distress. Avoid giving specific "
-                       "medical diagnoses. Be warm and encouraging."),
+                       "medical diagnoses. Be warm and encouraging. ALWAYS call the user by their name."),
             ("user", "Here are my responses:\n{responses_text}\n\nPlease give me a summary of my results.")
         ])
 
     @rate_limited("gemini")
-    async def generate_summary(self, questionnaire_name: str, total_score: float, risk_level: str, responses: List[dict]) -> str:
+    async def generate_summary(self, user_name: str, questionnaire_name: str, total_score: float, risk_level: str, responses: List[dict]) -> str:
         """Generates an AI summary for a completed assessment."""
         responses_text = "\n".join([f"Q: {r['question']}\nA: {r['answer']}" for r in responses])
         import asyncio
@@ -44,6 +44,7 @@ class ClinicalBot:
         response = await asyncio.to_thread(
             chain.invoke,
             {
+                "user_name": user_name,
                 "questionnaire_name": questionnaire_name,
                 "total_score": total_score,
                 "risk_level": risk_level,
@@ -63,6 +64,7 @@ class CompanionBot:
         
         self.chat_prompt = ChatPromptTemplate.from_messages([
             ("system", "You are CompanionBot, a safe, friendly, and deeply empathetic mental health companion. "
+                       "The user's name is {user_name}. "
                        "Your role is to offer emotional support, suggest coping strategies (like breathing "
                        "exercises or meditation), and provide a safe space for the user to vent.\n\n"
                        "Important Guidelines:\n"
@@ -72,6 +74,7 @@ class CompanionBot:
                        "encourage them to seek emergency services or a crisis hotline immediately.\n"
                        "- You are an AI, not a doctor. Do not prescribe medication or diagnose conditions.\n"
                        "- Use a warm and conversational tone.\n"
+                       "- ALWAYS call the user by their name frequently to build rapport.\n"
                        "- IMPORTANT: If the language is '{language}', respond ONLY in that language."),
             MessagesPlaceholder(variable_name="history"),
             ("user", "{message}")
@@ -87,7 +90,7 @@ class CompanionBot:
         ])
 
     @rate_limited("gemini")
-    async def chat(self, message: str, history: Optional[List[Dict[str, str]]] = None, language: str = "en") -> str:
+    async def chat(self, user_name: str, message: str, history: Optional[List[Dict[str, str]]] = None, language: str = "en") -> str:
         """
         Chat with CompanionBot using conversation history.
         """
@@ -119,6 +122,7 @@ class CompanionBot:
             response = await asyncio.to_thread(
                 chain.invoke,
                 {
+                    "user_name": user_name,
                     "message": f"{message}\n\n[System Context: {library_context}]",
                     "history": self._prepare_history(history),
                     "language": language
@@ -132,6 +136,7 @@ class CompanionBot:
         response = await asyncio.to_thread(
             chain.invoke,
             {
+                "user_name": user_name,
                 "message": message,
                 "history": self._prepare_history(history),
                 "language": language

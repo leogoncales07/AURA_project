@@ -25,7 +25,7 @@ export default function PlaceholderPage({ title, description, icon, badgeColor =
                     </Card>
                 </section>
 
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--color-text-light)' }}>
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
                     <p>Esta funcionalidade está a ser desenvolvida e estará disponível brevemente.</p>
                 </div>
             </main>

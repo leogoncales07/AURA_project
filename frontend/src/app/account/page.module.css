@@ -172,7 +172,7 @@
 }
 
 .displayName:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-pill);
   border-color: var(--aura-border);
 }
 
@@ -186,7 +186,7 @@
 }
 
 .handle:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-pill);
 }
 
 .inlineInput {
@@ -630,7 +630,7 @@
 }
 
 .discardBtn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-pill);
   color: var(--aura-white);
   border-color: var(--aura-border-hover);
 }

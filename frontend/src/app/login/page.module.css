@@ -58,7 +58,7 @@
   background: var(--aura-depth);
   border: 1px solid var(--aura-border);
   border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--bg-pill);
   position: relative;
   overflow: hidden;
 }
@@ -101,7 +101,7 @@
 .inputField:focus {
   border-color: var(--aura-aurora-1);
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-pill);
 }
 
 .inputField::placeholder {
@@ -140,7 +140,7 @@
 }
 
 .demoBtn:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-pill);
   color: var(--aura-white);
   border-color: var(--aura-border-hover);
   transform: translateY(-1px);

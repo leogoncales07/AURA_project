@@ -34,10 +34,10 @@ export default function DashboardPage() {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', height: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', background: '#09090b' }}>
+            <div style={{ display: 'flex', height: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-background)' }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #10b981, #06b6d4)', margin: '0 auto 16px', animation: 'pulse 2s infinite' }} />
-                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '13px', letterSpacing: '0.02em' }}>
+                    <p style={{ color: 'var(--bg-pill)', fontSize: '13px', letterSpacing: '0.02em' }}>
                         {t('dashboard.syncing').toLowerCase()}
                     </p>
                 </div>
@@ -45,7 +45,9 @@ export default function DashboardPage() {
         );
     }
 
-    const greeting = t('dashboard.greeting', { name: user?.display_name || user?.name?.split(' ')[0] || 'friend' });
+    const userName = user?.display_name || user?.name || user?.user_metadata?.name || t('dashboard.friend');
+    const nameToShow = userName.split(' ')[0];
+    const greeting = t('dashboard.greeting', { name: nameToShow });
     const moodText = latestLog?.mood_score > 7 ? t('dashboard.moodHigh') : latestLog?.mood_score > 4 ? t('dashboard.moodMid') : t('dashboard.moodLow');
     const moodPercent = (latestLog?.mood_score || 0) / 10;
 
@@ -164,7 +166,7 @@ export default function DashboardPage() {
                           }}>
                               {latestLog?.mood_score ? latestLog.mood_score * 10 : '--'}
                           </span>
-                          <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px', opacity: 0.5 }}>
+                          <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>
                             AURA
                           </span>
                         </div>
@@ -195,7 +197,7 @@ export default function DashboardPage() {
                         onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.borderColor = 'var(--brand-primary)'; }}
                         onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.borderColor = 'var(--border-primary)'; }}
                         >
-                            <span style={{ color: 'var(--fg-muted)', opacity: 0.5, marginBottom: '16px' }}>{stat.icon}</span>
+                            <span style={{ color: 'var(--fg-muted)', marginBottom: '16px' }}>{stat.icon}</span>
                             <span style={{
                                 fontFamily: 'var(--font-dm-sans), sans-serif',
                                 fontSize: '26px',
@@ -209,7 +211,6 @@ export default function DashboardPage() {
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.1em',
                                 color: 'var(--fg-muted)',
-                                opacity: 0.6
                             }}>{stat.label.toLowerCase()}</span>
                         </div>
                     ))}
@@ -223,7 +224,6 @@ export default function DashboardPage() {
                         textTransform: 'uppercase',
                         letterSpacing: '0.12em',
                         color: 'var(--fg-muted)',
-                        opacity: 0.6,
                         marginBottom: '16px',
                         marginLeft: '4px'
                     }}>
@@ -272,7 +272,7 @@ export default function DashboardPage() {
                                         {action.desc.toLowerCase()}
                                     </div>
                                 </div>
-                                <ChevronRight size={18} style={{ color: 'var(--fg-muted)', opacity: 0.3, flexShrink: 0 }} />
+                                <ChevronRight size={18} style={{ color: 'var(--fg-muted)', flexShrink: 0 }} />
                             </div>
                         ))}
                     </div>

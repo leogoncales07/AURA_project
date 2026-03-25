@@ -363,28 +363,36 @@ async def get_agent_task(task_id: str):
 async def companion_chat(req: CompanionMessageRequest, authorization: Optional[str] = Header(None)):
     """Chat with the CompanionBot. Persists conversation history."""
 
-    # 1. Fetch recent history
+    # 1. Fetch recent history and user profile
     try:
         token = authorization.replace("Bearer ", "") if authorization else None
         db = await get_db(token)
-        history_res = await db.from_("conversations") \
-            .select("role, message") \
-            .eq("user_id", req.user_id) \
-            .eq("agent_type", "CompanionBot") \
-            .order("created_at", desc=True) \
-            .limit(10) \
-            .execute()
         
-        if history_res.data:
-            history = [{"role": row["role"], "content": row["message"]} for row in reversed(history_res.data)]
-        else:
-            history = []
-    except Exception:
+        # Gather calls directly
+        history_res, name_res = await asyncio.gather(
+            db.from_("conversations")
+                .select("role, message")
+                .eq("user_id", req.user_id)
+                .eq("agent_type", "CompanionBot")
+                .order("created_at", desc=True)
+                .limit(10)
+                .execute(),
+            db.from_("users")
+                .select("name")
+                .eq("id", req.user_id)
+                .execute()
+        )
+        
+        history = [{"role": row["role"], "content": row["message"]} for row in reversed(history_res.data)] if history_res.data else []
+        user_name = name_res.data[0].get("name", "Friend") if name_res.data else "Friend"
+    except Exception as e:
+        print(f"Fetch error: {e}")
         history = []
+        user_name = "Friend"
 
     # 2. Get AI response
     bot = CompanionBot()
-    response = await bot.chat(req.message, history, language=req.language)
+    response = await bot.chat(user_name, req.message, history, language=req.language)
 
     # 3. Save conversation
     try:
@@ -506,9 +514,17 @@ async def submit_assessment(req: AssessmentSubmitRequest, authorization: Optiona
         responses_list.append({"question": q.questions[i], "answer": answer_text})
 
     # Generate AI summary
+    try:
+        token = authorization.replace("Bearer ", "") if authorization else None
+        db = await get_db(token)
+        name_res = await db.from_("users").select("name").eq("id", req.user_id).execute()
+        user_name = name_res.data[0].get("name", "Friend") if name_res.data else "Friend"
+    except:
+        user_name = "Friend"
+
     bot = ClinicalBot()
     ai_summary = await bot.generate_summary(
-        q.name, score_data["total_score"], score_data["risk_level"], responses_list
+        user_name, q.name, score_data["total_score"], score_data["risk_level"], responses_list
     )
 
     # Save to Supabase using user's own token

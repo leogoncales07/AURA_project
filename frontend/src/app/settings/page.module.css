@@ -46,8 +46,8 @@
 }
 
 .navItem:hover:not(.navItemActive) {
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.8);
+  background: var(--bg-pill);
+  color: var(--bg-pill);
   transform: translateX(2px);
 }
 

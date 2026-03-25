@@ -1,7 +1,10 @@
 {
     "app": {
         "name": "AURA",
-        "tagline": "your sanctuary for clarity."
+        "title": "Aura",
+        "description": "Your mental health companion",
+        "tagline": "your sanctuary for clarity.",
+        "daily_quote": "your sanctuary of peace."
     },
     "landing": {
         "login": "enter",
@@ -127,6 +130,7 @@
         "followGuide": "follow the guide",
         "begin": "begin session",
         "inProgress": "session in progress",
+        "session": "session",
         "inhale": "inhale",
         "hold": "hold",
         "exhale": "exhale",

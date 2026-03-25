@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: #030405; /* Darker variant of aura-void */
+  background: var(--bg-background);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -50,7 +50,7 @@
 }
 
 .exitButton {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-pill);
   border: 1px solid var(--aura-border);
   color: var(--aura-white);
   width: 44px;
@@ -64,7 +64,7 @@
 }
 
 .exitButton:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-card);
 }
 
 .playerCore {

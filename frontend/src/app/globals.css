@@ -4,23 +4,31 @@
   /* System Foundations: Light Mode */
   --bg-background: #ffffff;
   --bg-sidebar: rgba(245, 245, 247, 0.72);
-  --bg-card: rgba(255, 255, 255, 0.65);
+  --bg-card: rgba(255, 255, 255, 0.8);
   --bg-pill: rgba(0, 0, 0, 0.05);
-  --bg-scrolled: rgba(255, 255, 255, 0.8);
-  
+  --bg-scrolled: rgba(255, 255, 255, 0.82);
+
   --fg-foreground: #1d1d1f;
-  --fg-muted: rgba(0, 0, 0, 0.45);
-  --fg-placeholder: rgba(0, 0, 0, 0.3);
-  
+  --fg-muted: rgba(0, 0, 0, 0.5);
+  --fg-placeholder: rgba(0, 0, 0, 0.4);
+  --fg-ghost: rgba(0, 0, 0, 0.2);
+
   --border-primary: rgba(0, 0, 0, 0.08);
-  --border-pill: rgba(0, 0, 0, 0.06);
-  
+  --border-pill: rgba(0, 0, 0, 0.05);
+  --border-hover: rgba(0, 0, 0, 0.12);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-aura: 0 0 40px rgba(16, 185, 129, 0.08);
+
   /* Brand Foundations */
-  --brand-primary: #10b981; 
-  --brand-secondary: #06b6d4; 
+  --brand-primary: #10b981;
+  --brand-secondary: #06b6d4;
   --brand-gradient: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-  
+
   /* Radii */
+  --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-xl: 28px;
@@ -28,24 +36,57 @@
 
   /* Fonts */
   --aura-font-serif: var(--font-fraunces), serif;
-  --aura-font-sans: var(--font-inter), system-ui, sans-serif;
+  --aura-font-sans: var(--font-dm-sans), var(--font-outfit), system-ui, sans-serif;
   --aura-font-round: var(--font-outfit), sans-serif;
+
+  /* Typography */
+  --text-2xs: 0.65rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-display: 3rem;
+
+  /* Aura legacy variable mappings (for compatibility) */
+  --aura-void: var(--bg-background);
+  --aura-white: var(--fg-foreground);
+  --aura-muted: var(--fg-muted);
+  --aura-ghost: var(--fg-ghost);
+  --aura-border: var(--border-primary);
+  --aura-border-hover: var(--brand-primary);
+  --aura-aurora-1: var(--brand-primary);
+  --aura-aurora-2: var(--brand-secondary);
+  --aura-aurora-3: var(--brand-secondary);
+  --aura-gradient-primary: var(--brand-gradient);
+  --aura-depth: var(--bg-card);
+  --aura-surface: var(--bg-scrolled);
+
+  /* Animations */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="dark"] {
   /* System Foundations: Dark Mode */
-  --bg-background: #020617; 
-  --bg-sidebar: rgba(9, 9, 11, 0.65);
-  --bg-card: rgba(255, 255, 255, 0.025);
-  --bg-pill: rgba(255, 255, 255, 0.04);
-  --bg-scrolled: rgba(9, 9, 11, 0.8);
-  
+  --bg-background: #020617;
+  --bg-sidebar: rgba(15, 23, 42, 0.65);
+  --bg-card: rgba(30, 41, 59, 0.4);
+  --bg-pill: rgba(255, 255, 255, 0.05);
+  --bg-scrolled: rgba(2, 6, 23, 0.85);
+
   --fg-foreground: #f8fafc;
-  --fg-muted: rgba(255, 255, 255, 0.4);
-  --fg-placeholder: rgba(255, 255, 255, 0.2);
-  
+  --fg-muted: rgba(148, 163, 184, 0.8);
+  --fg-placeholder: rgba(148, 163, 184, 0.4);
+
   --border-primary: rgba(255, 255, 255, 0.06);
   --border-pill: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(16, 185, 129, 0.25);
+
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.8);
+  --shadow-aura: 0 0 40px rgba(16, 185, 129, 0.12);
 }
 
 * {
@@ -54,18 +95,27 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body {
+html,
+body {
   background: var(--bg-background);
   color: var(--fg-foreground);
-  transition: background 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: var(--aura-font-sans);
+  font-size: 16px;
+  line-height: 1.6;
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  transition: background 0.5s var(--ease-spring), color 0.5s var(--ease-spring);
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--aura-font-serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--fg-foreground);
   margin: 0;
 }
 
@@ -94,4 +144,13 @@ button {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--fg-placeholder);
+}
+
+.aura-logo-img {
+  transition: filter 0.3s ease;
+}
+
+/* In dark mode, invert the white background, and hue-rotate the logo back to its correct purple/blue color */
+[data-theme="dark"] .aura-logo-img {
+  filter: invert(1) hue-rotate(180deg) brightness(1.1);
 }

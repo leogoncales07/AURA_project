@@ -1,7 +1,9 @@
 {
     "app": {
+        "name": "AURA",
         "title": "Aura",
         "description": "A tua companheira de saúde mental",
+        "tagline": "o teu santuário para clareza mental.",
         "daily_quote": "o teu santuário de paz."
     },
     "landing": {
@@ -128,6 +130,7 @@
         "followGuide": "segue o guia",
         "begin": "começar sessão",
         "inProgress": "sessão em curso",
+        "session": "sessão",
         "inhale": "inspira",
         "hold": "sustém",
         "exhale": "expira",

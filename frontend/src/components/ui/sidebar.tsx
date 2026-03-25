@@ -143,7 +143,7 @@ export const MobileSidebar = ({
           style={{
             background: "none",
             border: "none",
-            color: "rgba(255,255,255,0.5)",
+            color: "var(--fg-muted)",
             cursor: "pointer",
             padding: "8px",
           }}
@@ -164,7 +164,7 @@ export const MobileSidebar = ({
             style={{
               position: "fixed",
               inset: 0,
-              background: "#09090b",
+              background: "var(--bg-background)",
               padding: "32px",
               zIndex: 100,
             }}
@@ -177,7 +177,7 @@ export const MobileSidebar = ({
                 top: "24px",
                 background: "none",
                 border: "none",
-                color: "rgba(255,255,255,0.3)",
+                color: "var(--fg-muted)",
                 cursor: "pointer",
                 zIndex: 50,
               }}
@@ -217,22 +217,22 @@ export const SidebarLink = ({
         padding: open ? "9px 12px" : "9px 0",
         justifyContent: open ? "flex-start" : "center",
         borderRadius: "10px",
-        background: active ? "rgba(255,255,255,0.07)" : "transparent",
-        color: active ? "#fff" : "rgba(255,255,255,0.4)",
+        background: active ? "var(--bg-pill)" : "transparent",
+        color: active ? "var(--fg-foreground)" : "var(--fg-muted)",
         textDecoration: "none",
         transition: "all 0.2s ease",
         position: "relative",
       }}
       onMouseEnter={e => {
         if (!active) {
-          e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-          e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+          e.currentTarget.style.background = "var(--bg-pill)";
+          e.currentTarget.style.color = "var(--fg-foreground)";
         }
       }}
       onMouseLeave={e => {
         if (!active) {
           e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.color = "rgba(255,255,255,0.4)";
+          e.currentTarget.style.color = "var(--fg-muted)";
         }
       }}
       {...props}
@@ -241,7 +241,7 @@ export const SidebarLink = ({
         flexShrink: 0,
         display: "flex",
         alignItems: "center",
-        color: active ? "#fff" : "rgba(255,255,255,0.3)",
+        color: active ? "var(--fg-foreground)" : "var(--fg-muted)",
         transition: "color 0.2s ease",
       }}>
         {link.icon}
@@ -256,7 +256,7 @@ export const SidebarLink = ({
             fontSize: "13px",
             fontWeight: 500,
             whiteSpace: "nowrap",
-            color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+            color: active ? "var(--fg-foreground)" : "var(--fg-muted)",
             letterSpacing: "-0.01em",
           }}
         >

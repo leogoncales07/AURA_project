@@ -27,6 +27,10 @@
   will-change: transform;
 }
 
+[data-theme="light"] .orb {
+  mix-blend-mode: multiply;
+}
+
 .orb1 {
   width: 90vw;
   height: 90vw;
