@@ -20,21 +20,9 @@
   gap: 16px;
 }
 
-.iconCircle {
-  width: 44px;
-  height: 44px;
-  background: var(--aura-surface);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--aura-aurora-3);
-  transition: transform 250ms var(--ease-spring), background 250ms ease;
-}
-
-.libraryCard:hover .iconCircle {
-  transform: scale(1.08);
-  background: rgba(142, 207, 176, 0.1);
+.cardInfo {
+  flex: 1;
+  min-width: 0;
 }
 
 .cardInfo h3 {
@@ -52,10 +40,29 @@
   letter-spacing: 0.04em;
 }
 
+.iconCircle {
+  width: 44px;
+  height: 44px;
+  background: var(--aura-surface);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--aura-aurora-3);
+  transition: transform 250ms var(--ease-spring), background 250ms ease;
+  flex-shrink: 0;
+}
+
+.libraryCard:hover .iconCircle {
+  transform: scale(1.08);
+  background: rgba(142, 207, 176, 0.1);
+}
+
 .arrowIcon {
   margin-left: auto;
   color: var(--aura-ghost);
   transition: transform 250ms ease, color 250ms ease;
+  flex-shrink: 0;
 }
 
 .libraryCard:hover .arrowIcon {

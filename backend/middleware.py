@@ -37,7 +37,7 @@ class OwnerAuthMiddleware(BaseHTTPMiddleware):
         self._secret_hash = hashlib.sha256(owner_secret.encode()).hexdigest()
 
     # Paths that don't require owner secret (allow the app to function)
-    PUBLIC_PREFIXES = ("/auth", "/users", "/companion", "/assessments", "/questionnaires", "/reports", "/api/v1")
+    PUBLIC_PREFIXES = ("/auth", "/users", "/companion", "/assessments", "/questionnaires", "/reports", "/library", "/api/v1")
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path

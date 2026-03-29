@@ -52,13 +52,8 @@ export default function ReportsPage() {
     const chartRef = useRef(null);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('aura_user');
-        if (!storedUser) {
-            router.push('/login');
-            return;
-        }
         setLoading(false);
-    }, [router]);
+    }, []);
 
     // SVG Line Chart calculations
     const width = 800;

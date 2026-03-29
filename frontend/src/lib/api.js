@@ -1,4 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8000` : 'http://localhost:8000');
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? (
+    window.location.port === '3000'
+        ? `${window.location.protocol}//${window.location.hostname}:8000`
+        : window.location.origin
+) : 'http://localhost:8000');
 const OWNER_SECRET = process.env.NEXT_PUBLIC_DEV_KEY;
 
 /**
@@ -75,6 +79,9 @@ export const api = {
     getQuestionnaire: (qId) => fetchApi(`/questionnaires/${qId}`),
     submitAssessment: (userId, questionnaireId, answers) => fetchApi('/assessments/submit', { method: 'POST', body: { user_id: userId, questionnaire_id: questionnaireId, answers } }),
     getHistory: (userId) => fetchApi(`/assessments/${userId}/history`),
+
+    // Library
+    getLibraryContent: () => fetchApi('/library/content'),
 
     // Companion Chat
     chat: (userId, message) => fetchApi('/companion/chat', { method: 'POST', body: { user_id: userId, message } }),

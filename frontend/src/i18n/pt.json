@@ -95,7 +95,7 @@
     },
     "assessment": {
         "headerLabel": "insights clínicos",
-        "title": "reflexões clínicas",
+        "title": "inquéritos",
         "pending": "pendentes",
         "expired": "expirou há 2 dias. por favor, completa.",
         "history": "reflexões passadas",
@@ -117,7 +117,7 @@
     },
     "meditations": {
         "headerLabel": "sessões guiadas",
-        "title": "respiração e quietude",
+        "title": "meditação",
         "recommended": "curadoria para agora",
         "featuredTitle": "equilíbrio emocional",
         "featuredDesc": "um guia suave para recentrar o teu sistema nervoso.",
@@ -162,8 +162,8 @@
     "nav": {
         "home": "santuário",
         "chat": "companheira",
-        "tests": "clínica",
-        "pause": "calma",
+        "tests": "inquéritos",
+        "pause": "meditação",
         "progress": "evolução",
         "sleep": "dormir",
         "notifications": "Notificações",

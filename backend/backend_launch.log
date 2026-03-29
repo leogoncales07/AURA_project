@@ -1,0 +1,16 @@
+Starting backend process...
+(node:1904) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Error: listen EADDRINUSE: address already in use :::8000
+    at Server.setupListenHandle [as _listen2] (node:net:2016:16)
+    at listenInCluster (node:net:2073:12)
+    at Server.listen (node:net:2178:7)
+    at app.listen (c:\Users\leogo\Documents\meu_app_agentes\backend\node_modules\express\lib\application.js:635:24)
+    at file:///c:/Users/leogo/Documents/meu_app_agentes/backend/src/index.js:23:20 {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 8000
+}
+[15:45:41.402] [31mERROR[39m (1904): [36mUNCAUGHT EXCEPTION! 💥 Shutting down...[39m

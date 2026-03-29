@@ -95,7 +95,7 @@
     },
     "assessment": {
         "headerLabel": "clinical insights",
-        "title": "clinical reflections",
+        "title": "inquiries",
         "pending": "pending",
         "expired": "expired 2 days ago. please complete.",
         "history": "past reflections",
@@ -117,7 +117,7 @@
     },
     "meditations": {
         "headerLabel": "guided sessions",
-        "title": "breathing & stillness",
+        "title": "meditation",
         "recommended": "curated for now",
         "featuredTitle": "emotional balance",
         "featuredDesc": "a gentle guide to recenter your nervous system.",
@@ -162,12 +162,21 @@
     "nav": {
         "home": "home",
         "chat": "companion",
-        "tests": "reflections",
+        "tests": "inquiries",
         "pause": "meditate",
         "progress": "insights",
         "sleep": "sleep",
         "notifications": "Notifications",
         "accountSettings": "Account Settings"
+    },
+    "sidebar": {
+        "management": "management",
+        "personal": "personal",
+        "profileName": "Matheus Silva",
+        "profileStatus": "Premium",
+        "profile": "profile",
+        "wellness": "wellness",
+        "account": "account"
     },
     "settings": {
         "title": "settings",

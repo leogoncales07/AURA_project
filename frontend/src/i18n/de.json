@@ -1,7 +1,10 @@
 {
     "app": {
         "name": "AURA",
-        "tagline": "Dein digitaler Zufluchtsort."
+        "title": "Aura",
+        "description": "Dein Begleiter für mentale Gesundheit",
+        "tagline": "Dein digitaler Zufluchtsort.",
+        "daily_quote": "dein Heiligtum des Friedens."
     },
     "landing": {
         "login": "Anmelden",
@@ -43,23 +46,30 @@
         "signIn": "Anmelden"
     },
     "dashboard": {
-        "syncing": "dein bereich wird synchronisiert...",
-        "greeting": "hallo, {name}.",
-        "statusLabel": "dein status heute",
-        "moodHigh": "strahlend und ruhig",
-        "moodMid": "ausgeglichen",
-        "moodLow": "braucht fokus",
+        "syncing": "dein aura wird beobachtet...",
+        "greeting": "dein heiligtum, {name}.",
+        "friend": "freund",
+        "currentState": "dein zustand",
+        "howFeeling": "wie geht es dir heute?",
+        "moodHigh": "deine energie ist strahlend",
+        "moodMid": "du findest gleichgewicht",
+        "moodLow": "nimm dir einen moment für dich",
         "sleep": "{hours}h schlaf",
-        "focus": "+12% fokus",
-        "days": "tage",
-        "streak": "serie",
-        "sessions": "sitzungen",
-        "tasks": "aufgaben",
-        "recommendations": "kuratierte empfehlungen",
+        "focus": "fokus ist hoch",
+        "nextStep": "nächster schritt",
+        "dailyReflection": "bereit für deine tägliche reflexion?",
+        "fiveMinCheckin": "5-minuten-check-in",
+        "yourJourney": "deine reise",
+        "streak": "tage hintereinander",
+        "sessions": "gespräche",
+        "consistency": "konsistenz",
+        "focusGain": "fokus gewinn",
+        "todayInsights": "heutige erkenntnisse",
         "weeklyAssessment": "wöchentliche bewertung",
-        "weeklyAssessmentDesc": "dein strukturiertes check-in ist bereit.",
+        "weeklyAssessmentDesc": "verstehe deine tiefgreifenden emotionalen muster diese woche.",
         "breathingPause": "atempause",
-        "breathingPauseDesc": "zentriere dein nervensystem."
+        "breathingPauseDesc": "zentriere dein nervensystem neu.",
+        "tasks": "reflexionen"
     },
     "chat": {
         "botName": "aura-assistent",
@@ -73,8 +83,8 @@
         "connectionError": "ich habe ein wenig probleme, mich zu verbinden. lass uns atmen und es in einer sekunde noch einmal versuchen."
     },
     "assessment": {
-        "headerLabel": "klinische einblicke",
-        "title": "klinische reflexionen",
+        "headerLabel": "klinische erkenntnisse",
+        "title": "befragungen",
         "pending": "ausstehend",
         "expired": "vor 2 tagen abgelaufen. bitte abschließen.",
         "history": "vergangene reflexionen",
@@ -96,19 +106,20 @@
     },
     "meditations": {
         "headerLabel": "geführte sitzungen",
-        "title": "atmung & stille",
+        "title": "meditation",
         "recommended": "für jetzt kuratiert",
         "featuredTitle": "emotionales gleichgewicht",
-        "featuredDesc": "eine sanfte anleitung, um dein nervensystem neu zu zentrieren.",
+        "featuredDesc": "ein sanfter führer, um dein nervensystem neu zu zentrieren.",
         "start": "sitzung beginnen",
-        "explore": "entdecken",
+        "explore": "erforschen",
         "sessions": "sitzungen",
         "sleep": "schlaf",
         "validated": "validierte technik",
         "source": "quelle: {source}",
-        "followGuide": "folge der anleitung",
+        "followGuide": "folge dem leitfaden",
         "begin": "sitzung beginnen",
         "inProgress": "sitzung läuft",
+        "session": "sitzung",
         "inhale": "einatmen",
         "hold": "halten",
         "exhale": "ausatmen",
@@ -146,5 +157,25 @@
         "sleep": "schlaf",
         "notifications": "Benachrichtigungen",
         "accountSettings": "Kontoeinstellungen"
+    },
+    "sidebar": {
+        "management": "verwaltung",
+        "personal": "persönlich",
+        "profileName": "Matheus Silva",
+        "profileStatus": "Premium",
+        "profile": "profil",
+        "wellness": "wohlbefinden",
+        "account": "konto"
+    },
+    "settings": {
+        "title": "einstellungen",
+        "profile": "persönlich",
+        "privacy": "datenschutz",
+        "notifications": "benachrichtigungen",
+        "help": "hilfe",
+        "logout": "abmelden",
+        "appearance": "erscheinungsbild",
+        "language": "sprache",
+        "version": "v1.0.0"
     }
 }

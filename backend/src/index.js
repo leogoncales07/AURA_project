@@ -19,7 +19,7 @@ const logger = pino({
   }
 });
 
-const port = process.env.PORT || 8001;
+const port = process.env.PORT || 8000;
 const server = app.listen(port, () => {
   logger.info(`App running on port ${port}...`);
 });

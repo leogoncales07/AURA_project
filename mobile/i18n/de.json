@@ -1,4 +1,9 @@
 {
+    "common": {
+        "error": "Etwas ist schief gelaufen. Bitte erneut versuchen.",
+        "cancel": "Abbrechen",
+        "save": "Speichern"
+    },
     "app": {
         "name": "AURA",
         "tagline": "Dein digitaler Zufluchtsort."
@@ -99,7 +104,13 @@
         "sleepPrep": "Schlafvorbereitung",
         "sleepPrepMeta": "12 Min • Deltawellen",
         "deepFocus": "Tiefer Fokus",
-        "deepFocusMeta": "15 Min • Braunes Rauschen"
+        "deepFocusMeta": "15 Min • Braunes Rauschen",
+        "meditations_title": "Evidenzbasierte Meditationen",
+        "sleep_title": "Wissenschaftliche Schlafmethoden",
+        "validatedTechnique": "Validierte Technik",
+        "sourceLabel": "Quelle:",
+        "followSteps": "Befolgen Sie diese Schritte:",
+        "done": "Fertig"
     },
     "reports": {
         "headerLabel": "Dein Fortschritt",

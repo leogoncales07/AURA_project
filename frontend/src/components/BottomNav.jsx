@@ -19,7 +19,7 @@ export default function BottomNav() {
                     </Link>
                 </li>
                 <li>
-                    <Link href="/assessment" className={styles.navItem}>
+                    <Link href="/inqueritos" className={styles.navItem}>
                         <ClipboardList className={styles.icon} strokeWidth={2} size={24} />
                         <span>{t('nav.tests')}</span>
                     </Link>

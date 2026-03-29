@@ -25,10 +25,13 @@ export default function StaggeredEntrance({ children, className = '' }) {
         if (!React.isValidElement(child)) return child;
 
         const style = mounted ? {
+          opacity: 1,
+          transform: 'translateY(0)',
+          transition: `opacity 280ms cubic-bezier(0.16, 1, 0.3, 1) ${index * 25}ms, transform 280ms cubic-bezier(0.16, 1, 0.3, 1) ${index * 25}ms`
+        } : {
           opacity: 0,
-          animation: `enter 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
-          animationDelay: `${index * 25}ms`
-        } : { opacity: 0 };
+          transform: 'translateY(12px)'
+        };
 
         return React.cloneElement(child, {
           style: {

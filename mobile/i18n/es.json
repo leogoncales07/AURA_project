@@ -1,4 +1,9 @@
 {
+    "common": {
+        "error": "Algo salió mal. Inténtelo de nuevo.",
+        "cancel": "Cancelar",
+        "save": "Guardar"
+    },
     "app": {
         "name": "AURA",
         "tagline": "Tu refugio digital."
@@ -99,7 +104,13 @@
         "sleepPrep": "Preparación para Dormir",
         "sleepPrepMeta": "12 min • Ondas Delta",
         "deepFocus": "Enfoque Profundo",
-        "deepFocusMeta": "15 min • Ruido Marrón"
+        "deepFocusMeta": "15 min • Ruido Marrón",
+        "meditations_title": "Meditaciones Basadas en Evidencia",
+        "sleep_title": "Métodos Científicos para Dormir",
+        "validatedTechnique": "Técnica Validada",
+        "sourceLabel": "Fuente:",
+        "followSteps": "Sigue estos pasos:",
+        "done": "Hecho"
     },
     "reports": {
         "headerLabel": "Tu Progreso",

@@ -90,22 +90,22 @@ class WHO5(QuestionnaireDefinition):
     def __init__(self):
         super().__init__(
             id="WHO-5",
-            name="WHO (Five) Well-Being Index",
-            description="Screening for current mental well-being.",
+            name="WHO-5: Índice de Bem-Estar",
+            description="Uma breve avaliação do bem-estar subjetivo atual.",
             questions=[
-                "1. I have felt cheerful and in good spirits",
-                "2. I have felt calm and relaxed",
-                "3. I have felt active and vigorous",
-                "4. I woke up feeling fresh and rested",
-                "5. My daily life has been filled with things that interest me"
+                "Tem-se sentido alegre, bem-disposto(a) e com bom astral ultimamente?",
+                "Com que frequência se tem sentido calmo(a), tranquilo(a) e relaxado(a)?",
+                "Tem-se sentido com energia, ativo(a) e com vigor para realizar as suas tarefas?",
+                "Ao acordar, sente que teve um sono revigorante e que está realmente descansado(a)?",
+                "Sente que o seu dia a dia tem sido preenchido com coisas e atividades que despertam o seu interesse?"
             ],
             options=[
-                {"text": "At no time", "value": 0},
-                {"text": "Some of the time", "value": 1},
-                {"text": "Less than half of the time", "value": 2},
-                {"text": "More than half of the time", "value": 3},
-                {"text": "Most of the time", "value": 4},
-                {"text": "All of the time", "value": 5}
+                {"text": "Todo o tempo", "value": 5},
+                {"text": "A maior parte do tempo", "value": 4},
+                {"text": "Mais de metade do tempo", "value": 3},
+                {"text": "Menos de metade do tempo", "value": 2},
+                {"text": "Algumas vezes", "value": 1},
+                {"text": "Nunca", "value": 0}
             ]
         )
 
@@ -125,27 +125,27 @@ class WHO5(QuestionnaireDefinition):
 class PSS(QuestionnaireDefinition):
     def __init__(self):
         super().__init__(
-            id="PSS",
-            name="Perceived Stress Scale",
-            description="Screening for perceived stress.",
+            id="PSS-10",
+            name="PSS-10: Escala de Stress Percebido",
+            description="Uma breve avaliação da perceção de stress nas últimas semanas.",
             questions=[
-                "1. In the last month, how often have you been upset because of something that happened unexpectedly?",
-                "2. In the last month, how often have you felt that you were unable to control the important things in your life?",
-                "3. In the last month, how often have you felt nervous and 'stressed'?",
-                "4. In the last month, how often have you felt confident about your ability to handle your personal problems?",
-                "5. In the last month, how often have you felt that things were going your way?",
-                "6. In the last month, how often have you found that you could not cope with all the things that you had to do?",
-                "7. In the last month, how often have you been able to control irritations in your life?",
-                "8. In the last month, how often have you felt that you were on top of things?",
-                "9. In the last month, how often have you been angered because of things that were outside of your control?",
-                "10. In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?"
+                "Você tem se sentido afetado(a) ou abalado(a) por coisas inesperadas que aconteceram recentemente?",
+                "Com que frequência sentiu que não tinha controle sobre as coisas realmente importantes da sua vida?",
+                "Você tem se sentido muito nervoso(a) ou 'sob pressão' ultimamente?",
+                "Com que frequência sentiu confiança na sua própria capacidade de lidar com os seus problemas pessoais?",
+                "Você tem sentido que as coisas estão a correr como gostaria ou planeou?",
+                "Com que frequência sentiu que não conseguia dar conta de todas as tarefas e obrigações que tinha para fazer?",
+                "Tem sido capaz de controlar as irritações ou pequenas chateações do dia a dia?",
+                "Com que frequência sentiu que tinha tudo sob controlo e que as coisas estavam a caminhar bem?",
+                "Tem se sentido furioso(a) ou muito irritado(a) por causa de coisas que fugiram totalmente do seu controlo?",
+                "Com que frequência sentiu que as dificuldades se acumulavam tanto que já não as conseguia ultrapassar?"
             ],
             options=[
-                {"text": "Never", "value": 0},
-                {"text": "Almost Never", "value": 1},
-                {"text": "Sometimes", "value": 2},
-                {"text": "Fairly Often", "value": 3},
-                {"text": "Very Often", "value": 4}
+                {"text": "Nunca", "value": 0},
+                {"text": "Quase nunca", "value": 1},
+                {"text": "Às vezes", "value": 2},
+                {"text": "Com frequência", "value": 3},
+                {"text": "Com muita frequência", "value": 4}
             ]
         )
 
@@ -171,7 +171,7 @@ QUESTIONNAIRES = {
     "PHQ-9": PHQ9(),
     "GAD-7": GAD7(),
     "WHO-5": WHO5(),
-    "PSS": PSS()
+    "PSS-10": PSS()
 }
 
 def get_questionnaire(q_id: str) -> Optional[QuestionnaireDefinition]:

@@ -13,6 +13,10 @@ import accountRouter from './routes/accountRoutes.js';
 import settingsRouter from './routes/settingsRoutes.js';
 import integrationRouter from './routes/integrationRoutes.js';
 import authRouter from './routes/authRoutes.js';
+import libraryRouter from './routes/libraryRoutes.js';
+import questionnairesRouter from './routes/questionnairesRoutes.js';
+import assessmentsRouter from './routes/assessmentsRoutes.js';
+import companionRouter from './routes/companionRoutes.js';
 
 const app = express();
 const logger = pino({
@@ -56,6 +60,10 @@ app.use(cookieParser());
 
 // 2) ROUTES
 app.use('/auth', authRouter);
+app.use('/library', libraryRouter);
+app.use('/questionnaires', questionnairesRouter);
+app.use('/assessments', assessmentsRouter);
+app.use('/companion', companionRouter);
 app.use('/api/v1/account', accountRouter);
 app.use('/api/v1/settings', settingsRouter);
 app.use('/api/v1/integrations', integrationRouter);

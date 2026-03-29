@@ -14,7 +14,7 @@
 }
 
 .toggle:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.08);
   border-color: var(--aura-border-hover);
   transform: translateY(-1px);
 }

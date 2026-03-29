@@ -35,7 +35,7 @@ export default function AuraSidebar() {
   const wellnessLinks = [
     { label: t('nav.sleep'),        href: "/sleep",       icon: <Moon size={18} strokeWidth={1.75} /> },
     { label: t('nav.pause'),        href: "/meditations", icon: <Leaf size={18} strokeWidth={1.75} /> },
-    { label: t('assessment.title'), href: "/assessment",  icon: <Heart size={18} strokeWidth={1.75} /> },
+    { label: t('assessment.title'), href: "/inqueritos", icon: <Heart size={18} strokeWidth={1.75} /> },
   ];
 
   const bottomLinks = [

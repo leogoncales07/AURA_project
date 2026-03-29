@@ -43,7 +43,7 @@ export default function LoginPage() {
             }
         } catch (err) {
             console.error("[Login] Exception:", err);
-            setError(`Connection error: ${err.message}. Check if backend is running on port 8000.`);
+            setError(`Connection error: ${err.message}. Check if the backend server and API URL configuration.`);
             setLoading(false);
         }
     };

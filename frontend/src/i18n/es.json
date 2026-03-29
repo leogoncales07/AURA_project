@@ -1,7 +1,10 @@
 {
     "app": {
         "name": "AURA",
-        "tagline": "Tu refugio digital."
+        "title": "Aura",
+        "description": "Tu compañera de salud mental",
+        "tagline": "Tu refugio digital.",
+        "daily_quote": "tu santuario de paz."
     },
     "landing": {
         "login": "Entrar",
@@ -73,8 +76,8 @@
         "connectionError": "estoy teniendo un poco de dificultad para conectarme. vamos a respirar e intentar de nuevo en un segundo."
     },
     "assessment": {
-        "headerLabel": "insights clínicos",
-        "title": "reflexiones clínicas",
+        "headerLabel": "perspectivas clínicas",
+        "title": "evaluaciones",
         "pending": "pendientes",
         "expired": "expiró hace 2 días. por favor, completa.",
         "history": "reflexiones pasadas",
@@ -96,7 +99,7 @@
     },
     "meditations": {
         "headerLabel": "sesiones guiadas",
-        "title": "respiración y quietud",
+        "title": "meditación",
         "recommended": "curado para ahora",
         "featuredTitle": "equilibrio emocional",
         "featuredDesc": "una guía suave para recentrar tu sistema nervioso.",
@@ -146,5 +149,25 @@
         "sleep": "dormir",
         "notifications": "Notificaciones",
         "accountSettings": "Ajustes de Cuenta"
+    },
+    "sidebar": {
+        "management": "gestión",
+        "personal": "personal",
+        "profileName": "Matheus Silva",
+        "profileStatus": "Premium",
+        "profile": "perfil",
+        "wellness": "bienestar",
+        "account": "cuenta"
+    },
+    "settings": {
+        "title": "ajustes",
+        "profile": "personal",
+        "privacy": "privacidad",
+        "notifications": "notificaciones",
+        "help": "ayuda",
+        "logout": "salir",
+        "appearance": "apariencia",
+        "language": "idioma",
+        "version": "v1.0.0"
     }
 }

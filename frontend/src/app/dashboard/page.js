@@ -38,7 +38,7 @@ export default function DashboardPage() {
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #10b981, #06b6d4)', margin: '0 auto 16px', animation: 'pulse 2s infinite' }} />
                     <p style={{ color: 'var(--bg-pill)', fontSize: '13px', letterSpacing: '0.02em' }}>
-                        {t('dashboard.syncing').toLowerCase()}
+                        {t('dashboard.syncing')}
                     </p>
                 </div>
             </div>
@@ -65,7 +65,7 @@ export default function DashboardPage() {
                         margin: 0,
                         letterSpacing: '-0.02em',
                     }}>
-                        {greeting.toLowerCase()}
+                        {greeting}
                     </h1>
                     <p style={{
                       margin: '8px 0 0 0',
@@ -106,12 +106,12 @@ export default function DashboardPage() {
                             lineHeight: 1.3,
                             margin: '0 0 24px 0',
                         }}>
-                            {moodText.toLowerCase()}
+                            {moodText}
                         </h2>
                         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                             {[
                                 { label: t('dashboard.sleep', { hours: latestLog.sleep_hours }), },
-                                { label: t('dashboard.focus').toLowerCase(), },
+                                { label: t('dashboard.focus'), },
                             ].map((pill, i) => (
                                 <span key={i} style={{
                                     padding: '6px 16px',
@@ -211,7 +211,7 @@ export default function DashboardPage() {
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.1em',
                                 color: 'var(--fg-muted)',
-                            }}>{stat.label.toLowerCase()}</span>
+                            }}>{stat.label}</span>
                         </div>
                     ))}
                 </div>
@@ -231,7 +231,7 @@ export default function DashboardPage() {
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {[
-                            { icon: <ClipboardList size={18} />, title: t('dashboard.weeklyAssessment'), desc: t('dashboard.weeklyAssessmentDesc'), href: '/assessment' },
+                            { icon: <ClipboardList size={18} />, title: t('dashboard.weeklyAssessment'), desc: t('dashboard.weeklyAssessmentDesc'), href: '/inqueritos' },
                             { icon: <Wind size={18} />, title: t('dashboard.breathingPause'), desc: t('dashboard.breathingPauseDesc'), href: '/meditations' },
                         ].map((action, i) => (
                             <div key={i} onClick={() => router.push(action.href)} style={{
@@ -266,10 +266,10 @@ export default function DashboardPage() {
                                 </div>
                                 <div style={{ flex: 1 }}>
                                     <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--fg-foreground)', marginBottom: '2px' }}>
-                                        {action.title.toLowerCase()}
+                                        {action.title}
                                     </div>
                                     <div style={{ fontSize: '13px', color: 'var(--fg-muted)', lineHeight: 1.5 }}>
-                                        {action.desc.toLowerCase()}
+                                        {action.desc}
                                     </div>
                                 </div>
                                 <ChevronRight size={18} style={{ color: 'var(--fg-muted)', flexShrink: 0 }} />

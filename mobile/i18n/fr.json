@@ -1,4 +1,9 @@
 {
+    "common": {
+        "error": "Une erreur est survenue. Réessayez.",
+        "cancel": "Annuler",
+        "save": "Enregistrer"
+    },
     "app": {
         "name": "AURA",
         "tagline": "Votre refuge numérique."
@@ -99,7 +104,13 @@
         "sleepPrep": "Préparation au Sommeil",
         "sleepPrepMeta": "12 min • Ondes Delta",
         "deepFocus": "Concentration Profonde",
-        "deepFocusMeta": "15 min • Bruit Brun"
+        "deepFocusMeta": "15 min • Bruit Brun",
+        "meditations_title": "Méditations Basées sur les Preuves",
+        "sleep_title": "Méthodes de Sommeil Scientifiques",
+        "validatedTechnique": "Technique Validée",
+        "sourceLabel": "Source:",
+        "followSteps": "Suivez ces étapes:",
+        "done": "Terminé"
     },
     "reports": {
         "headerLabel": "Votre Progression",

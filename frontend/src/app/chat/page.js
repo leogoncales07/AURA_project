@@ -150,7 +150,7 @@ export default function ChatPage() {
                         {messages.map((msg) => (
                             <div key={msg.id} className={`${styles.messageRow} ${msg.role === 'user' ? styles.messageRowRight : styles.messageRowLeft}`}>
                                 <div className={styles.messageContent}>
-                                    <p>{msg.content.toLowerCase()}</p>
+                                    <p>{msg.content}</p>
                                     <div className={styles.timestamp}>{msg.timestamp}</div>
                                 </div>
                             </div>

@@ -29,24 +29,33 @@ export default function AssessmentPage() {
 
     useEffect(() => {
         const stored = localStorage.getItem('aura_user');
-        if (stored) {
-            const user = JSON.parse(stored);
+        const user = stored ? JSON.parse(stored) : null;
+        if (user) {
             setUserId(user.id);
             loadData(user.id);
+        } else {
+            loadData();
         }
     }, []);
 
     const loadData = async (uid) => {
         setLoading(true);
         try {
-            const [qRes, hRes] = await Promise.all([
-                api.listQuestionnaires(),
-                api.getHistory(uid),
-            ]);
-            if (qRes.data) setQuestionnaires(qRes.data.questionnaires || []);
-            if (hRes.data) setHistory(hRes.data.assessments || []);
+            const qRes = await api.listQuestionnaires();
+            console.log('Questionnaires response:', qRes);
+            if (qRes.data) {
+                const qList = qRes.data.questionnaires || [];
+                console.log('Setting questionnaires:', qList);
+                setQuestionnaires(qList);
+            } else if (qRes.error) {
+                console.error('Error loading questionnaires:', qRes.error);
+            }
+            if (uid) {
+                const hRes = await api.getHistory(uid);
+                if (hRes.data) setHistory(hRes.data.assessments || []);
+            }
         } catch (err) {
-            console.error(err);
+            console.error('Exception in loadData:', err);
         } finally {
             setLoading(false);
         }
@@ -66,12 +75,6 @@ export default function AssessmentPage() {
         const newAnswers = [...answers];
         newAnswers[currentQ] = value;
         setAnswers(newAnswers);
-
-        setTimeout(() => {
-            if (currentQ < activeForm.questions.length - 1) {
-                setCurrentQ(currentQ + 1);
-            }
-        }, 300);
     };
 
     const handleSubmit = async () => {
@@ -152,7 +155,7 @@ export default function AssessmentPage() {
         const allAnswered = !answers.includes(null);
 
         return (
-            <AppShell title={activeForm.name.toLowerCase()}>
+            <AppShell title={activeForm.name}>
                 <div className="fade-up-stagger" style={{ maxWidth: '640px', margin: '0 auto' }}>
                     <button onClick={resetForm} className={formStyles.backBtn} style={{ marginBottom: '32px' }}>
                         <ArrowLeft size={16} /> {t('assessment.backToList')}
@@ -248,8 +251,8 @@ export default function AssessmentPage() {
                                 <ClipboardList size={20} />
                             </div>
                             <div className={styles.actionContent}>
-                                <h3>{q.name.toLowerCase()}</h3>
-                                <p>{q.description.toLowerCase()}</p>
+                                <h3>{q.name}</h3>
+                                <p>{q.description}</p>
                             </div>
                             <ChevronRight size={18} style={{ marginLeft: 'auto', color: 'var(--aura-ghost)' }} />
                         </Card>
@@ -266,8 +269,8 @@ export default function AssessmentPage() {
                                         <CheckCircle2 size={20} />
                                     </div>
                                     <div className={styles.actionContent}>
-                                        <h3>{h.questionnaire.toLowerCase()}</h3>
-                                        <p>{t('assessment.scoreLabel', { score: h.total_score, risk: h.risk_level?.toLowerCase() })}</p>
+                                        <h3>{h.questionnaire}</h3>
+                                        <p>{t('assessment.scoreLabel', { score: h.total_score, risk: h.risk_level })}</p>
                                     </div>
                                     <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
                                         <span className="label-text" style={{ fontSize: '10px' }}>{new Date(h.created_at).toLocaleDateString()}</span>

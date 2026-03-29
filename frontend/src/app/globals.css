@@ -3,19 +3,19 @@
 :root {
   /* System Foundations: Light Mode */
   --bg-background: #ffffff;
-  --bg-sidebar: rgba(245, 245, 247, 0.72);
-  --bg-card: rgba(255, 255, 255, 0.8);
-  --bg-pill: rgba(0, 0, 0, 0.05);
-  --bg-scrolled: rgba(255, 255, 255, 0.82);
+  --bg-sidebar: rgba(245, 245, 247, 0.88);
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-pill: rgba(0, 0, 0, 0.08);
+  --bg-scrolled: rgba(255, 255, 255, 0.9);
 
   --fg-foreground: #1d1d1f;
-  --fg-muted: rgba(0, 0, 0, 0.5);
-  --fg-placeholder: rgba(0, 0, 0, 0.4);
-  --fg-ghost: rgba(0, 0, 0, 0.2);
+  --fg-muted: rgba(0, 0, 0, 0.65);
+  --fg-placeholder: rgba(0, 0, 0, 0.55);
+  --fg-ghost: rgba(0, 0, 0, 0.35);
 
-  --border-primary: rgba(0, 0, 0, 0.08);
-  --border-pill: rgba(0, 0, 0, 0.05);
-  --border-hover: rgba(0, 0, 0, 0.12);
+  --border-primary: rgba(0, 0, 0, 0.12);
+  --border-pill: rgba(0, 0, 0, 0.1);
+  --border-hover: rgba(0, 0, 0, 0.18);
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
@@ -60,6 +60,7 @@
   --aura-aurora-2: var(--brand-secondary);
   --aura-aurora-3: var(--brand-secondary);
   --aura-gradient-primary: var(--brand-gradient);
+  --aura-gradient-calm: linear-gradient(135deg, #0f172a 0%, #059669 100%);
   --aura-depth: var(--bg-card);
   --aura-surface: var(--bg-scrolled);
 
@@ -70,29 +71,59 @@
 [data-theme="dark"] {
   /* System Foundations: Dark Mode */
   --bg-background: #020617;
-  --bg-sidebar: rgba(15, 23, 42, 0.65);
-  --bg-card: rgba(30, 41, 59, 0.4);
-  --bg-pill: rgba(255, 255, 255, 0.05);
-  --bg-scrolled: rgba(2, 6, 23, 0.85);
+  --bg-sidebar: rgba(15, 23, 42, 0.85);
+  --bg-card: rgba(30, 41, 59, 0.72);
+  --bg-pill: rgba(255, 255, 255, 0.08);
+  --bg-scrolled: rgba(2, 6, 23, 0.95);
 
   --fg-foreground: #f8fafc;
-  --fg-muted: rgba(148, 163, 184, 0.8);
-  --fg-placeholder: rgba(148, 163, 184, 0.4);
+  --fg-muted: rgba(248, 250, 252, 0.92);
+  --fg-placeholder: rgba(148, 163, 184, 0.65);
+  --fg-ghost: rgba(248, 250, 252, 0.55);
 
-  --border-primary: rgba(255, 255, 255, 0.06);
-  --border-pill: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(16, 185, 129, 0.25);
+  --border-primary: rgba(255, 255, 255, 0.18);
+  --border-pill: rgba(255, 255, 255, 0.16);
+  --border-hover: rgba(16, 185, 129, 0.35);
 
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.8);
   --shadow-aura: 0 0 40px rgba(16, 185, 129, 0.12);
+  --aura-gradient-calm: linear-gradient(135deg, #0f172a 0%, #059669 100%);
 }
 
 * {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.aura-card,
+.glass {
+  border-radius: var(--radius-xl);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.aura-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px);
+}
+
+.label-text {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--aura-muted);
 }
 
 html,
