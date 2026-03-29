@@ -11,6 +11,8 @@ const AuraLogo = ({ size = 32, className = "", style = {} }) => {
             style={{ 
                 objectFit: 'contain', 
                 borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+                display: 'block',
                 ...style 
             }}
         />

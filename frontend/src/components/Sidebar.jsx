@@ -198,15 +198,17 @@ export default function AuraSidebar() {
 
 const Logo = () => (
   <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '14px', textDecoration: 'none', position: 'relative', zIndex: 20 }}>
-    <div style={{ 
-      width: '28px', 
-      height: '28px', 
-      borderRadius: '7px', 
-      background: 'var(--brand-gradient)', 
-      boxShadow: '0 2px 12px rgba(16, 185, 129, 0.35)', 
-      flexShrink: 0,
-      border: '1px solid var(--border-pill)'
-    }} />
+    <img 
+      src="/aura-logo-dark.png"
+      alt="Aura Logo"
+      style={{ 
+        width: '32px', 
+        height: '32px', 
+        borderRadius: '7px',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.3)',
+        objectFit: 'contain'
+      }}
+    />
     <motion.span
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -220,14 +222,16 @@ const Logo = () => (
 
 const LogoIcon = () => (
   <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', position: 'relative', zIndex: 20 }}>
-    <div style={{ 
-      width: '28px', 
-      height: '28px', 
-      borderRadius: '7px', 
-      background: 'var(--brand-gradient)', 
-      boxShadow: '0 2px 12px rgba(16, 185, 129, 0.35)', 
-      flexShrink: 0,
-      border: '1px solid var(--border-pill)'
-    }} />
+    <img 
+      src="/aura-logo-dark.png"
+      alt="Aura Logo"
+      style={{ 
+        width: '32px', 
+        height: '32px', 
+        borderRadius: '7px',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.3)',
+        objectFit: 'contain'
+      }}
+    />
   </Link>
 );
