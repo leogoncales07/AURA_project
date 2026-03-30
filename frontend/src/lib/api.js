@@ -84,8 +84,10 @@ export const api = {
     getLibraryContent: () => fetchApi('/library/content'),
 
     // Companion Chat
-    chat: (userId, message) => fetchApi('/companion/chat', { method: 'POST', body: { user_id: userId, message } }),
+    chat: (userId, message, conversationId = null) => fetchApi('/companion/chat', { method: 'POST', body: { user_id: userId, message, conversation_id: conversationId } }),
     getConversations: (userId, limit = 50) => fetchApi(`/companion/${userId}/conversations?limit=${limit}`),
+    getConversationMessages: (userId, conversationId) => fetchApi(`/companion/${userId}/conversations/${conversationId}`),
+    deleteConversation: (userId, conversationId) => fetchApi(`/companion/${userId}/conversations/${conversationId}`, { method: 'DELETE' }),
 
     // Reports
     generateReport: (userId, context = "") => fetchApi('/reports/generate', { method: 'POST', body: { user_id: userId, context } }),

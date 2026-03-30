@@ -4,44 +4,78 @@ import { AppError } from '../utils/appError.js';
 const conversationsByUser = new Map();
 const logsByUser = new Map();
 
-// Simple language detection
+// Improved language detection
 const detectLanguage = (text) => {
-  const portugueseWords = /\b(olá|oi|como|está|você|para|uma|que|não|sim|obrigado|porém|também|podem)\b/i;
-  const englishWords = /\b(hello|hi|how|are|you|thank|why|what|can|would|could|should)\b/i;
+  const portugueseWords = /\b(olá|oi|como|está|você|para|uma|que|não|sim|obrigado|porém|também|podem|estou|triste|feliz|ansioso|medo|ajuda|quero|preciso|muito|pouco|bem|mal|hoje|agora|eu|ele|ela|nós)\b/gmi;
+  const englishWords = /\b(hello|hi|how|are|you|thank|why|what|can|would|could|should|sad|happy|anxious|help|want|need|very|little|good|bad|today|now|i|he|she|we)\b/gmi;
   
   const ptMatches = (text.match(portugueseWords) || []).length;
   const enMatches = (text.match(englishWords) || []).length;
   
-  return ptMatches > enMatches ? 'pt' : 'en';
+  return ptMatches >= enMatches ? 'pt' : 'en';
 };
 
-const getConversationHistory = (userId) => {
-  return conversationsByUser.get(userId) || [];
+const getUserThreads = (userId) => {
+  if (!conversationsByUser.has(userId)) {
+    conversationsByUser.set(userId, []);
+  }
+  return conversationsByUser.get(userId);
 };
 
 const getLogsHistory = (userId) => {
   return logsByUser.get(userId) || [];
 };
 
-const createAssistantReply = async (message, userId) => {
+const createAssistantReply = async (message, userId, history) => {
   try {
     const language = detectLanguage(message);
-    const history = getConversationHistory(userId);
+    const recentLogs = getLogsHistory(userId).slice(0, 5);
     
+    // Format the user's personal context
+    let logsContext = "The user has not logged any mood or sleep data yet. Encourage them to use the daily tracker in the dashboard.";
+    if (recentLogs.length > 0) {
+      const formattedLogs = recentLogs.map((log, index) => 
+        `- [Log ${index + 1} from today/past] Mood Score: ${log.mood_score}/5 | Sleep: ${log.sleep_hours}h | Notes: ${log.notes || 'None'}`
+      ).join('\\n');
+      logsContext = `Here are the user's most recent mood and sleep logs:\\n${formattedLogs}`;
+    }
+
     // Try Google Gemini API first
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${process.env.G_KEY}`, {
+      const formattedHistory = history.map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.message }]
+      }));
+
+      const systemPrompt = `[System Instruction: You are the 'AURA Assistant', an empathetic and intelligent mental wellness companion embedded directly inside the AURA application.
+You are NOT a generic chatbot; you are an AURA expert.
+You MUST respond in the EXACT same language that the user used in their message.
+Keep your response concise (max 3-4 sentences). Be warm, reflective, and validating.
+
+*** AURA APP FEATURES & KNOWLEDGE ***
+If the user mentions or asks about:
+- Anxiety: Recommend they take the "GAD-7" questionnaire.
+- Depression / Sadness: Recommend they take the "PHQ-9" questionnaire.
+- Stress / Overwhelmed: Recommend they take the "PSS-10" questionnaire.
+- General Well-being: Recommend the "WHO-5" questionnaire.
+*Always tell them they can find these questionnaires in the "Inquéritos" (Questionnaires) page.*
+- Trouble sleeping or high stress: Suggest they visit the "Meditations" or "Sleep" pages in the app for guided audio exercises.
+
+*** USER DATA MEMORY ***
+If the user asks to check their progress, summarize the following data:
+${logsContext}]
+
+User message: ${message}`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.G_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: language === 'pt'
-                ? `Você é um companheiro empático para bem-estar mental. Responda em português, com máx 3-4 frases. Seja caloroso, reflexivo e validador.\n\nMensagem do usuário: ${message}`
-                : `You are an empathetic mental wellness companion. Respond in English, max 3-4 sentences. Be warm, reflective, and validating.\n\nUser message: ${message}`
-            }]
+          contents: [...formattedHistory, {
+            role: 'user',
+            parts: [{ text: systemPrompt }]
           }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 300 }
+          generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
         })
       });
 
@@ -155,28 +189,41 @@ const createAssistantReply = async (message, userId) => {
 };
 
 export const chat = catchAsync(async (req, res, next) => {
-  const { user_id, message } = req.body;
+  const { user_id, message, conversation_id } = req.body;
 
-  if (!user_id) {
-    return next(new AppError('Missing user_id in request body', 400));
-  }
-  if (!message) {
-    return next(new AppError('Missing message in request body', 400));
+  if (!user_id || !message) {
+    return next(new AppError('Missing user_id or message', 400));
   }
 
-  const responseText = await createAssistantReply(message, user_id);
+  const threads = getUserThreads(user_id);
+  let thread = null;
+
+  if (conversation_id) {
+    thread = threads.find(t => t.id === conversation_id);
+  }
+
+  if (!thread) {
+    thread = {
+      id: Date.now().toString(),
+      title: message.substring(0, 30) + (message.length > 30 ? '...' : ''),
+      updatedAt: new Date().toISOString(),
+      messages: []
+    };
+    threads.unshift(thread);
+  }
+
+  const responseText = await createAssistantReply(message, user_id, thread.messages);
   const timestamp = new Date().toISOString();
 
-  const history = getConversationHistory(user_id);
-  const updatedHistory = [
-    ...history,
-    { role: 'user', message, timestamp },
-    { role: 'assistant', message: responseText, timestamp }
-  ].slice(-50);
+  thread.messages.push({ role: 'user', message, timestamp });
+  thread.messages.push({ role: 'assistant', message: responseText, timestamp });
+  thread.updatedAt = timestamp;
 
-  conversationsByUser.set(user_id, updatedHistory);
+  if (thread.messages.length > 50) {
+    thread.messages = thread.messages.slice(-50);
+  }
 
-  res.status(200).json({ response: responseText, conversation: updatedHistory });
+  res.status(200).json({ response: responseText, conversation_id: thread.id, messages: thread.messages });
 });
 
 export const logMood = catchAsync(async (req, res, next) => {
@@ -215,12 +262,48 @@ export const getLogs = catchAsync(async (req, res, next) => {
 
 export const getConversations = catchAsync(async (req, res, next) => {
   const { userId } = req.params;
-  const limit = parseInt(req.query.limit, 10) || 50;
 
   if (!userId) {
     return next(new AppError('Missing userId parameter', 400));
   }
 
-  const conversations = getConversationHistory(userId).slice(-limit).reverse();
-  res.status(200).json({ conversations });
+  const threads = getUserThreads(userId);
+  const metadata = threads.map(t => ({ id: t.id, title: t.title, updatedAt: t.updatedAt }));
+  res.status(200).json({ conversations: metadata });
+});
+
+export const getConversationMessages = catchAsync(async (req, res, next) => {
+  const { userId, conversationId } = req.params;
+
+  if (!userId || !conversationId) {
+    return next(new AppError('Missing parameters', 400));
+  }
+
+  const threads = getUserThreads(userId);
+  const thread = threads.find(t => t.id === conversationId);
+
+  if (!thread) {
+    return next(new AppError('Conversation not found', 404));
+  }
+
+  res.status(200).json({ messages: thread.messages });
+});
+
+export const deleteConversation = catchAsync(async (req, res, next) => {
+  const { userId, conversationId } = req.params;
+
+  if (!userId || !conversationId) {
+    return next(new AppError('Missing parameters', 400));
+  }
+
+  const threads = getUserThreads(userId);
+  const initialLength = threads.length;
+  const updatedThreads = threads.filter(t => t.id !== conversationId);
+
+  if (updatedThreads.length === initialLength) {
+    return next(new AppError('Conversation not found', 404));
+  }
+
+  conversationsByUser.set(userId, updatedThreads);
+  res.status(200).json({ success: true, message: 'Conversation deleted' });
 });

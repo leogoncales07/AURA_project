@@ -1,0 +1,6 @@
+{
+  "payload_test": {
+    "status": 200,
+    "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"Hello! How can I help you today?\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 1,\n    \"candidatesTokenCount\": 9,\n    \"totalTokenCount\": 39,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 1\n      }\n    ],\n    \"thoughtsTokenCount\": 29\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"LLnKadKdGIWUvdIPmIuQwQc\"\n}\n"
+  }
+}
