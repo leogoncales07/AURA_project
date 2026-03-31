@@ -27,12 +27,9 @@ const logger = pino({
 });
 
 // 1) GLOBAL MIDDLEWARES
+// Allow all origins in development (Expo Go / mobile doesn't send a browser Origin header)
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:3001',
-  ],
+  origin: true, // reflects the request origin — works for mobile, Expo Go, and browser
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Owner-Secret', 'Bypass-Tunnel-Reminder'],

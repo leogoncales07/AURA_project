@@ -30,13 +30,19 @@ export default function LoginScreen() {
             const { data, error: apiError } = await api.login(email, password);
             if (apiError) {
                 setError(apiError === 'Invalid login credentials' ? t('login.invalidCredentials') : apiError);
-                setLoading(true);
-                setTimeout(() => setLoading(false), 1000);
+                setLoading(false);
                 return;
             }
             if (data?.access_token) {
                 await AsyncStorage.setItem('aura_token', data.access_token);
-                await AsyncStorage.setItem('aura_user', JSON.stringify(data.user));
+                // Node+Supabase backend: name is in user_metadata
+                const user = data.user || {};
+                const normalizedUser = {
+                    id: user.id,
+                    email: user.email,
+                    name: user.user_metadata?.name || user.name || user.email?.split('@')[0] || 'User',
+                };
+                await AsyncStorage.setItem('aura_user', JSON.stringify(normalizedUser));
                 router.replace('/(tabs)/dashboard');
             } else {
                 setError(t('login.serverError'));

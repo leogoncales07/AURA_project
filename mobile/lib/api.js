@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ── API URL (Uses .env with local IP fallback) ──
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.101.14.223:8000';
+// ── API URL (uses .env — update IP if your machine changes networks) ──
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.144:8000';
 const OWNER_SECRET = 'rRA5utI-P45PjhV3HP1gYLmDCSbFL29l-uqunqqtArV8mohJk9Ov1R2QSGKYkZXN';
 
 async function fetchApi(endpoint, options = {}) {
@@ -31,20 +31,25 @@ async function fetchApi(endpoint, options = {}) {
     try {
         console.log(`[API] ${method} ${API_URL}${endpoint}`, body ? '(with body)' : '');
         const response = await fetch(`${API_URL}${endpoint}`, config);
-        
+
+        let data;
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
-            const data = await response.json();
-            if (!response.ok) {
-                console.warn(`[API Error] ${response.status}:`, data.detail || data);
-                return { error: data.detail || 'API Error', status: response.status };
-            }
-            return { data, status: response.status };
+            data = await response.json();
         } else {
             const text = await response.text();
-            console.warn(`[API Error] Non-JSON response (status ${response.status}):`, text.substring(0, 100));
-            return { error: 'Invalid server response (not JSON)', status: response.status };
+            console.warn(`[API] Non-JSON response (${response.status}):`, text.substring(0, 100));
+            return { error: 'Invalid server response', status: response.status };
         }
+
+        if (!response.ok) {
+            // Handle both Node backend {error:{message}} and Python {detail} formats
+            const errMsg = data?.message || data?.error?.message || data?.detail || 'API Error';
+            console.warn(`[API Error] ${response.status}:`, errMsg);
+            return { error: errMsg, status: response.status };
+        }
+
+        return { data, status: response.status };
     } catch (err) {
         console.error('[API Network Error]:', err);
         return { error: 'Network error or server down', status: 500 };
