@@ -2,7 +2,7 @@ import urllib.request
 import json
 import traceback
 
-key = 'AIzaSyDSqxmIuIUev5y-qJSM5Vxth4jt5Yt2ENk'
+key = 'YOUR_API_KEY_HERE'
 results = {}
 
 def test_api(model, version):

@@ -1,5 +1,5 @@
 const fs = require('fs');
-const key = 'AIzaSyDSqxmIuIUev5y-qJSM5Vxth4jt5Yt2ENk';
+const key = 'YOUR_API_KEY_HERE';
 
 async function testFull() {
   const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${key}`;
