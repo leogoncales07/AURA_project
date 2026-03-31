@@ -2,20 +2,33 @@ import { useState, useEffect, useRef } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, FlatList,
     StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform,
+    Modal, Dimensions
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import { COLORS, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const { width, height } = Dimensions.get('window');
+
 export default function ChatScreen() {
     const { t, locale } = useI18n();
     const insets = useSafeAreaInsets();
+    
+    // Core state
+    const [userId, setUserId] = useState(null);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [sending, setSending] = useState(false);
-    const [userId, setUserId] = useState(null);
+    
+    // Multi-thread state
+    const [threads, setThreads] = useState([]);
+    const [currentThreadId, setCurrentThreadId] = useState(null);
+    const [showHistory, setShowHistory] = useState(false);
+    
     const listRef = useRef(null);
 
     useEffect(() => {
@@ -23,21 +36,41 @@ export default function ChatScreen() {
             if (stored) {
                 const user = JSON.parse(stored);
                 setUserId(user.id);
-                loadHistory(user.id);
+                loadThreads(user.id);
             }
         });
     }, []);
 
-    const loadHistory = async (uid) => {
-        const { data } = await api.getConversations(uid, 20);
+    const loadThreads = async (uid) => {
+        const { data } = await api.getConversations(uid, 50);
         if (data?.conversations) {
-            const mapped = data.conversations.reverse().map((c, i) => ({
+            setThreads(data.conversations);
+            // Auto load first thread if multiple exist
+            if (data.conversations.length > 0 && !currentThreadId) {
+                loadThreadMessages(uid, data.conversations[0].id);
+            }
+        }
+    };
+
+    const loadThreadMessages = async (uid, threadId) => {
+        setCurrentThreadId(threadId);
+        setShowHistory(false);
+        setMessages([]); // Clear visually while loading
+        const { data } = await api.getConversationMessages(uid, threadId);
+        if (data?.messages) {
+            const mapped = data.messages.map((c, i) => ({
                 id: String(i),
                 role: c.role,
                 content: c.message,
             }));
             setMessages(mapped);
         }
+    };
+
+    const handleNewChat = () => {
+        setCurrentThreadId(null);
+        setMessages([]);
+        setShowHistory(false);
     };
 
     const handleSend = async () => {
@@ -49,7 +82,16 @@ export default function ChatScreen() {
         setInput('');
         setSending(true);
 
-        const { data, error } = await api.chat(userId, text, locale);
+        const { data, error } = await api.chat(userId, text, currentThreadId, locale);
+        
+        if (data?.response) {
+            // New thread logic
+            if (!currentThreadId && data.conversation_id) {
+                setCurrentThreadId(data.conversation_id);
+                loadThreads(userId);
+            }
+        }
+
         const botMsg = {
             id: String(Date.now() + 1),
             role: 'assistant',
@@ -66,160 +108,291 @@ export default function ChatScreen() {
                     <Text style={styles.botAvatarText}>A</Text>
                 </View>
             )}
-            <View style={[styles.bubble, item.role === 'user' ? styles.bubbleUser : styles.bubbleBot]}>
-                <Text style={[styles.bubbleText, item.role === 'user' && styles.bubbleTextUser]}>
-                    {item.content}
-                </Text>
-            </View>
+            
+            {item.role === 'user' ? (
+                // User Bubble - Gradient
+                <View style={[styles.bubbleWrap, styles.bubbleWrapRight]}>
+                    <LinearGradient
+                        colors={[COLORS.primary, COLORS.secondary]}
+                        start={{x: 0, y: 0}} end={{x: 1, y: 1}}
+                        style={[styles.bubble, styles.bubbleUser]}
+                    >
+                        <Text style={styles.bubbleTextUser}>{item.content}</Text>
+                    </LinearGradient>
+                </View>
+            ) : (
+                // Bot Bubble - Glass
+                <View style={[styles.bubbleWrap, styles.bubbleWrapLeft]}>
+                    <BlurView intensity={40} tint="dark" style={[styles.bubble, styles.bubbleBot]}>
+                        <Text style={styles.bubbleTextBot}>{item.content}</Text>
+                    </BlurView>
+                </View>
+            )}
         </View>
     );
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
-            {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-                <View style={styles.botAvatar}>
-                    <Text style={styles.botAvatarText}>A</Text>
-                </View>
-                <View>
-                    <Text style={styles.botName}>{t('chat.botName')}</Text>
-                    <Text style={styles.botStatus}>● {t('chat.botStatus')}</Text>
-                </View>
-            </View>
-
-            {/* Messages */}
-            <FlatList
-                ref={listRef}
-                data={messages}
-                renderItem={renderMessage}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.messageList}
-                onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-                ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyEmoji}>💬</Text>
-                        <Text style={styles.emptyText}>{t('chat.emptyState')}</Text>
-                    </View>
-                }
-                ListFooterComponent={
-                    sending ? (
-                        <View style={styles.msgRowLeft}>
-                            <View style={styles.botAvatar}>
-                                <Text style={styles.botAvatarText}>A</Text>
-                            </View>
-                            <View style={[styles.bubble, styles.bubbleBot, styles.typingBubble]}>
-                                <Text style={styles.typingDots}>• • •</Text>
-                            </View>
-                        </View>
-                    ) : null
-                }
+        <View style={styles.root}>
+            {/* Ambient Background Grid / Blur base */}
+            <LinearGradient
+                colors={['rgba(6,182,212,0.1)', 'transparent']}
+                style={[styles.ambientBlob, { top: -100, left: -50 }]}
+                start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
             />
 
-            {/* Input */}
-            <View style={[styles.inputArea, { paddingBottom: insets.bottom + Spacing.sm }]}>
-                <TextInput
-                    style={styles.input}
-                    placeholder={t('chat.placeholder')}
-                    placeholderTextColor={COLORS.textTertiary}
-                    value={input}
-                    onChangeText={setInput}
-                    onSubmitEditing={handleSend}
-                    returnKeyType="send"
-                    editable={!sending}
-                    multiline
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+                {/* Header (Glass) */}
+                <BlurView intensity={30} tint="dark" style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+                    <View style={styles.headerLeft}>
+                        <View style={styles.botAvatar}>
+                            <Text style={styles.botAvatarText}>A</Text>
+                        </View>
+                        <View>
+                            <Text style={styles.botName}>{t('chat.botName')}</Text>
+                            <Text style={styles.botStatus}>● {t('chat.botStatus')}</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity style={styles.historyBtn} onPress={() => setShowHistory(true)}>
+                        <Text style={styles.historyBtnIcon}>☰</Text>
+                    </TouchableOpacity>
+                </BlurView>
+
+                {/* Messages */}
+                <FlatList
+                    ref={listRef}
+                    data={messages}
+                    renderItem={renderMessage}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.messageList}
+                    onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+                    ListEmptyComponent={
+                        <View style={styles.emptyState}>
+                            <Text style={styles.emptyEmoji}>✨</Text>
+                            <Text style={styles.emptyTitle}>{t('chat.botName')}</Text>
+                            <Text style={styles.emptyText}>{t('chat.emptyState')}</Text>
+                        </View>
+                    }
+                    ListFooterComponent={
+                        sending ? (
+                            <View style={styles.msgRowLeft}>
+                                <View style={styles.botAvatar}>
+                                    <Text style={styles.botAvatarText}>A</Text>
+                                </View>
+                                <BlurView intensity={40} tint="dark" style={[styles.bubble, styles.bubbleBot, styles.typingBubble]}>
+                                    <Text style={styles.typingDots}>• • •</Text>
+                                </BlurView>
+                            </View>
+                        ) : null
+                    }
                 />
-                <TouchableOpacity
-                    style={[styles.sendBtn, (!input.trim() || sending) && styles.sendBtnDisabled]}
-                    onPress={handleSend}
-                    disabled={!input.trim() || sending}
-                >
-                    {sending ? (
-                        <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                        <Text style={styles.sendBtnText}>↑</Text>
-                    )}
-                </TouchableOpacity>
-            </View>
-        </KeyboardAvoidingView>
+
+                {/* Input Area (Glass) */}
+                <BlurView intensity={50} tint="dark" style={[styles.inputArea, { paddingBottom: insets.bottom + Spacing.sm }]}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder={t('chat.placeholder')}
+                        placeholderTextColor={COLORS.textTertiary}
+                        value={input}
+                        onChangeText={setInput}
+                        onSubmitEditing={handleSend}
+                        returnKeyType="send"
+                        editable={!sending}
+                        multiline
+                    />
+                    <TouchableOpacity
+                        style={[styles.sendBtnWrap, (!input.trim() || sending) && styles.sendBtnDisabled]}
+                        onPress={handleSend}
+                        disabled={!input.trim() || sending}
+                    >
+                        <LinearGradient
+                            colors={[COLORS.primary, COLORS.secondary]}
+                            style={styles.sendBtn}
+                            start={{x:0, y:0}} end={{x:1, y:1}}
+                        >
+                            {sending ? (
+                                <ActivityIndicator color="#fff" size="small" />
+                            ) : (
+                                <Text style={styles.sendBtnText}>↑</Text>
+                            )}
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </BlurView>
+            </KeyboardAvoidingView>
+
+            {/* Sliding History Modal */}
+            <Modal
+                visible={showHistory}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowHistory(false)}
+            >
+                <BlurView intensity={90} tint="dark" style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.lg }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Chat History</Text>
+                            <TouchableOpacity onPress={() => setShowHistory(false)} style={styles.closeBtn}>
+                                <Text style={styles.closeBtnText}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity style={styles.newChatCard} onPress={handleNewChat}>
+                            <LinearGradient colors={['rgba(16,185,129,0.2)', 'transparent']} style={StyleSheet.absoluteFillObject} />
+                            <Text style={styles.newChatText}>+ New Conversation</Text>
+                        </TouchableOpacity>
+
+                        <FlatList
+                            data={threads}
+                            keyExtractor={(item) => String(item.id)}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity 
+                                    style={[styles.threadCard, currentThreadId === item.id && styles.threadCardActive]}
+                                    onPress={() => loadThreadMessages(userId, item.id)}
+                                >
+                                    <Text style={[styles.threadTitle, currentThreadId === item.id && styles.threadTitleActive]} numberOfLines={1}>
+                                        💬 {item.title || 'Conversation'}
+                                    </Text>
+                                    <Text style={styles.threadDate}>{new Date(item.updated_at).toLocaleDateString()}</Text>
+                                </TouchableOpacity>
+                            )}
+                            contentContainerStyle={styles.threadList}
+                        />
+                    </View>
+                </BlurView>
+            </Modal>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.bg },
+    root: { flex: 1, backgroundColor: COLORS.bg },
+    keyboardView: { flex: 1 },
+
+    ambientBlob: {
+        position: 'absolute',
+        width: width * 1.5,
+        height: height * 0.5,
+        borderRadius: 9999,
+        transform: [{ scale: 1.5 }],
+    },
 
     header: {
-        flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-        backgroundColor: COLORS.surface,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         padding: Spacing.md,
-        borderBottomWidth: 1, borderBottomColor: COLORS.border,
+        borderBottomWidth: 1, borderBottomColor: COLORS.divider,
+        zIndex: 10,
     },
-    botName: { ...Fonts.bold, color: COLORS.textPrimary, fontSize: 16 },
-    botStatus: { ...Fonts.regular, color: COLORS.accentMint, fontSize: 12 },
+    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+    botName: { ...Fonts.serif, fontWeight: '500', color: COLORS.textPrimary, fontSize: 18, letterSpacing: 0.5 },
+    botStatus: { ...Fonts.semibold, color: COLORS.accentMint, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
 
     botAvatar: {
-        width: 38, height: 38, borderRadius: 19,
-        backgroundColor: COLORS.primary,
+        width: 40, height: 40, borderRadius: 20,
+        backgroundColor: COLORS.primaryDim,
         alignItems: 'center', justifyContent: 'center',
+        borderWidth: 1, borderColor: COLORS.primary,
     },
-    botAvatarText: { ...Fonts.bold, color: '#fff', fontSize: 18 },
+    botAvatarText: { ...Fonts.bold, color: COLORS.primary, fontSize: 18 },
 
-    messageList: { padding: Spacing.md, paddingBottom: Spacing.sm },
+    historyBtn: {
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        alignItems: 'center', justifyContent: 'center',
+        borderWidth: 1, borderColor: COLORS.border,
+    },
+    historyBtnIcon: { fontSize: 20, color: COLORS.textPrimary },
 
-    emptyState: { alignItems: 'center', marginTop: 80 },
-    emptyEmoji: { fontSize: 56, marginBottom: Spacing.md },
+    messageList: { padding: Spacing.md, paddingBottom: Spacing.xl },
+
+    emptyState: { alignItems: 'center', marginTop: height * 0.15 },
+    emptyEmoji: { fontSize: 64, marginBottom: Spacing.md },
+    emptyTitle: { ...Fonts.serif, fontSize: 28, color: COLORS.textPrimary, marginBottom: Spacing.xs },
     emptyText: { ...Fonts.regular, color: COLORS.textSecondary, fontSize: 15, textAlign: 'center' },
 
-    msgRow: { flexDirection: 'row', marginBottom: Spacing.sm, alignItems: 'flex-end', gap: Spacing.xs },
+    msgRow: { flexDirection: 'row', marginBottom: Spacing.md, alignItems: 'flex-end', gap: Spacing.sm },
     msgRowLeft: { justifyContent: 'flex-start' },
     msgRowRight: { justifyContent: 'flex-end' },
 
-    bubble: {
-        maxWidth: '78%', padding: Spacing.sm + 4,
-        borderRadius: Radius.lg, flexShrink: 1,
+    bubbleWrap: {
+        maxWidth: '80%',
+        borderRadius: Radius.xl,
+        overflow: 'hidden',
     },
+    bubbleWrapLeft: { borderBottomLeftRadius: 4 },
+    bubbleWrapRight: { borderBottomRightRadius: 4 },
+
+    bubble: { padding: Spacing.md },
     bubbleUser: {
-        backgroundColor: COLORS.primary,
-        borderBottomRightRadius: 4,
+        // LinearGradient applied automatically over this
     },
     bubbleBot: {
-        backgroundColor: COLORS.surface,
+        backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1, borderColor: COLORS.border,
-        borderBottomLeftRadius: 4,
     },
-    bubbleText: { ...Fonts.regular, color: COLORS.textPrimary, fontSize: 15, lineHeight: 22 },
-    bubbleTextUser: { color: '#fff' },
+    
+    bubbleTextUser: { ...Fonts.regular, color: '#fff', fontSize: 16, lineHeight: 22 },
+    bubbleTextBot: { ...Fonts.regular, color: COLORS.textPrimary, fontSize: 16, lineHeight: 24 },
 
-    typingBubble: { paddingVertical: Spacing.sm },
-    typingDots: { ...Fonts.bold, color: COLORS.textSecondary, letterSpacing: 4, fontSize: 16 },
+    typingBubble: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg },
+    typingDots: { ...Fonts.heavy, color: COLORS.textSecondary, letterSpacing: 4, fontSize: 18 },
 
     inputArea: {
         flexDirection: 'row', alignItems: 'flex-end',
         padding: Spacing.md,
-        backgroundColor: COLORS.surface,
-        borderTopWidth: 1, borderTopColor: COLORS.border,
+        borderTopWidth: 1, borderTopColor: COLORS.divider,
         gap: Spacing.sm,
     },
     input: {
         flex: 1,
-        backgroundColor: COLORS.surfaceAlt,
+        backgroundColor: 'rgba(0,0,0,0.2)',
         color: COLORS.textPrimary,
         borderRadius: Radius.xl,
         paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        fontSize: 15,
+        paddingTop: Spacing.md,
+        paddingBottom: Spacing.md,
+        fontSize: 16,
         maxHeight: 120,
         ...Fonts.regular,
         borderWidth: 1, borderColor: COLORS.border,
     },
-    sendBtn: {
-        width: 44, height: 44, borderRadius: 22,
-        backgroundColor: COLORS.primary,
-        alignItems: 'center', justifyContent: 'center',
+    sendBtnWrap: {
+        width: 48, height: 48, borderRadius: 24, overflow: 'hidden'
     },
-    sendBtnDisabled: { opacity: 0.4 },
-    sendBtnText: { ...Fonts.bold, color: '#fff', fontSize: 22, marginBottom: 2 },
+    sendBtn: {
+        flex: 1, alignItems: 'center', justifyContent: 'center',
+    },
+    sendBtnDisabled: { opacity: 0.5 },
+    sendBtnText: { ...Fonts.heavy, color: '#fff', fontSize: 24, marginBottom: 4 },
+
+    /* Modal Styles */
+    modalOverlay: { flex: 1 },
+    modalContent: { flex: 1, backgroundColor: 'rgba(2, 6, 23, 0.6)', padding: Spacing.lg },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.xl },
+    modalTitle: { ...Fonts.serif, fontSize: 28, color: COLORS.textPrimary },
+    closeBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20 },
+    closeBtnText: { color: COLORS.textPrimary, fontSize: 16, ...Fonts.bold },
+
+    newChatCard: {
+        padding: Spacing.lg, borderRadius: Radius.lg,
+        borderWidth: 1, borderColor: COLORS.primary,
+        alignItems: 'center', justifyContent: 'center',
+        marginBottom: Spacing.lg, overflow: 'hidden'
+    },
+    newChatText: { ...Fonts.semibold, color: COLORS.primary, fontSize: 16 },
+
+    threadList: { paddingBottom: 100 },
+    threadCard: {
+        padding: Spacing.md, borderRadius: Radius.md,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        marginBottom: Spacing.sm, borderWidth: 1, borderColor: 'transparent'
+    },
+    threadCardActive: {
+        backgroundColor: 'rgba(16,185,129,0.1)',
+        borderColor: 'rgba(16,185,129,0.3)',
+    },
+    threadTitle: { ...Fonts.medium, color: COLORS.textSecondary, fontSize: 16, marginBottom: 4 },
+    threadTitleActive: { color: COLORS.primary, ...Fonts.bold },
+    threadDate: { ...Fonts.regular, color: COLORS.textTertiary, fontSize: 12 },
 });

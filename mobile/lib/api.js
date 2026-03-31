@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ── PUBLIC TUNNEL URL (Recommended for real devices) ──
-const API_URL = 'https://breezy-news-kneel.loca.lt';
-// const API_URL = 'http://10.20.40.45:8000'; // Local IP fallback
+// ── API URL (Uses .env with local IP fallback) ──
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.101.14.223:8000';
 const OWNER_SECRET = 'rRA5utI-P45PjhV3HP1gYLmDCSbFL29l-uqunqqtArV8mohJk9Ov1R2QSGKYkZXN';
 
 async function fetchApi(endpoint, options = {}) {
@@ -85,13 +84,15 @@ export const api = {
     getHistory: (userId) => fetchApi(`/assessments/${userId}/history`),
 
     // Companion Chat
-    chat: (userId, message, language = 'pt') =>
+    chat: (userId, message, conversationId = null, language = 'pt') =>
         fetchApi('/companion/chat', {
             method: 'POST',
-            body: { user_id: userId, message, language },
+            body: { user_id: userId, message, conversation_id: conversationId, language },
         }),
     getConversations: (userId, limit = 50) =>
         fetchApi(`/companion/${userId}/conversations?limit=${limit}`),
+    getConversationMessages: (userId, conversationId) =>
+        fetchApi(`/companion/${userId}/conversations/${conversationId}`),
 
     // Reports
     generateReport: (userId, context = '') =>
