@@ -1,4 +1,11 @@
 {
+    "tabs": {
+        "dashboard":   "Home",
+        "chat":        "Chat",
+        "assessment":  "Tests",
+        "meditations": "Pause",
+        "reports":     "Progress"
+    },
     "common": {
         "error": "Something went wrong. Try again.",
         "cancel": "Cancel",
@@ -30,6 +37,7 @@
         "loading": "Processing...",
         "invalidCredentials": "Invalid credentials. Please try again.",
         "serverError": "Unexpected server error.",
+        "networkError": "Cannot reach server. Check your connection.",
         "demoFailed": "Demo access failed. Check the backend.",
         "demoButton": "Enter Presentation Mode",
         "forgotPassword": "Forgot your password?",
@@ -167,5 +175,18 @@
         "tests": "Tests",
         "pause": "Pause",
         "progress": "Progress"
+    },
+    "settings": {
+        "title": "Settings",
+        "account": "ACCOUNT",
+        "language": "LANGUAGE",
+        "appearance": "APPEARANCE",
+        "darkMode": "Dark Mode",
+        "lightMode": "Light Mode",
+        "theme": "Theme",
+        "logout": "Sign Out",
+        "loggingOut": "Signing out...",
+        "version": "Version",
+        "profile": "Profile"
     }
 }

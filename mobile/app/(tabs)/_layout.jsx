@@ -1,79 +1,88 @@
 import { Tabs } from 'expo-router';
-import { View, StyleSheet, Platform } from 'react-native';
-import { COLORS } from '../../constants/Theme';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import { useTheme, Fonts } from '../../constants/Theme';
+import { useI18n } from '../../i18n';
 
-function TabIcon({ name, focused }) {
-    const icons = {
-        dashboard: focused ? '⚡' : '⚡',
-        chat: focused ? '💬' : '💬',
-        assessment: focused ? '📋' : '📋',
-        meditations: focused ? '🌬️' : '🌬️',
-        reports: focused ? '📊' : '📊',
+function TabSymbol({ symbol, focused, colors }) {
+    const symbols = {
+        'house.fill':      '🏠',
+        'bubble.left.fill':'💬',
+        checklist:         '📋',
+        wind:              '🌬️',
+        'chart.bar.fill':  '📊',
     };
     return (
-        <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-            <View style={styles.emojiWrap}>
-                <View style={focused ? styles.activeDot : null} />
-            </View>
-        </View>
+        <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.45 }}>
+            {symbols[symbol] || '•'}
+        </Text>
     );
 }
 
 export default function TabsLayout() {
+    const { colors, theme } = useTheme();
+    const { t } = useI18n();
+    const isDark = theme === 'dark';
+
     return (
         <Tabs
             screenOptions={({ route }) => ({
                 headerShown: false,
-                tabBarStyle: styles.tabBar,
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textTertiary,
+                tabBarStyle: [styles.tabBar, {
+                    backgroundColor: colors.tabBar,
+                    borderTopColor: colors.tabBorder,
+                    shadowColor: isDark ? '#000' : 'rgba(0,0,0,0.08)',
+                }],
+                tabBarActiveTintColor: colors.primary,
+                tabBarInactiveTintColor: colors.textTertiary,
                 tabBarLabelStyle: styles.tabLabel,
                 tabBarItemStyle: styles.tabItem,
-                tabBarBackground: () => <View style={styles.tabBarBg} />,
+                tabBarBackground: () => (
+                    <View style={[styles.tabBarBg, { backgroundColor: colors.tabBar }]} />
+                ),
             })}
         >
             <Tabs.Screen
                 name="dashboard"
                 options={{
-                    title: 'Início',
+                    title: t('tabs.dashboard'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="house.fill" focused={focused} />
+                        <TabSymbol symbol="house.fill" focused={focused} colors={colors} />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="chat"
                 options={{
-                    title: 'Chat',
+                    title: t('tabs.chat'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="bubble.left.fill" focused={focused} />
+                        <TabSymbol symbol="bubble.left.fill" focused={focused} colors={colors} />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="assessment"
                 options={{
-                    title: 'Testes',
+                    title: t('tabs.assessment'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="checklist" focused={focused} />
+                        <TabSymbol symbol="checklist" focused={focused} colors={colors} />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="meditations"
                 options={{
-                    title: 'Pausar',
+                    title: t('tabs.meditations'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="wind" focused={focused} />
+                        <TabSymbol symbol="wind" focused={focused} colors={colors} />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="reports"
                 options={{
-                    title: 'Progresso',
+                    title: t('tabs.reports'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="chart.bar.fill" focused={focused} />
+                        <TabSymbol symbol="chart.bar.fill" focused={focused} colors={colors} />
                     ),
                 }}
             />
@@ -81,45 +90,18 @@ export default function TabsLayout() {
     );
 }
 
-// Simple text-symbol fallback that works cross-platform
-function TabSymbol({ symbol, focused }) {
-    const symbols = {
-        'house.fill': '🏠',
-        'bubble.left.fill': '💬',
-        checklist: '📋',
-        wind: '🌬️',
-        'chart.bar.fill': '📊',
-    };
-    const { Text } = require('react-native');
-    return (
-        <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>
-            {symbols[symbol] || '•'}
-        </Text>
-    );
-}
-
 const styles = StyleSheet.create({
     tabBar: {
-        backgroundColor: COLORS.tabBar,
-        borderTopColor: COLORS.tabBorder,
         borderTopWidth: 0.5,
         height: Platform.OS === 'ios' ? 84 : 64,
         paddingBottom: Platform.OS === 'ios' ? 24 : 8,
         paddingTop: 8,
         elevation: 20,
-        shadowColor: '#000',
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.25,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: -4 },
     },
-    tabBarBg: { flex: 1, backgroundColor: COLORS.tabBar },
+    tabBarBg: { flex: 1 },
     tabLabel: { fontSize: 10, fontWeight: '600', letterSpacing: 0.3 },
     tabItem: { paddingTop: 4 },
-    iconWrap: { alignItems: 'center', justifyContent: 'center' },
-    iconWrapActive: {},
-    emojiWrap: {},
-    activeDot: {
-        width: 4, height: 4, borderRadius: 2,
-        backgroundColor: COLORS.primary, marginTop: 2,
-    },
 });

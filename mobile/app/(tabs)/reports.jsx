@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { useI18n } from '../../i18n';
-import { COLORS, Fonts, Spacing, Radius } from '../../constants/Theme';
+import { useTheme, COLORS, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -20,10 +20,10 @@ const SAVED_REPORTS_KEY = 'aura_saved_reports';
 
 // ── Risk badge colours ──────────────────────────────────────────
 const riskColors = {
-    low: COLORS.accentMint,
-    moderate: COLORS.accentAmber,
-    high: COLORS.accentPink,
-    severe: COLORS.accentPink,
+    low: '#30D158',
+    moderate: '#FFB340',
+    high: '#FF6B9D',
+    severe: '#FF6B9D',
 };
 
 // ── PDF HTML builder ────────────────────────────────────────────
@@ -253,6 +253,7 @@ function buildPdfHtml({ locale, userName, monthLabel, generatedDate, data }) {
 // ── Main Component ──────────────────────────────────────────────
 export default function ReportsScreen() {
     const { t, locale } = useI18n();
+    const { colors } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const isPt = locale === 'pt';
@@ -494,8 +495,8 @@ export default function ReportsScreen() {
     // ── Loading state ──
     if (loading) {
         return (
-            <View style={[styles.container, styles.center]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
+            <View style={[styles.container, styles.center, { backgroundColor: colors.bg }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
@@ -505,18 +506,16 @@ export default function ReportsScreen() {
 
     return (
         <ScrollView
-            style={styles.container}
+            style={[styles.container, { backgroundColor: colors.bg }]}
             contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         >
             {/* ── PAGE TITLE ── */}
-            <Text style={styles.pageTitle}>{t('reports.title')}</Text>
+            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>{t('reports.title')}</Text>
 
-            {/* ══════════════════════════════════════════════ */}
-            {/* SECTION A — WEEKLY CHART                       */}
-            {/* ══════════════════════════════════════════════ */}
-            <Text style={styles.sectionLabel}>{t('reports.weeklySummary')}</Text>
-            <View style={styles.chartCard}>
+            {/* ══════════ SECTION A — WEEKLY CHART ══════════ */}
+            <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>{t('reports.weeklySummary')}</Text>
+            <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.chartBars}>
                     {weekStats.chartData.map((val, i) => (
                         <View key={i} style={styles.barWrapper}>
@@ -525,8 +524,8 @@ export default function ReportsScreen() {
                                 {
                                     height: Math.max(val * CHART_HEIGHT / 100, 4),
                                     backgroundColor: i === weekStats.todayIndex
-                                        ? COLORS.primary
-                                        : val > 0 ? COLORS.accentBlue : COLORS.border,
+                                        ? colors.primary
+                                        : val > 0 ? colors.accentBlue : colors.border,
                                     opacity: i > weekStats.todayIndex ? 0.3 : 1,
                                 }
                             ]} />
@@ -537,53 +536,52 @@ export default function ReportsScreen() {
                     {DAYS.map((day, i) => (
                         <Text key={i} style={[
                             styles.chartDayLabel,
-                            i === weekStats.todayIndex && styles.chartDayLabelActive,
+                            { color: colors.textTertiary },
+                            i === weekStats.todayIndex && { color: colors.primary, fontWeight: '700' },
                         ]}>
                             {day}
                         </Text>
                     ))}
                 </View>
                 {weekStats.streak === 0 && (
-                    <Text style={styles.noDataText}>
+                    <Text style={[styles.noDataText, { color: colors.textSecondary }]}>
                         {isPt ? 'Registe o seu humor diariamente.' : 'Log your mood daily to populate the chart.'}
                     </Text>
                 )}
             </View>
 
             {/* Stats row */}
-            <Text style={styles.sectionLabel}>{t('reports.statistics')}</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>{t('reports.statistics')}</Text>
             <View style={styles.statsRow}>
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Text style={styles.statEmoji}>📈</Text>
-                    <Text style={styles.statValue}>{weekStats.avgMood > 0 ? `${weekStats.avgMood}%` : '—'}</Text>
-                    <Text style={styles.statLabel}>{t('reports.avgMood')}</Text>
+                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>{weekStats.avgMood > 0 ? `${weekStats.avgMood}%` : '—'}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('reports.avgMood')}</Text>
                 </View>
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Text style={styles.statEmoji}>🗓️</Text>
-                    <Text style={styles.statValue}>{weekStats.streak}</Text>
-                    <Text style={styles.statLabel}>{t('reports.consecutiveDays')}</Text>
+                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>{weekStats.streak}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('reports.consecutiveDays')}</Text>
                 </View>
             </View>
 
-            {/* ══════════════════════════════════════════════ */}
-            {/* SECTION B — MONTHLY REPORT GENERATOR           */}
-            {/* ══════════════════════════════════════════════ */}
-            <Text style={[styles.sectionLabel, { marginTop: Spacing.md }]}>{t('reports.monthlyReport')}</Text>
+            {/* ══════════ SECTION B — MONTHLY REPORT ══════════ */}
+            <Text style={[styles.sectionLabel, { marginTop: Spacing.md, color: colors.textTertiary }]}>{t('reports.monthlyReport')}</Text>
 
-            <View style={styles.reportCard}>
+            <View style={[styles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 {/* Header row */}
                 <View style={styles.reportCardHeader}>
                     <View style={styles.reportCardIconWrap}>
                         <Text style={styles.reportCardIcon}>📄</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.reportCardTitle}>{t('reports.monthlyReport')}</Text>
-                        <Text style={styles.reportCardDesc}>{t('reports.monthlyReportDesc')}</Text>
+                        <Text style={[styles.reportCardTitle, { color: colors.textPrimary }]}>{t('reports.monthlyReport')}</Text>
+                        <Text style={[styles.reportCardDesc, { color: colors.textSecondary }]}>{t('reports.monthlyReportDesc')}</Text>
                     </View>
                 </View>
 
                 {/* Month selector */}
-                <Text style={styles.monthSelectLabel}>{t('reports.selectMonth')}</Text>
+                <Text style={[styles.monthSelectLabel, { color: colors.textTertiary }]}>{t('reports.selectMonth')}</Text>
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -597,7 +595,8 @@ export default function ReportsScreen() {
                                 key={m}
                                 style={[
                                     styles.monthChip,
-                                    isSelected && styles.monthChipActive,
+                                    { backgroundColor: colors.card, borderColor: colors.border },
+                                    isSelected && { backgroundColor: 'rgba(16,185,129,0.15)', borderColor: colors.primary },
                                     isFuture && styles.monthChipDisabled,
                                 ]}
                                 onPress={() => { if (!isFuture) { setSelectedMonth(i); setReportData(null); } }}
@@ -606,7 +605,8 @@ export default function ReportsScreen() {
                             >
                                 <Text style={[
                                     styles.monthChipText,
-                                    isSelected && styles.monthChipTextActive,
+                                    { color: colors.textSecondary },
+                                    isSelected && { color: '#10b981', fontWeight: '700' },
                                     isFuture && styles.monthChipTextDisabled,
                                 ]}>
                                     {m}
@@ -617,7 +617,7 @@ export default function ReportsScreen() {
                 </ScrollView>
 
                 {/* Selected month label */}
-                <Text style={styles.selectedMonthText}>
+                <Text style={[styles.selectedMonthText, { color: colors.textPrimary }]}>
                     {monthNames[selectedMonth]} {selectedYear}
                 </Text>
 
@@ -791,12 +791,12 @@ export default function ReportsScreen() {
 
 // ── Styles ──────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.bg },
+    container: { flex: 1 },
     center: { alignItems: 'center', justifyContent: 'center' },
     content: { padding: Spacing.md, paddingBottom: 48 },
-    pageTitle: { ...Fonts.heavy, fontSize: 28, color: COLORS.textPrimary, marginBottom: Spacing.lg },
+    pageTitle: { ...Fonts.heavy, fontSize: 28, marginBottom: Spacing.lg },
     sectionLabel: {
-        ...Fonts.semibold, fontSize: 12, color: COLORS.textTertiary,
+        ...Fonts.semibold, fontSize: 12,
         textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: Spacing.sm,
     },
     noDataText: { ...Fonts.regular, fontSize: 12, color: COLORS.textTertiary, textAlign: 'center', marginTop: Spacing.sm },

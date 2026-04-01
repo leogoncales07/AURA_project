@@ -1,4 +1,11 @@
 {
+    "tabs": {
+        "dashboard":   "Accueil",
+        "chat":        "Chat",
+        "assessment":  "Tests",
+        "meditations": "Pause",
+        "reports":     "Progrès"
+    },
     "common": {
         "error": "Une erreur est survenue. Réessayez.",
         "cancel": "Annuler",
@@ -134,5 +141,18 @@
         "tests": "Tests",
         "pause": "Pause",
         "progress": "Progrès"
+    },
+    "settings": {
+        "title": "Paramètres",
+        "account": "COMPTE",
+        "language": "LANGUE",
+        "appearance": "APPARENCE",
+        "darkMode": "Mode Sombre",
+        "lightMode": "Mode Clair",
+        "theme": "Thème",
+        "logout": "Se déconnecter",
+        "loggingOut": "Déconnexion...",
+        "version": "Version",
+        "profile": "Profil"
     }
 }

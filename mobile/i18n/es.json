@@ -1,4 +1,11 @@
 {
+    "tabs": {
+        "dashboard": "Inicio",
+        "chat": "Chat",
+        "assessment": "Tests",
+        "meditations": "Pausar",
+        "reports": "Progreso"
+    },
     "common": {
         "error": "Algo salió mal. Inténtelo de nuevo.",
         "cancel": "Cancelar",
@@ -134,5 +141,18 @@
         "tests": "Tests",
         "pause": "Pausar",
         "progress": "Progreso"
+    },
+    "settings": {
+        "title": "Ajustes",
+        "account": "CUENTA",
+        "language": "IDIOMA",
+        "appearance": "APARIENCIA",
+        "darkMode": "Modo Oscuro",
+        "lightMode": "Modo Claro",
+        "theme": "Tema",
+        "logout": "Cerrar Sesión",
+        "loggingOut": "Cerrando...",
+        "version": "Versión",
+        "profile": "Perfil"
     }
 }

@@ -1,4 +1,11 @@
 {
+    "tabs": {
+        "dashboard": "Start",
+        "chat": "Chat",
+        "assessment": "Tests",
+        "meditations": "Pause",
+        "reports": "Fortschritt"
+    },
     "common": {
         "error": "Etwas ist schief gelaufen. Bitte erneut versuchen.",
         "cancel": "Abbrechen",
@@ -134,5 +141,18 @@
         "tests": "Tests",
         "pause": "Pause",
         "progress": "Fortschritt"
+    },
+    "settings": {
+        "title": "Einstellungen",
+        "account": "KONTO",
+        "language": "SPRACHE",
+        "appearance": "DARSTELLUNG",
+        "darkMode": "Dunkler Modus",
+        "lightMode": "Heller Modus",
+        "theme": "Thema",
+        "logout": "Abmelden",
+        "loggingOut": "Abmelden...",
+        "version": "Version",
+        "profile": "Profil"
     }
 }

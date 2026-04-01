@@ -9,13 +9,15 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useI18n } from '../../i18n';
-import { COLORS, Fonts, Spacing, Radius } from '../../constants/Theme';
+import { COLORS, useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
 export default function ChatScreen() {
     const { t, locale } = useI18n();
+    const { theme, colors } = useTheme();
+    const isDark = theme === 'dark';
     const insets = useSafeAreaInsets();
     
     // Core state
@@ -132,7 +134,7 @@ export default function ChatScreen() {
     );
 
     return (
-        <View style={styles.root}>
+        <View style={[styles.root, { backgroundColor: colors.bg }]}>
             {/* Ambient Background Grid / Blur base */}
             <LinearGradient
                 colors={['rgba(6,182,212,0.1)', 'transparent']}
@@ -144,21 +146,21 @@ export default function ChatScreen() {
                 style={styles.keyboardView}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                {/* Header (Glass) */}
-                <BlurView intensity={30} tint="dark" style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+                {/* Header */}
+                <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.divider, paddingTop: insets.top + Spacing.sm }]}>
                     <View style={styles.headerLeft}>
-                        <View style={styles.botAvatar}>
-                            <Text style={styles.botAvatarText}>A</Text>
+                        <View style={[styles.botAvatar, { backgroundColor: colors.primaryDim, borderColor: colors.primary }]}>
+                            <Text style={[styles.botAvatarText, { color: colors.primary }]}>A</Text>
                         </View>
                         <View>
-                            <Text style={styles.botName}>{t('chat.botName')}</Text>
-                            <Text style={styles.botStatus}>● {t('chat.botStatus')}</Text>
+                            <Text style={[styles.botName, { color: colors.textPrimary }]}>{t('chat.botName')}</Text>
+                            <Text style={[styles.botStatus, { color: colors.accentMint }]}>● {t('chat.botStatus')}</Text>
                         </View>
                     </View>
-                    <TouchableOpacity style={styles.historyBtn} onPress={() => setShowHistory(true)}>
-                        <Text style={styles.historyBtnIcon}>☰</Text>
+                    <TouchableOpacity style={[styles.historyBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]} onPress={() => setShowHistory(true)}>
+                        <Text style={[styles.historyBtnIcon, { color: colors.textPrimary }]}>☰</Text>
                     </TouchableOpacity>
-                </BlurView>
+                </View>
 
                 {/* Messages */}
                 <FlatList
@@ -171,15 +173,15 @@ export default function ChatScreen() {
                     ListEmptyComponent={
                         <View style={styles.emptyState}>
                             <Text style={styles.emptyEmoji}>✨</Text>
-                            <Text style={styles.emptyTitle}>{t('chat.botName')}</Text>
-                            <Text style={styles.emptyText}>{t('chat.emptyState')}</Text>
+                            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('chat.botName')}</Text>
+                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('chat.emptyState')}</Text>
                         </View>
                     }
                     ListFooterComponent={
                         sending ? (
                             <View style={styles.msgRowLeft}>
-                                <View style={styles.botAvatar}>
-                                    <Text style={styles.botAvatarText}>A</Text>
+                                <View style={[styles.botAvatar, { backgroundColor: colors.primaryDim, borderColor: colors.primary }]}>
+                                    <Text style={[styles.botAvatarText, { color: colors.primary }]}>A</Text>
                                 </View>
                                 <BlurView intensity={40} tint="dark" style={[styles.bubble, styles.bubbleBot, styles.typingBubble]}>
                                     <Text style={styles.typingDots}>• • •</Text>
@@ -189,10 +191,10 @@ export default function ChatScreen() {
                     }
                 />
 
-                {/* Input Area (Glass) */}
-                <BlurView intensity={50} tint="dark" style={[styles.inputArea, { paddingBottom: insets.bottom + Spacing.sm }]}>
+                {/* Input Area */}
+                <View style={[styles.inputArea, { backgroundColor: colors.surface, borderTopColor: colors.divider, paddingBottom: insets.bottom + Spacing.sm }]}>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { backgroundColor: colors.inputBg, color: colors.textPrimary, borderColor: colors.border }]}
                         placeholder={t('chat.placeholder')}
                         placeholderTextColor={COLORS.textTertiary}
                         value={input}
@@ -219,7 +221,7 @@ export default function ChatScreen() {
                             )}
                         </LinearGradient>
                     </TouchableOpacity>
-                </BlurView>
+                </View>
             </KeyboardAvoidingView>
 
             {/* Sliding History Modal */}
@@ -267,7 +269,7 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: COLORS.bg },
+    root: { flex: 1 },
     keyboardView: { flex: 1 },
 
     ambientBlob: {
@@ -281,12 +283,12 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         padding: Spacing.md,
-        borderBottomWidth: 1, borderBottomColor: COLORS.divider,
+        borderBottomWidth: 1,
         zIndex: 10,
     },
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-    botName: { ...Fonts.serif, fontWeight: '500', color: COLORS.textPrimary, fontSize: 18, letterSpacing: 0.5 },
-    botStatus: { ...Fonts.semibold, color: COLORS.accentMint, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
+    botName: { ...Fonts.serif, fontWeight: '500', fontSize: 18, letterSpacing: 0.5 },
+    botStatus: { ...Fonts.semibold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
 
     botAvatar: {
         width: 40, height: 40, borderRadius: 20,
@@ -298,18 +300,17 @@ const styles = StyleSheet.create({
 
     historyBtn: {
         width: 44, height: 44, borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.05)',
         alignItems: 'center', justifyContent: 'center',
-        borderWidth: 1, borderColor: COLORS.border,
+        borderWidth: 1,
     },
-    historyBtnIcon: { fontSize: 20, color: COLORS.textPrimary },
+    historyBtnIcon: { fontSize: 20 },
 
     messageList: { padding: Spacing.md, paddingBottom: Spacing.xl },
 
     emptyState: { alignItems: 'center', marginTop: height * 0.15 },
     emptyEmoji: { fontSize: 64, marginBottom: Spacing.md },
-    emptyTitle: { ...Fonts.serif, fontSize: 28, color: COLORS.textPrimary, marginBottom: Spacing.xs },
-    emptyText: { ...Fonts.regular, color: COLORS.textSecondary, fontSize: 15, textAlign: 'center' },
+    emptyTitle: { ...Fonts.serif, fontSize: 28, marginBottom: Spacing.xs },
+    emptyText: { ...Fonts.regular, fontSize: 15, textAlign: 'center' },
 
     msgRow: { flexDirection: 'row', marginBottom: Spacing.md, alignItems: 'flex-end', gap: Spacing.sm },
     msgRowLeft: { justifyContent: 'flex-start' },
@@ -341,13 +342,11 @@ const styles = StyleSheet.create({
     inputArea: {
         flexDirection: 'row', alignItems: 'flex-end',
         padding: Spacing.md,
-        borderTopWidth: 1, borderTopColor: COLORS.divider,
+        borderTopWidth: 1,
         gap: Spacing.sm,
     },
     input: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.2)',
-        color: COLORS.textPrimary,
         borderRadius: Radius.xl,
         paddingHorizontal: Spacing.md,
         paddingTop: Spacing.md,
@@ -355,7 +354,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         maxHeight: 120,
         ...Fonts.regular,
-        borderWidth: 1, borderColor: COLORS.border,
+        borderWidth: 1,
     },
     sendBtnWrap: {
         width: 48, height: 48, borderRadius: 24, overflow: 'hidden'

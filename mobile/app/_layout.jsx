@@ -4,45 +4,49 @@ import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { I18nProvider } from '../i18n';
-import { COLORS } from '../constants/Theme';
+import { ThemeProvider, useTheme } from '../constants/Theme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function AppShell() {
+    const { colors, theme } = useTheme();
+
     useEffect(() => {
-        // Hide splash screen when component mounts
-        SplashScreen.hideAsync().catch(() => {
-            /* ignore errors */
-        });
+        SplashScreen.hideAsync().catch(() => { /* ignore */ });
     }, []);
 
     return (
+        <View style={[styles.root, { backgroundColor: colors.bg }]}>
+            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+            <Stack
+                screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: colors.bg },
+                    animation: 'fade_from_bottom',
+                }}
+            >
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(tabs)" />
+            </Stack>
+        </View>
+    );
+}
+
+export default function RootLayout() {
+    return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <I18nProvider>
-                <View style={styles.root}>
-                    <StatusBar style="light" />
-                    <Stack
-                        screenOptions={{
-                            headerShown: false,
-                            contentStyle: { backgroundColor: COLORS.bg },
-                            animation: 'fade_from_bottom',
-                        }}
-                    >
-                        <Stack.Screen name="index" />
-                        <Stack.Screen name="(auth)" />
-                        <Stack.Screen name="(tabs)" />
-                    </Stack>
-                </View>
-            </I18nProvider>
+            <ThemeProvider>
+                <I18nProvider>
+                    <AppShell />
+                </I18nProvider>
+            </ThemeProvider>
         </GestureHandlerRootView>
     );
 }
 
 const styles = StyleSheet.create({
-    root: {
-        flex: 1,
-        backgroundColor: COLORS.bg,
-    },
+    root: { flex: 1 },
 });

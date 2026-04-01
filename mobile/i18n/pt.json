@@ -1,4 +1,11 @@
 {
+    "tabs": {
+        "dashboard": "Início",
+        "chat": "Chat",
+        "assessment": "Testes",
+        "meditations": "Pausar",
+        "reports": "Progresso"
+    },
     "common": {
         "error": "Ocorreu um erro. Tente novamente.",
         "cancel": "Cancelar",
@@ -30,6 +37,7 @@
         "loading": "A processar...",
         "invalidCredentials": "Credenciais inválidas. Tente novamente.",
         "serverError": "Erro inesperado no servidor.",
+        "networkError": "Sem conexão ao servidor. Verifique a sua ligação.",
         "demoFailed": "Acesso de demonstração falhou. Verifique o backend.",
         "demoButton": "Entrar no Modo de Apresentação",
         "forgotPassword": "Esqueceu-se da Palavra-passe?",
@@ -167,5 +175,18 @@
         "tests": "Testes",
         "pause": "Pausar",
         "progress": "Progresso"
+    },
+    "settings": {
+        "title": "Definições",
+        "account": "CONTA",
+        "language": "IDIOMA",
+        "appearance": "APARÊNCIA",
+        "darkMode": "Modo Escuro",
+        "lightMode": "Modo Claro",
+        "theme": "Tema",
+        "logout": "Terminar Sessão",
+        "loggingOut": "A terminar...",
+        "version": "Versão",
+        "profile": "Perfil"
     }
 }
