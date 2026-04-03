@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "aura",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.aura.mentalhealth"
@@ -44,6 +44,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "771eb9b2-2177-4d0c-8db8-e023c36c7024"
+      }
     }
   }
 }
