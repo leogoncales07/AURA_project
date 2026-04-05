@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import {
     View, Text, ScrollView, TouchableOpacity,
-    StyleSheet, ActivityIndicator, RefreshControl, Dimensions
+    StyleSheet, RefreshControl, Dimensions, Appearance
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LineChart } from 'react-native-gifted-charts';
 import { api } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import { useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SettingsModal from '../../components/SettingsModal';
+import Skeleton from '../../components/Skeleton';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,9 +23,13 @@ export default function DashboardScreen() {
     const { theme, colors } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    
     const [user, setUser] = useState(null);
     const [stats, setStats] = useState({ streak: 0, sessions: 0 });
     const [latestLog, setLatestLog] = useState(null);
+    const [recentLogs, setRecentLogs] = useState([]);
+    
+    // We use a small cache loading state initially
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [settingsVisible, setSettingsVisible] = useState(false);
@@ -38,25 +45,55 @@ export default function DashboardScreen() {
         if (!stored) { router.replace('/(auth)/login'); return; }
         const parsedUser = JSON.parse(stored);
         setUser(parsedUser);
+        
+        // Cache read for instant display
+        try {
+            const cachedStats = await AsyncStorage.getItem(`aura_cache_stats_${parsedUser.id}`);
+            const cachedLogs = await AsyncStorage.getItem(`aura_cache_logs_${parsedUser.id}`);
+            if (cachedStats) setStats(JSON.parse(cachedStats));
+            if (cachedLogs) {
+                const logs = JSON.parse(cachedLogs);
+                setRecentLogs(logs);
+                if (logs.length > 0) setLatestLog(logs[0]);
+                setLoading(false); // Stop loading skeleton once cache hits
+            }
+        } catch (e) {
+            console.error(e);
+        }
+
         fetchData(parsedUser.id);
     };
 
     const fetchData = async (userId) => {
-        const [userRes, logsRes, historyRes] = await Promise.all([
-            api.getUser(userId),
-            api.getLogs(userId),
-            api.getHistory(userId),
-        ]);
-        if (userRes?.data) setUser(userRes.data.user);
-        let streak = 0, sessions = 0;
-        if (logsRes?.data?.logs?.length > 0) {
-            setLatestLog(logsRes.data.logs[0]);
-            streak = logsRes.data.logs.length;
+        try {
+            const [userRes, logsRes, historyRes] = await Promise.all([
+                api.getUser(userId),
+                api.getLogs(userId),
+                api.getHistory(userId),
+            ]);
+            
+            if (userRes?.data) setUser(userRes.data.user);
+            
+            let streak = 0, sessions = 0;
+            if (logsRes?.data?.logs?.length > 0) {
+                setLatestLog(logsRes.data.logs[0]);
+                setRecentLogs(logsRes.data.logs);
+                streak = logsRes.data.logs.length;
+                AsyncStorage.setItem(`aura_cache_logs_${userId}`, JSON.stringify(logsRes.data.logs));
+            }
+            if (historyRes?.data?.assessments) {
+                sessions = historyRes.data.assessments.length;
+            }
+            
+            setStats({ streak, sessions });
+            AsyncStorage.setItem(`aura_cache_stats_${userId}`, JSON.stringify({ streak, sessions }));
+            
+        } catch(e) {
+            console.error('Fetch error', e);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
-        if (historyRes?.data?.assessments) sessions = historyRes.data.assessments.length;
-        setStats({ streak, sessions });
-        setLoading(false);
-        setRefreshing(false);
     };
 
     const onRefresh = async () => {
@@ -73,18 +110,20 @@ export default function DashboardScreen() {
         weekday: 'long', day: 'numeric', month: 'short',
     });
 
-    if (loading) {
-        return (
-            <View style={[styles.container, styles.center, { backgroundColor: colors.bg }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('dashboard.syncing')}</Text>
-            </View>
-        );
-    }
+    // Chart Data mapping (last 7 logs, in chronological order)
+    const chartData = [...recentLogs].slice(0, 7).reverse().map(log => {
+        const d = new Date(log.created_at);
+        const dayLabel = d.toLocaleDateString(dateLocaleMap[locale] || 'pt-PT', { weekday: 'short' });
+        return {
+            value: log.mood_score * 10,
+            label: dayLabel,
+            dataPointText: String(log.mood_score * 10),
+        };
+    });
 
     return (
         <View style={[styles.container, { backgroundColor: colors.bg }]}>
-            {/* Ambient blobs — dark mode only, hidden in light to keep white bg */}
+            {/* Ambient blobs — dark mode only */}
             {isDark && (
                 <>
                     <LinearGradient
@@ -104,8 +143,8 @@ export default function DashboardScreen() {
                 contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             >
-                {/* Header */}
-                <View style={styles.header}>
+                {/* Header Stage */}
+                <Animated.View entering={FadeInDown.delay(100).duration(600)} style={styles.header}>
                     <View>
                         <Text style={[styles.dateText, { color: colors.textTertiary }]}>{dateStr}</Text>
                         <Text style={[styles.greeting, { color: colors.textPrimary }]}>
@@ -113,7 +152,6 @@ export default function DashboardScreen() {
                         </Text>
                     </View>
 
-                    {/* Avatar → opens Settings modal */}
                     <TouchableOpacity
                         style={[styles.avatarBtn, { borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(16,185,129,0.35)' }]}
                         onPress={() => setSettingsVisible(true)}
@@ -126,101 +164,174 @@ export default function DashboardScreen() {
                         />
                         <Text style={styles.avatarText}>{user?.name?.[0] || 'U'}</Text>
                     </TouchableOpacity>
-                </View>
+                </Animated.View>
 
                 {/* Mood card */}
-                <BlurView
-                    intensity={isDark ? 30 : 0}
-                    tint={isDark ? 'dark' : 'light'}
-                    style={[styles.moodCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                >
-                    <View style={styles.moodLeft}>
-                        <Text style={[styles.moodLabel, { color: colors.textTertiary }]}>{t('dashboard.statusLabel')}</Text>
-                        <Text style={[styles.moodTitle, { color: colors.textPrimary }]}>{moodLabel}</Text>
-                        {latestLog?.sleep_hours ? (
-                            <View style={[styles.pill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(16,185,129,0.1)', borderColor: colors.border }]}>
-                                <Text style={[styles.pillText, { color: colors.textPrimary }]}>🌙 {t('dashboard.sleep', { hours: latestLog.sleep_hours })}</Text>
+                <Animated.View entering={FadeInDown.delay(200).duration(600)}>
+                    <BlurView
+                        intensity={isDark ? 30 : 0}
+                        tint={isDark ? 'dark' : 'light'}
+                        style={[styles.moodCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    >
+                        {loading ? (
+                            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                                <View style={{ flex: 1, gap: 12 }}>
+                                    <Skeleton width={100} height={14} />
+                                    <Skeleton width={160} height={32} />
+                                    <Skeleton width={80} height={26} borderRadius={20} />
+                                </View>
+                                <Skeleton width={80} height={80} borderRadius={40} />
                             </View>
-                        ) : null}
-                    </View>
-                    {/* Ring */}
-                    <View style={[styles.moodRing, { borderColor: colors.primary }]}>
-                        <LinearGradient
-                            colors={['rgba(16,185,129,0.3)', 'rgba(6,182,212,0.1)']}
-                            style={StyleSheet.absoluteFillObject}
-                        />
-                        <Text style={[styles.moodScore, { color: colors.primary }]}>{moodScore ? moodScore * 10 : '--'}</Text>
-                        <Text style={[styles.moodScoreUnit, { color: colors.textSecondary }]}>%</Text>
-                    </View>
-                </BlurView>
+                        ) : (
+                            <>
+                                <View style={styles.moodLeft}>
+                                    <Text style={[styles.moodLabel, { color: colors.textTertiary }]}>{t('dashboard.statusLabel')}</Text>
+                                    <Text style={[styles.moodTitle, { color: colors.textPrimary }]}>{moodLabel}</Text>
+                                    {latestLog?.sleep_hours ? (
+                                        <View style={[styles.pill, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(16,185,129,0.1)', borderColor: colors.border }]}>
+                                            <Text style={[styles.pillText, { color: colors.textPrimary }]}>🌙 {t('dashboard.sleep', { hours: latestLog.sleep_hours })}</Text>
+                                        </View>
+                                    ) : null}
+                                </View>
+                                <View style={[styles.moodRing, { borderColor: colors.primary }]}>
+                                    <LinearGradient
+                                        colors={['rgba(16,185,129,0.3)', 'rgba(6,182,212,0.1)']}
+                                        style={StyleSheet.absoluteFillObject}
+                                    />
+                                    <Text style={[styles.moodScore, { color: colors.primary }]}>{moodScore ? moodScore * 10 : '--'}</Text>
+                                    <Text style={[styles.moodScoreUnit, { color: colors.textSecondary }]}>%</Text>
+                                </View>
+                            </>
+                        )}
+                    </BlurView>
+                </Animated.View>
 
-                {/* Stats */}
-                <View style={styles.statsRow}>
+                {/* Stats row */}
+                <Animated.View entering={FadeInDown.delay(300).duration(600)} style={styles.statsRow}>
                     <BlurView intensity={isDark ? 25 : 0} tint={isDark ? 'dark' : 'light'}
                         style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats.streak}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('dashboard.days')}</Text>
-                        <Text style={[styles.statSub, { color: colors.textTertiary }]}>{t('dashboard.streak')}</Text>
+                        {loading ? (
+                            <View style={{ alignItems: 'center', gap: 6 }}>
+                                <Skeleton width={60} height={36} />
+                                <Skeleton width={80} height={14} />
+                            </View>
+                        ) : (
+                            <>
+                                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats.streak}</Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('dashboard.days')}</Text>
+                                <Text style={[styles.statSub, { color: colors.textTertiary }]}>{t('dashboard.streak')}</Text>
+                            </>
+                        )}
                     </BlurView>
                     <BlurView intensity={isDark ? 25 : 0} tint={isDark ? 'dark' : 'light'}
                         style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats.sessions}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('dashboard.sessions')}</Text>
-                        <Text style={[styles.statSub, { color: colors.textTertiary }]}>{t('dashboard.total')}</Text>
+                        {loading ? (
+                            <View style={{ alignItems: 'center', gap: 6 }}>
+                                <Skeleton width={60} height={36} />
+                                <Skeleton width={80} height={14} />
+                            </View>
+                        ) : (
+                            <>
+                                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats.sessions}</Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('dashboard.sessions')}</Text>
+                                <Text style={[styles.statSub, { color: colors.textTertiary }]}>{t('dashboard.total')}</Text>
+                            </>
+                        )}
                     </BlurView>
-                </View>
+                </Animated.View>
+
+                {/* Interactive Chart */}
+                <Animated.View entering={FadeInDown.delay(400).duration(600)}>
+                     {!loading && chartData.length > 1 && (
+                        <View style={[styles.chartContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 16 }]}>Progresso</Text>
+                            <LineChart
+                                data={chartData}
+                                width={width - Spacing.md * 2 - 50}
+                                height={140}
+                                thickness={3}
+                                color={colors.primary}
+                                hideRules
+                                yAxisThickness={0}
+                                xAxisThickness={0}
+                                hideYAxisText
+                                maxValue={100}
+                                noOfSections={4}
+                                customDataPoint={() => <View style={[styles.dataPoint, { borderColor: colors.primary }]} />}
+                                textShiftY={-12}
+                                textColor={colors.textSecondary}
+                                textFontSize={10}
+                                areaChart
+                                startFillColor={colors.primary}
+                                endFillColor={colors.primary}
+                                startOpacity={0.3}
+                                endOpacity={0.0}
+                                initialSpacing={10}
+                                spacing={(width - Spacing.md * 2 - 60) / Math.max(1, chartData.length - 1)}
+                                xAxisLabelTextStyle={{ color: colors.textTertiary, fontSize: 10, marginTop: 4 }}
+                            />
+                        </View>
+                    )}
+                </Animated.View>
 
                 {/* Actions */}
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('dashboard.recommendations')}</Text>
+                <Animated.View entering={FadeInDown.delay(500).duration(600)}>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('dashboard.recommendations')}</Text>
+                    
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/assessment')} activeOpacity={0.7}>
+                        <BlurView intensity={isDark ? 25 : 0} tint={isDark ? 'dark' : 'light'}
+                            style={[styles.actionCard, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]}>
+                            {loading ? <Skeleton width={48} height={48} borderRadius={12} /> : (
+                                <View style={[styles.actionIcon, { backgroundColor: colors.primaryDim }]}>
+                                    <Text style={styles.actionIconText}>📋</Text>
+                                </View>
+                            )}
+                            <View style={styles.actionText}>
+                                {loading ? (
+                                    <View style={{ gap: 6 }}>
+                                        <Skeleton width={140} height={16} />
+                                        <Skeleton width={200} height={14} />
+                                    </View>
+                                ) : (
+                                    <>
+                                        <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{t('dashboard.weeklyAssessment')}</Text>
+                                        <Text style={[styles.actionDesc, { color: colors.textSecondary }]}>{t('dashboard.weeklyAssessmentDesc')}</Text>
+                                    </>
+                                )}
+                            </View>
+                            {!loading && <Text style={[styles.actionArrow, { color: colors.textTertiary }]}>›</Text>}
+                        </BlurView>
+                    </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => router.push('/(tabs)/assessment')} activeOpacity={0.8}>
-                    <BlurView intensity={isDark ? 25 : 0} tint={isDark ? 'dark' : 'light'}
-                        style={[styles.actionCard, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]}>
-                        <View style={[styles.actionIcon, { backgroundColor: colors.primaryDim }]}>
-                            <Text style={styles.actionIconText}>📋</Text>
-                        </View>
-                        <View style={styles.actionText}>
-                            <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{t('dashboard.weeklyAssessment')}</Text>
-                            <Text style={[styles.actionDesc, { color: colors.textSecondary }]}>{t('dashboard.weeklyAssessmentDesc')}</Text>
-                        </View>
-                        <Text style={[styles.actionArrow, { color: colors.textTertiary }]}>›</Text>
-                    </BlurView>
-                </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/meditations')} activeOpacity={0.7}>
+                        <BlurView intensity={isDark ? 25 : 0} tint={isDark ? 'dark' : 'light'}
+                            style={[styles.actionCard, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]}>
+                             {loading ? <Skeleton width={48} height={48} borderRadius={12} /> : (
+                                <View style={[styles.actionIcon, { backgroundColor: 'rgba(48,209,88,0.15)' }]}>
+                                    <Text style={styles.actionIconText}>🌬️</Text>
+                                </View>
+                            )}
+                            <View style={styles.actionText}>
+                                {loading ? (
+                                    <View style={{ gap: 6 }}>
+                                        <Skeleton width={140} height={16} />
+                                        <Skeleton width={200} height={14} />
+                                    </View>
+                                ) : (
+                                    <>
+                                        <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{t('dashboard.breathingPause')}</Text>
+                                        <Text style={[styles.actionDesc, { color: colors.textSecondary }]}>{t('dashboard.breathingPauseDesc')}</Text>
+                                    </>
+                                )}
+                            </View>
+                             {!loading && <Text style={[styles.actionArrow, { color: colors.textTertiary }]}>›</Text>}
+                        </BlurView>
+                    </TouchableOpacity>
+                </Animated.View>
 
-                <TouchableOpacity onPress={() => router.push('/(tabs)/meditations')} activeOpacity={0.8}>
-                    <BlurView intensity={isDark ? 25 : 0} tint={isDark ? 'dark' : 'light'}
-                        style={[styles.actionCard, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]}>
-                        <View style={[styles.actionIcon, { backgroundColor: 'rgba(48,209,88,0.15)' }]}>
-                            <Text style={styles.actionIconText}>🌬️</Text>
-                        </View>
-                        <View style={styles.actionText}>
-                            <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{t('dashboard.breathingPause')}</Text>
-                            <Text style={[styles.actionDesc, { color: colors.textSecondary }]}>{t('dashboard.breathingPauseDesc')}</Text>
-                        </View>
-                        <Text style={[styles.actionArrow, { color: colors.textTertiary }]}>›</Text>
-                    </BlurView>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => router.push('/(tabs)/chat')} activeOpacity={0.8}>
-                    <BlurView intensity={isDark ? 25 : 0} tint={isDark ? 'dark' : 'light'}
-                        style={[styles.actionCard, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]}>
-                        <View style={[styles.actionIcon, { backgroundColor: 'rgba(79,195,247,0.15)' }]}>
-                            <Text style={styles.actionIconText}>💬</Text>
-                        </View>
-                        <View style={styles.actionText}>
-                            <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{t('chat.botName')}</Text>
-                            <Text style={[styles.actionDesc, { color: colors.textSecondary }]}>{t('chat.botStatus')}</Text>
-                        </View>
-                        <Text style={[styles.actionArrow, { color: colors.textTertiary }]}>›</Text>
-                    </BlurView>
-                </TouchableOpacity>
             </ScrollView>
 
-            {/* Settings Modal (slides up from avatar tap) */}
-            <SettingsModal
-                visible={settingsVisible}
-                onClose={() => setSettingsVisible(false)}
-            />
+            <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
         </View>
     );
 }
@@ -229,7 +340,6 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     center: { alignItems: 'center', justifyContent: 'center' },
     content: { padding: Spacing.md, paddingBottom: 32 },
-
     auraBlob: {
         position: 'absolute',
         width: width * 1.5, height: width * 1.5,
@@ -237,36 +347,26 @@ const styles = StyleSheet.create({
         opacity: 0.10,
         transform: [{ scale: 1.2 }],
     },
-
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.xl },
     dateText: { ...Fonts.medium, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1.5 },
     greeting: { ...Fonts.serif, fontWeight: '500', fontSize: 32, marginTop: 4, letterSpacing: -0.5 },
-
     avatarBtn: {
         width: 46, height: 46, borderRadius: 23,
         overflow: 'hidden', alignItems: 'center', justifyContent: 'center',
         borderWidth: 1,
     },
     avatarText: { ...Fonts.bold, color: '#fff', fontSize: 18, zIndex: 10 },
-
-    loadingText: { ...Fonts.regular, marginTop: Spacing.sm },
-
+    
     moodCard: {
         borderRadius: Radius.xl, padding: Spacing.xl,
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: Spacing.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.07,
-        shadowRadius: 8,
-        elevation: 2,
     },
     moodLeft: { flex: 1 },
     moodLabel: { ...Fonts.medium, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 },
     moodTitle: { ...Fonts.serif, fontWeight: '500', fontSize: 26, marginBottom: 12 },
     pill: { borderRadius: Radius.full, paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'flex-start', borderWidth: 1 },
     pillText: { ...Fonts.medium, fontSize: 13 },
-
     moodRing: {
         width: 80, height: 80, borderRadius: 40,
         borderWidth: 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
@@ -278,27 +378,26 @@ const styles = StyleSheet.create({
     statCard: {
         flex: 1, borderRadius: Radius.lg, padding: Spacing.lg,
         alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.07,
-        shadowRadius: 6,
-        elevation: 2,
     },
     statValue: { ...Fonts.heavy, fontSize: 32 },
     statLabel: { ...Fonts.medium, fontSize: 12, marginTop: 4 },
     statSub: { ...Fonts.regular, fontSize: 11, marginTop: 2 },
+    
+    chartContainer: {
+        borderRadius: Radius.xl, padding: Spacing.lg,
+        marginBottom: Spacing.xl, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden',
+        alignItems: 'center',
+    },
+    dataPoint: {
+        width: 10, height: 10, borderRadius: 5,
+        backgroundColor: '#fff', borderWidth: 2,
+    },
 
-    sectionTitle: { ...Fonts.bold, fontSize: 18, marginBottom: Spacing.md },
-
+    sectionTitle: { ...Fonts.bold, fontSize: 18, marginBottom: Spacing.md, alignSelf: 'flex-start' },
     actionCard: {
         borderRadius: Radius.lg, padding: Spacing.md,
         flexDirection: 'row', alignItems: 'center',
         marginBottom: Spacing.sm, borderWidth: StyleSheet.hairlineWidth, gap: Spacing.md, overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 5,
-        elevation: 1,
     },
     actionIcon: { width: 48, height: 48, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
     actionIconText: { fontSize: 24 },

@@ -75,6 +75,15 @@ export default function ChatScreen() {
         setShowHistory(false);
     };
 
+    const handleDeleteThread = async (threadId) => {
+        setThreads(prev => prev.filter(t => t.id !== threadId));
+        if (currentThreadId === threadId) {
+            handleNewChat();
+            setShowHistory(true); // Keep history open since we deleted the active one
+        }
+        await api.deleteConversation(userId, threadId);
+    };
+
     const handleSend = async () => {
         const text = input.trim();
         if (!text || sending || !userId) return;
@@ -249,15 +258,24 @@ export default function ChatScreen() {
                             data={threads}
                             keyExtractor={(item) => String(item.id)}
                             renderItem={({ item }) => (
-                                <TouchableOpacity 
-                                    style={[styles.threadCard, currentThreadId === item.id && styles.threadCardActive]}
-                                    onPress={() => loadThreadMessages(userId, item.id)}
-                                >
-                                    <Text style={[styles.threadTitle, currentThreadId === item.id && styles.threadTitleActive]} numberOfLines={1}>
-                                        💬 {item.title || 'Conversation'}
-                                    </Text>
-                                    <Text style={styles.threadDate}>{new Date(item.updated_at).toLocaleDateString()}</Text>
-                                </TouchableOpacity>
+                                <View style={[styles.threadCard, currentThreadId === item.id && styles.threadCardActive]}>
+                                    <TouchableOpacity 
+                                        style={{ flex: 1, padding: Spacing.md }}
+                                        onPress={() => loadThreadMessages(userId, item.id)}
+                                    >
+                                        <Text style={[styles.threadTitle, currentThreadId === item.id && styles.threadTitleActive]} numberOfLines={1}>
+                                            💬 {item.title || 'Conversation'}
+                                        </Text>
+                                        <Text style={styles.threadDate}>{new Date(item.updated_at).toLocaleDateString()}</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity 
+                                        style={{ padding: Spacing.md, justifyContent: 'center' }}
+                                        onPress={() => handleDeleteThread(item.id)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={{ fontSize: 18, opacity: 0.8 }}>🗑️</Text>
+                                    </TouchableOpacity>
+                                </View>
                             )}
                             contentContainerStyle={styles.threadList}
                         />
@@ -383,9 +401,10 @@ const styles = StyleSheet.create({
 
     threadList: { paddingBottom: 100 },
     threadCard: {
-        padding: Spacing.md, borderRadius: Radius.md,
+        flexDirection: 'row', alignItems: 'center',
+        borderRadius: Radius.md,
         backgroundColor: 'rgba(255,255,255,0.05)',
-        marginBottom: Spacing.sm, borderWidth: 1, borderColor: 'transparent'
+        marginBottom: Spacing.sm, borderWidth: 1, borderColor: 'transparent',
     },
     threadCardActive: {
         backgroundColor: 'rgba(16,185,129,0.1)',

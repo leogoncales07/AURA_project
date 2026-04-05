@@ -75,8 +75,14 @@ export const api = {
     getLogs: (userId, limit = 14) => fetchApi(`/companion/${userId}/logs?limit=${limit}`),
 
     // Assessments
-    listQuestionnaires: () => fetchApi('/questionnaires'),
-    getQuestionnaire: (qId) => fetchApi(`/questionnaires/${qId}`),
+    listQuestionnaires: () => {
+        const lang = typeof window !== 'undefined' ? localStorage.getItem('aura_locale') || 'pt' : 'pt';
+        return fetchApi(`/questionnaires?lang=${lang}`);
+    },
+    getQuestionnaire: (qId) => {
+        const lang = typeof window !== 'undefined' ? localStorage.getItem('aura_locale') || 'pt' : 'pt';
+        return fetchApi(`/questionnaires/${qId}?lang=${lang}`);
+    },
     submitAssessment: (userId, questionnaireId, answers) => fetchApi('/assessments/submit', { method: 'POST', body: { user_id: userId, questionnaire_id: questionnaireId, answers } }),
     getHistory: (userId) => fetchApi(`/assessments/${userId}/history`),
 

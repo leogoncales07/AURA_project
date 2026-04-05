@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { I18nProvider } from '../i18n';
 import { ThemeProvider, useTheme } from '../constants/Theme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// import { registerForPushNotificationsAsync, scheduleDailyMoodReminder } from '../lib/notifications';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -15,6 +16,15 @@ function AppShell() {
 
     useEffect(() => {
         SplashScreen.hideAsync().catch(() => { /* ignore */ });
+        
+        // Setup daily push notifications
+        // const initNotifications = async () => {
+        //     const hasPermission = await registerForPushNotificationsAsync();
+        //     if (hasPermission) {
+        //         await scheduleDailyMoodReminder();
+        //     }
+        // };
+        // initNotifications();
     }, []);
 
     return (

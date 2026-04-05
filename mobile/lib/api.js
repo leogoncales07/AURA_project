@@ -79,8 +79,14 @@ export const api = {
         fetchApi(`/companion/${userId}/logs?limit=${limit}`),
 
     // Assessments
-    listQuestionnaires: () => fetchApi('/questionnaires'),
-    getQuestionnaire: (qId) => fetchApi(`/questionnaires/${qId}`),
+    listQuestionnaires: async () => {
+        const locale = await AsyncStorage.getItem('aura_locale') || 'pt';
+        return fetchApi(`/questionnaires?lang=${locale}`);
+    },
+    getQuestionnaire: async (qId) => {
+        const locale = await AsyncStorage.getItem('aura_locale') || 'pt';
+        return fetchApi(`/questionnaires/${qId}?lang=${locale}`);
+    },
     submitAssessment: (userId, questionnaireId, answers) =>
         fetchApi('/assessments/submit', {
             method: 'POST',
@@ -98,6 +104,8 @@ export const api = {
         fetchApi(`/companion/${userId}/conversations?limit=${limit}`),
     getConversationMessages: (userId, conversationId) =>
         fetchApi(`/companion/${userId}/conversations/${conversationId}`),
+    deleteConversation: (userId, conversationId) =>
+        fetchApi(`/companion/${userId}/conversations/${conversationId}`, { method: 'DELETE' }),
 
     // Reports
     generateReport: (userId, context = '') =>

@@ -4,6 +4,9 @@ import {
 import { useI18n } from '../../i18n';
 import { useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BreathingTool from '../../components/BreathingTool';
+import MeditationPlayerModal from '../../components/MeditationPlayerModal';
+import { useState } from 'react';
 
 const SESSION_COLORS = { accentBlue: '#4FC3F7', accentPink: '#FF6B9D', accentMint: '#30D158' };
 
@@ -16,6 +19,7 @@ export default function MeditationsScreen() {
     const { t } = useI18n();
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
+    const [activeSession, setActiveSession] = useState(null);
 
     return (
         <ScrollView
@@ -30,7 +34,17 @@ export default function MeditationsScreen() {
                     <Text style={[styles.featuredLabel, { color: SESSION_COLORS.accentMint }]}>{t('meditations.recommended')}</Text>
                     <Text style={[styles.featuredTitle, { color: colors.textPrimary }]}>{t('meditations.featuredTitle')}</Text>
                     <Text style={[styles.featuredDesc, { color: colors.textSecondary }]}>{t('meditations.featuredDesc')}</Text>
-                    <TouchableOpacity style={[styles.startBtn, { backgroundColor: SESSION_COLORS.accentMint }]} activeOpacity={0.8}>
+                    <TouchableOpacity 
+                        style={[styles.startBtn, { backgroundColor: SESSION_COLORS.accentMint }]} 
+                        activeOpacity={0.8}
+                        onPress={() => setActiveSession({
+                            title: t('meditations.featuredTitle'),
+                            meta: t('meditations.featuredDesc'),
+                            durationMin: 5,
+                            color: SESSION_COLORS.accentMint,
+                            emoji: '🌬️'
+                        })}
+                    >
                         <Text style={styles.startBtnText}>▶ {t('meditations.start')}</Text>
                     </TouchableOpacity>
                 </View>
@@ -41,7 +55,18 @@ export default function MeditationsScreen() {
             <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>{t('meditations.explore')}</Text>
 
             {SESSIONS.map((s) => (
-                <TouchableOpacity key={s.title} style={[styles.sessionCard, { backgroundColor: colors.card, borderColor: colors.border }]} activeOpacity={0.8}>
+                <TouchableOpacity 
+                    key={s.title} 
+                    style={[styles.sessionCard, { backgroundColor: colors.card, borderColor: colors.border }]} 
+                    activeOpacity={0.8}
+                    onPress={() => setActiveSession({
+                        title: t(`meditations.${s.title}`),
+                        meta: t(`meditations.${s.meta}`),
+                        durationMin: s.title === 'sleepPrep' ? 12 : 15,
+                        color: s.color,
+                        emoji: s.emoji
+                    })}
+                >
                     <View style={[styles.sessionIcon, { backgroundColor: s.color + '20' }]}>
                         <Text style={styles.sessionEmoji}>{s.emoji}</Text>
                     </View>
@@ -57,15 +82,13 @@ export default function MeditationsScreen() {
 
             {/* Breathing exercise */}
             <Text style={[styles.sectionLabel, { marginTop: Spacing.lg, color: colors.textTertiary }]}>Respição Guiada</Text>
-            <View style={[styles.breatheCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={[styles.breatheCircle, { borderColor: colors.primary, backgroundColor: colors.primaryDim }]}>
-                    <Text style={[styles.breatheEmoji, { color: colors.primary }]}>◉</Text>
-                </View>
-                <View style={styles.breatheText}>
-                    <Text style={[styles.breatheTitle, { color: colors.textPrimary }]}>4-7-8 Técnica</Text>
-                    <Text style={[styles.breatheDesc, { color: colors.textSecondary }]}>Inspira 4s · Segura 7s · Expira 8s</Text>
-                </View>
-            </View>
+            <BreathingTool />
+            
+            <MeditationPlayerModal 
+                visible={!!activeSession}
+                session={activeSession}
+                onClose={() => setActiveSession(null)}
+            />
         </ScrollView>
     );
 }
