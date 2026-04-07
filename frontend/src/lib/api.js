@@ -67,8 +67,8 @@ export const api = {
     getMe: () => fetchApi('/auth/me'),
 
     // User Profile
-    getUser: (userId) => fetchApi(`/users/${userId}`),
-    updateUser: (userId, update) => fetchApi(`/users/${userId}`, { method: 'PATCH', body: update }),
+    getUser: (userId) => fetchApi(`/api/v1/account/profile`),
+    updateUser: (userId, update) => fetchApi(`/api/v1/account/profile`, { method: 'PATCH', body: update }),
 
     // Daily Logs
     logMood: (userId, mood_score, sleep_hours, notes) => fetchApi('/companion/log', { method: 'POST', body: { user_id: userId, mood_score, sleep_hours, notes } }),

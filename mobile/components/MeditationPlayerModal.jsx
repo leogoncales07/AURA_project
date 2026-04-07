@@ -3,22 +3,61 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme, Fonts, Spacing, Radius } from '../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
+import { Audio } from 'expo-av';
 
 export default function MeditationPlayerModal({ visible, session, onClose }) {
     const { colors, theme } = useTheme();
     const isDark = theme === 'dark';
     const insets = useSafeAreaInsets();
-    
-    // session object structure: { title, meta, durationMin, color, emoji }
+    // session object structure: { title, meta, durationMin, color, emoji, audioUrl }
     const [isPlaying, setIsPlaying] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
+    const [sound, setSound] = useState(null);
 
     useEffect(() => {
         if (visible && session) {
             setTimeLeft(session.durationMin * 60);
             setIsPlaying(false);
+        } else if (!visible) {
+            setIsPlaying(false);
+            if (sound) {
+                sound.unloadAsync();
+                setSound(null);
+            }
         }
     }, [visible, session]);
+
+    useEffect(() => {
+        const handleAudio = async () => {
+            if (isPlaying && session?.audioUrl) {
+                if (!sound) {
+                    try {
+                        const { sound: newSound } = await Audio.Sound.createAsync(
+                            { uri: session.audioUrl },
+                            { shouldPlay: true, isLooping: true }
+                        );
+                        setSound(newSound);
+                    } catch (e) {
+                        console.log('Audio load error:', e);
+                    }
+                } else {
+                    await sound.playAsync();
+                }
+            } else if (!isPlaying && sound) {
+                await sound.pauseAsync();
+            }
+        };
+        handleAudio();
+    }, [isPlaying]);
+
+    useEffect(() => {
+        return () => {
+            if (sound) {
+                sound.unloadAsync();
+            }
+        };
+    }, [sound]);
 
     useEffect(() => {
         let interval;
@@ -29,6 +68,28 @@ export default function MeditationPlayerModal({ visible, session, onClose }) {
         }
         return () => clearInterval(interval);
     }, [isPlaying, timeLeft]);
+
+    const scale = useSharedValue(1);
+
+    useEffect(() => {
+        if (isPlaying) {
+            scale.value = withRepeat(
+                withSequence(
+                    withTiming(1.15, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+                    withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+                ),
+                -1,
+                true
+            );
+        } else {
+            cancelAnimation(scale);
+            scale.value = withTiming(1, { duration: 500 });
+        }
+    }, [isPlaying]);
+
+    const animatedScaleStyle = useAnimatedStyle(() => ({ 
+        transform: [{ scale: scale.value }] 
+    }));
 
     if (!session) return null;
 
@@ -50,9 +111,13 @@ export default function MeditationPlayerModal({ visible, session, onClose }) {
 
                     {/* Content Area */}
                     <View style={styles.content}>
-                        <View style={[styles.artwork, { backgroundColor: session.color + '15', borderColor: session.color + '30' }]}>
+                        <Animated.View style={[
+                            styles.artwork, 
+                            { backgroundColor: session.color + '15', borderColor: session.color + '30' },
+                            animatedScaleStyle
+                        ]}>
                             <Text style={styles.artworkEmoji}>{session.emoji}</Text>
-                        </View>
+                        </Animated.View>
                         
                         <Text style={[styles.title, { color: colors.textPrimary }]}>{session.title}</Text>
                         <Text style={[styles.meta, { color: colors.textSecondary }]}>{session.meta}</Text>

@@ -11,8 +11,8 @@ import { useState } from 'react';
 const SESSION_COLORS = { accentBlue: '#4FC3F7', accentPink: '#FF6B9D', accentMint: '#30D158' };
 
 const SESSIONS = [
-    { emoji: '🌬️', title: 'sleepPrep', meta: 'sleepPrepMeta', color: SESSION_COLORS.accentBlue },
-    { emoji: '🎯', title: 'deepFocus', meta: 'deepFocusMeta', color: SESSION_COLORS.accentPink },
+    { emoji: '🌬️', title: 'sleepPrep', meta: 'sleepPrepMeta', color: SESSION_COLORS.accentBlue, audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
+    { emoji: '🎯', title: 'deepFocus', meta: 'deepFocusMeta', color: SESSION_COLORS.accentPink, audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3' },
 ];
 
 export default function MeditationsScreen() {
@@ -42,7 +42,8 @@ export default function MeditationsScreen() {
                             meta: t('meditations.featuredDesc'),
                             durationMin: 5,
                             color: SESSION_COLORS.accentMint,
-                            emoji: '🌬️'
+                            emoji: '🌬️',
+                            audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
                         })}
                     >
                         <Text style={styles.startBtnText}>▶ {t('meditations.start')}</Text>
@@ -64,7 +65,8 @@ export default function MeditationsScreen() {
                         meta: t(`meditations.${s.meta}`),
                         durationMin: s.title === 'sleepPrep' ? 12 : 15,
                         color: s.color,
-                        emoji: s.emoji
+                        emoji: s.emoji,
+                        audioUrl: s.audioUrl
                     })}
                 >
                     <View style={[styles.sessionIcon, { backgroundColor: s.color + '20' }]}>
