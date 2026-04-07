@@ -11,8 +11,8 @@ import { useState } from 'react';
 const SESSION_COLORS = { accentBlue: '#4FC3F7', accentPink: '#FF6B9D', accentMint: '#30D158' };
 
 const SESSIONS = [
-    { emoji: '🌬️', title: 'sleepPrep', meta: 'sleepPrepMeta', color: SESSION_COLORS.accentBlue, audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
-    { emoji: '🎯', title: 'deepFocus', meta: 'deepFocusMeta', color: SESSION_COLORS.accentPink, audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3' },
+    { emoji: '🌬️', title: 'sleepPrep', meta: 'sleepPrepMeta', color: SESSION_COLORS.accentBlue, audioUrl: require('../../assets/audio/sleep.mp3') },
+    { emoji: '🎯', title: 'deepFocus', meta: 'deepFocusMeta', color: SESSION_COLORS.accentPink, audioUrl: require('../../assets/audio/focus.mp3') },
 ];
 
 export default function MeditationsScreen() {
@@ -34,8 +34,8 @@ export default function MeditationsScreen() {
                     <Text style={[styles.featuredLabel, { color: SESSION_COLORS.accentMint }]}>{t('meditations.recommended')}</Text>
                     <Text style={[styles.featuredTitle, { color: colors.textPrimary }]}>{t('meditations.featuredTitle')}</Text>
                     <Text style={[styles.featuredDesc, { color: colors.textSecondary }]}>{t('meditations.featuredDesc')}</Text>
-                    <TouchableOpacity 
-                        style={[styles.startBtn, { backgroundColor: SESSION_COLORS.accentMint }]} 
+                    <TouchableOpacity
+                        style={[styles.startBtn, { backgroundColor: SESSION_COLORS.accentMint }]}
                         activeOpacity={0.8}
                         onPress={() => setActiveSession({
                             title: t('meditations.featuredTitle'),
@@ -43,7 +43,8 @@ export default function MeditationsScreen() {
                             durationMin: 5,
                             color: SESSION_COLORS.accentMint,
                             emoji: '🌬️',
-                            audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+                            audioUrl:
+                                require('../../assets/audio/balance.mp3')
                         })}
                     >
                         <Text style={styles.startBtnText}>▶ {t('meditations.start')}</Text>
@@ -56,9 +57,9 @@ export default function MeditationsScreen() {
             <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>{t('meditations.explore')}</Text>
 
             {SESSIONS.map((s) => (
-                <TouchableOpacity 
-                    key={s.title} 
-                    style={[styles.sessionCard, { backgroundColor: colors.card, borderColor: colors.border }]} 
+                <TouchableOpacity
+                    key={s.title}
+                    style={[styles.sessionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                     activeOpacity={0.8}
                     onPress={() => setActiveSession({
                         title: t(`meditations.${s.title}`),
@@ -85,8 +86,8 @@ export default function MeditationsScreen() {
             {/* Breathing exercise */}
             <Text style={[styles.sectionLabel, { marginTop: Spacing.lg, color: colors.textTertiary }]}>Respição Guiada</Text>
             <BreathingTool />
-            
-            <MeditationPlayerModal 
+
+            <MeditationPlayerModal
                 visible={!!activeSession}
                 session={activeSession}
                 onClose={() => setActiveSession(null)}
