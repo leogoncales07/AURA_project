@@ -33,10 +33,9 @@ export default function MeditationPlayerModal({ visible, session, onClose }) {
             if (isPlaying && session?.audioUrl) {
                 if (!sound) {
                     try {
-                        const audioSource = typeof session.audioUrl === 'string' 
-                            ? { uri: session.audioUrl } 
+                        const audioSource = typeof session.audioUrl === 'string'
+                            ? { uri: session.audioUrl }
                             : session.audioUrl;
-
                         const { sound: newSound } = await Audio.Sound.createAsync(
                             audioSource,
                             { shouldPlay: true, isLooping: true }
@@ -49,22 +48,14 @@ export default function MeditationPlayerModal({ visible, session, onClose }) {
                     await sound.playAsync();
                 }
             } else if (!isPlaying && sound) {
-                try {
-                    await sound.pauseAsync();
-                } catch (e) {
-                    // Ignore unhandled promise rejections if the sound is already unloaded natively
-                }
+                try { await sound.pauseAsync(); } catch (e) { /* already unloaded */ }
             }
         };
         handleAudio();
     }, [isPlaying]);
 
     useEffect(() => {
-        return () => {
-            if (sound) {
-                sound.unloadAsync();
-            }
-        };
+        return () => { if (sound) sound.unloadAsync(); };
     }, [sound]);
 
     useEffect(() => {

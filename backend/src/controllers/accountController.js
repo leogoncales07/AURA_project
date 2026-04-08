@@ -21,33 +21,13 @@ const profileSchema = z.object({
 });
 
 export const getProfile = catchAsync(async (req, res, next) => {
-  const userId = req.user.id;
-  
-  // 1) Try to get from cache
-  const cachedProfile = await cache.get(`user_profile:${userId}`);
-  if (cachedProfile) {
-    return res.status(200).json({ status: 'success', data: cachedProfile });
-  }
-
-  // 2) Get from DB
-  const result = await pool.query(
-    'SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL',
-    [userId]
-  );
-  
-  if (result.rows.length === 0) {
-    return next(new AppError('User not found', 404));
-  }
-
-  const user = result.rows[0];
-  delete user.password_hash; // Security
-
-  // 3) Cache and send
-  await cache.set(`user_profile:${userId}`, user, 300); // 5 min
+  // req.user is populated from Supabase by the protect middleware
+  // No local DB query needed — return user data directly
+  const { current_token_hash, ...profile } = req.user;
 
   res.status(200).json({
     status: 'success',
-    data: user
+    data: profile
   });
 });
 

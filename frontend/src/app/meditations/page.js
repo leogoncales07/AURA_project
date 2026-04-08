@@ -18,6 +18,7 @@ const DEFAULT_LIBRARY_CONTENT = {
         box_breathing: {
             name: 'Box Breathing (4-4-4-4)',
             description: 'A simple exercise to calm your nervous system.',
+            audioUrl: '/audio/balance.mp3',
             steps: [
                 'Exhale all the air from your lungs through your mouth.',
                 'Slowly breathe in through your nose, counting to 4.',
@@ -43,6 +44,7 @@ const DEFAULT_LIBRARY_CONTENT = {
         body_scan: {
             name: 'Progressive Body Scan',
             description: 'Mindfulness practice to notice physical sensations and relax.',
+            audioUrl: '/audio/focus.mp3',
             steps: [
                 'Sit or lie down comfortably. Close your eyes.',
                 'Start at your toes and notice any tension or sensation.',
@@ -70,6 +72,7 @@ const DEFAULT_LIBRARY_CONTENT = {
         military_method: {
             name: 'Military Sleep Method',
             description: 'Technique to fall asleep quickly with body and mental relaxation.',
+            audioUrl: '/audio/sleep.mp3',
             steps: [
                 'Relax your entire face, including forehead, eyelids, jaw, and tongue.',
                 'Drop your shoulders as much as possible. Relax your upper and lower arms.',

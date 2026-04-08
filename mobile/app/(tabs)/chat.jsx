@@ -266,7 +266,7 @@ export default function ChatScreen() {
                                         <Text style={[styles.threadTitle, currentThreadId === item.id && styles.threadTitleActive]} numberOfLines={1}>
                                             💬 {item.title || 'Conversation'}
                                         </Text>
-                                        <Text style={styles.threadDate}>{new Date(item.updated_at).toLocaleDateString()}</Text>
+                                        <Text style={styles.threadDate}>{new Date(item.updatedAt || item.updated_at).toLocaleDateString()}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity 
                                         style={{ padding: Spacing.md, justifyContent: 'center' }}

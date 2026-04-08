@@ -1,29 +1,51 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import { AppError } from '../utils/appError.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const conversationsByUser = new Map();
-const logsByUser = new Map();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 
-// Improved language detection
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
+const CONVERSATIONS_FILE = path.join(DATA_DIR, 'conversations.json');
+const LOGS_FILE = path.join(DATA_DIR, 'logs.json');
+
+// Load from disk on startup
+const loadJSON = (file) => {
+  try {
+    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  } catch (e) { console.warn(`[data] Could not load ${file}:`, e.message); }
+  return {};
+};
+
+const saveJSON = (file, data) => {
+  try { fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8'); }
+  catch (e) { console.warn(`[data] Could not save ${file}:`, e.message); }
+};
+
+// In-memory maps backed by disk
+const conversationsStore = loadJSON(CONVERSATIONS_FILE); // { [userId]: thread[] }
+const logsStore = loadJSON(LOGS_FILE);                    // { [userId]: log[] }
+
+const getUserThreads = (userId) => {
+  if (!conversationsStore[userId]) conversationsStore[userId] = [];
+  return conversationsStore[userId];
+};
+
+const saveThreads = () => saveJSON(CONVERSATIONS_FILE, conversationsStore);
+
+const getLogsHistory = (userId) => logsStore[userId] || [];
+
+// Language detection
 const detectLanguage = (text) => {
   const portugueseWords = /\b(olá|oi|como|está|você|para|uma|que|não|sim|obrigado|porém|também|podem|estou|triste|feliz|ansioso|medo|ajuda|quero|preciso|muito|pouco|bem|mal|hoje|agora|eu|ele|ela|nós)\b/gmi;
   const englishWords = /\b(hello|hi|how|are|you|thank|why|what|can|would|could|should|sad|happy|anxious|help|want|need|very|little|good|bad|today|now|i|he|she|we)\b/gmi;
-  
   const ptMatches = (text.match(portugueseWords) || []).length;
   const enMatches = (text.match(englishWords) || []).length;
-  
   return ptMatches >= enMatches ? 'pt' : 'en';
-};
-
-const getUserThreads = (userId) => {
-  if (!conversationsByUser.has(userId)) {
-    conversationsByUser.set(userId, []);
-  }
-  return conversationsByUser.get(userId);
-};
-
-const getLogsHistory = (userId) => {
-  return logsByUser.get(userId) || [];
 };
 
 const createAssistantReply = async (message, userId, history) => {
@@ -223,6 +245,7 @@ export const chat = catchAsync(async (req, res, next) => {
     thread.messages = thread.messages.slice(-50);
   }
 
+  saveThreads(); // persist to disk
   res.status(200).json({ response: responseText, conversation_id: thread.id, messages: thread.messages });
 });
 
@@ -243,7 +266,8 @@ export const logMood = catchAsync(async (req, res, next) => {
   const history = getLogsHistory(user_id);
   const updatedLogs = [entry, ...history].slice(0, 100);
 
-  logsByUser.set(user_id, updatedLogs);
+  logsStore[user_id] = updatedLogs;
+  saveJSON(LOGS_FILE, logsStore);
 
   res.status(200).json({ success: true, log: entry });
 });
@@ -304,6 +328,7 @@ export const deleteConversation = catchAsync(async (req, res, next) => {
     return next(new AppError('Conversation not found', 404));
   }
 
-  conversationsByUser.set(userId, updatedThreads);
+  conversationsStore[userId] = updatedThreads;
+  saveThreads();
   res.status(200).json({ success: true, message: 'Conversation deleted' });
 });

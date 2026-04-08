@@ -16,17 +16,34 @@ export default function MeditationPlayer({ session, onClose }) {
   const [phase, setPhase] = useState('inhale'); // inhale, hold, exhale, reset
   const [phaseTime, setPhaseTime] = useState(4);
   const [totalSeconds, setTotalSeconds] = useState(0);
-  const sessionDuration = 300; // 5 mins in seconds
+  const [duration, setDuration] = useState(300); // Default to 5 min until metadata loads
 
-  const timerRef = useRef(null);
   const phaseTimerRef = useRef(null);
+  const audioRef = useRef(null);
 
+  // Sync play/pause with audio element
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(e => console.warn("Audio play blocked by browser:", e));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+
+  // Cleanup on close to stop playback immediately
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  // Update breathing visualizer and timer
   useEffect(() => {
     if (isPlaying) {
-      timerRef.current = setInterval(() => {
-        setTotalSeconds(prev => prev + 1);
-      }, 1000);
-
       phaseTimerRef.current = setInterval(() => {
         setPhaseTime(prev => {
           if (prev <= 1) {
@@ -43,19 +60,17 @@ export default function MeditationPlayer({ session, onClose }) {
         });
       }, 1000);
     } else {
-      clearInterval(timerRef.current);
       clearInterval(phaseTimerRef.current);
     }
 
     return () => {
-      clearInterval(timerRef.current);
       clearInterval(phaseTimerRef.current);
     };
   }, [isPlaying]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -69,11 +84,30 @@ export default function MeditationPlayer({ session, onClose }) {
     }
   };
 
-  // Mock waveform animation
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+        setTotalSeconds(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current && audioRef.current.duration !== Infinity && !isNaN(audioRef.current.duration)) {
+        setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleSeek = (amount) => {
+    if (audioRef.current) {
+        audioRef.current.currentTime = Math.max(0, Math.min(duration, audioRef.current.currentTime + amount));
+        setTotalSeconds(audioRef.current.currentTime);
+    }
+  };
+
+  // Dynamic waveform animation mirroring play state
   const bars = Array.from({ length: 40 }).map((_, i) => (
     <div 
       key={i} 
-      className={`${styles.waveBar} ${i / 40 < totalSeconds / sessionDuration ? styles.waveBarActive : ''}`}
+      className={`${styles.waveBar} ${i / 40 < totalSeconds / duration ? styles.waveBarActive : ''}`}
       style={{ height: `${30 + Math.sin(i * 0.5 + totalSeconds) * 40}%` }}
     />
   ));
@@ -83,6 +117,17 @@ export default function MeditationPlayer({ session, onClose }) {
       <div className={styles.background}>
         <AuroraBackground />
       </div>
+
+      {session?.audioUrl && (
+          <audio 
+             ref={audioRef}
+             src={session.audioUrl}
+             onTimeUpdate={handleTimeUpdate}
+             onLoadedMetadata={handleLoadedMetadata}
+             onEnded={() => setIsPlaying(false)}
+             autoPlay
+          />
+      )}
 
       <header className={styles.header}>
         <div className={styles.sessionInfo}>
@@ -111,12 +156,12 @@ export default function MeditationPlayer({ session, onClose }) {
            </div>
            <div className={styles.timeInfo}>
               <span>{formatTime(totalSeconds)}</span>
-              <span>{formatTime(sessionDuration)}</span>
+              <span>{formatTime(duration)}</span>
            </div>
         </div>
 
         <div className={styles.mainControls}>
-          <button className={styles.navButton} onClick={() => setTotalSeconds(Math.max(0, totalSeconds - 10))}>
+          <button className={styles.navButton} onClick={() => handleSeek(-10)}>
             <RotateCcw size={24} />
           </button>
           
@@ -127,7 +172,7 @@ export default function MeditationPlayer({ session, onClose }) {
             {isPlaying ? <Pause size={32} fill="white" /> : <Play size={32} fill="white" style={{ marginLeft: '4px' }} />}
           </button>
 
-          <button className={styles.navButton} onClick={() => setTotalSeconds(Math.min(sessionDuration, totalSeconds + 10))}>
+          <button className={styles.navButton} onClick={() => handleSeek(10)}>
             <RotateCw size={24} />
           </button>
         </div>

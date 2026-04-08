@@ -72,7 +72,7 @@ export default function DashboardScreen() {
                 api.getHistory(userId),
             ]);
             
-            if (userRes?.data) setUser(userRes.data.user);
+            if (userRes?.data) setUser(prev => ({ ...prev, ...(userRes.data.data || userRes.data.user || userRes.data) }));
             
             let streak = 0, sessions = 0;
             if (logsRes?.data?.logs?.length > 0) {
