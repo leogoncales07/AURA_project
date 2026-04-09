@@ -48,9 +48,9 @@ const detectLanguage = (text) => {
   return ptMatches >= enMatches ? 'pt' : 'en';
 };
 
-const createAssistantReply = async (message, userId, history) => {
+const createAssistantReply = async (message, userId, history, languageOverride = null) => {
   try {
-    const language = detectLanguage(message);
+    const language = languageOverride || detectLanguage(message);
     const recentLogs = getLogsHistory(userId).slice(0, 5);
     
     // Format the user's personal context
@@ -211,7 +211,7 @@ User message: ${message}`;
 };
 
 export const chat = catchAsync(async (req, res, next) => {
-  const { user_id, message, conversation_id } = req.body;
+  const { user_id, message, conversation_id, language } = req.body;
 
   if (!user_id || !message) {
     return next(new AppError('Missing user_id or message', 400));
@@ -234,7 +234,7 @@ export const chat = catchAsync(async (req, res, next) => {
     threads.unshift(thread);
   }
 
-  const responseText = await createAssistantReply(message, user_id, thread.messages);
+  const responseText = await createAssistantReply(message, user_id, thread.messages, language);
   const timestamp = new Date().toISOString();
 
   thread.messages.push({ role: 'user', message, timestamp });

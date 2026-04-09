@@ -5,10 +5,12 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import { useTheme, COLORS, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import SettingsModal from '../../components/SettingsModal';
 
 const { width } = Dimensions.get('window');
 
@@ -253,10 +255,11 @@ function buildPdfHtml({ locale, userName, monthLabel, generatedDate, data }) {
 // ── Main Component ──────────────────────────────────────────────
 export default function ReportsScreen() {
     const { t, locale } = useI18n();
-    const { colors } = useTheme();
+    const { colors, theme } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const isPt = locale === 'pt';
+    const isDark = theme === 'dark';
 
     // ── state ──
     const [loading, setLoading] = useState(true);
@@ -278,6 +281,7 @@ export default function ReportsScreen() {
 
     // Saved reports
     const [savedReports, setSavedReports] = useState([]);
+    const [settingsVisible, setSettingsVisible] = useState(false);
 
     // ── months array ──
     const monthNames = isPt
@@ -511,7 +515,21 @@ export default function ReportsScreen() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         >
             {/* ── PAGE TITLE ── */}
-            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>{t('reports.title')}</Text>
+            <View style={styles.headerRow}>
+                <Text style={[styles.pageTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('reports.title')}</Text>
+                <TouchableOpacity
+                    style={[styles.avatarBtn, { borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(16,185,129,0.35)' }]}
+                    onPress={() => setSettingsVisible(true)}
+                    activeOpacity={0.8}
+                >
+                    <LinearGradient
+                        colors={[colors.primary, colors.secondary || colors.primary]}
+                        style={StyleSheet.absoluteFillObject}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    />
+                    <Text style={styles.avatarText}>{userName?.[0] || 'U'}</Text>
+                </TouchableOpacity>
+            </View>
 
             {/* ══════════ SECTION A — WEEKLY CHART ══════════ */}
             <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>{t('reports.weeklySummary')}</Text>
@@ -785,6 +803,7 @@ export default function ReportsScreen() {
                 <Text style={styles.tipText}>{t('reports.tip')}</Text>
             </View>
 
+            <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
         </ScrollView>
     );
 }
@@ -795,6 +814,9 @@ const styles = StyleSheet.create({
     center: { alignItems: 'center', justifyContent: 'center' },
     content: { padding: Spacing.md, paddingBottom: 48 },
     pageTitle: { ...Fonts.heavy, fontSize: 28, marginBottom: Spacing.lg },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg },
+    avatarBtn: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+    avatarText: { fontWeight: '700', color: '#fff', fontSize: 16 },
     sectionLabel: {
         ...Fonts.semibold, fontSize: 12,
         textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: Spacing.sm,

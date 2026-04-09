@@ -1,0 +1,75 @@
+{
+  "6d62e8a4-8a76-478f-bb3f-324ff5dee2ba": [
+    {
+      "id": "1775666373178",
+      "title": "Estou me sentindo um pouco mal...",
+      "updatedAt": "2026-04-08T16:39:36.102Z",
+      "messages": [
+        {
+          "role": "user",
+          "message": "Estou me sentindo um pouco mal hoje",
+          "timestamp": "2026-04-08T16:39:36.102Z"
+        },
+        {
+          "role": "assistant",
+          "message": "Compreendo que se esteja a sentir um pouco mal hoje. É importante reconhecer esses sentimentos.\n\nPara te ajudar a compreender melhor o que sentes, sugiro que faças o questionário WHO-5, que está disponível na página \"Inquéritos\". Explorar as meditações ou exercícios de sono na app também pode ser útil para encontrar algum conforto.",
+          "timestamp": "2026-04-08T16:39:36.102Z"
+        }
+      ]
+    },
+    {
+      "id": "1775665668085",
+      "title": "Today I'm feeling anxious",
+      "updatedAt": "2026-04-08T16:38:52.767Z",
+      "messages": [
+        {
+          "role": "user",
+          "message": "Today I'm feeling anxious",
+          "timestamp": "2026-04-08T16:27:48.894Z"
+        },
+        {
+          "role": "assistant",
+          "message": "I understand you're feeling anxious. Taking some deep breaths can help. What do you think is causing this anxiety?",
+          "timestamp": "2026-04-08T16:27:48.894Z"
+        },
+        {
+          "role": "user",
+          "message": "I have a hard test tomorrow",
+          "timestamp": "2026-04-08T16:38:52.767Z"
+        },
+        {
+          "role": "assistant",
+          "message": "That sounds like a lot of pressure, and it's completely understandable to feel anxious with a hard test coming up. Taking some time to manage that stress can really help.\n\nYou might find it helpful to take the GAD-7 questionnaire to better understand your anxiety, which you can find on the \"Inquéritos\" page. Also, visiting our \"Meditations\" or \"Sleep\" pages might offer some guided exercises to help you relax and prepare for tomorrow.",
+          "timestamp": "2026-04-08T16:38:52.767Z"
+        }
+      ]
+    },
+    {
+      "id": "1775665613171",
+      "title": "Hi",
+      "updatedAt": "2026-04-08T16:27:14.320Z",
+      "messages": [
+        {
+          "role": "user",
+          "message": "Hi",
+          "timestamp": "2026-04-08T16:26:55.171Z"
+        },
+        {
+          "role": "assistant",
+          "message": "Hi there! I'm your AURA Assistant, here to support you on your well-being journey. It's great to connect with you. How can I assist you today?",
+          "timestamp": "2026-04-08T16:26:55.171Z"
+        },
+        {
+          "role": "user",
+          "message": "I'm feeling really sad today",
+          "timestamp": "2026-04-08T16:27:14.320Z"
+        },
+        {
+          "role": "assistant",
+          "message": "I'm so sorry to hear you're feeling really sad today. It takes courage to acknowledge those feelings, and I want you to know you're not alone.\n\nTo help us understand a bit more about what you're experiencing, you might find it helpful to take the PHQ-9 questionnaire. You can find it, along with other helpful tools, on the \"Inquéritos\" (Questionnaires) page in the app.",
+          "timestamp": "2026-04-08T16:27:14.320Z"
+        }
+      ]
+    }
+  ]
+}

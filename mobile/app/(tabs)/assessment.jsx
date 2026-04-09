@@ -4,15 +4,19 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import { useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
+import SettingsModal from '../../components/SettingsModal';
 
 export default function AssessmentScreen() {
     const { t } = useI18n();
-    const { colors } = useTheme();
+    const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
+    const isDark = theme === 'dark';
     const [questionnaires, setQuestionnaires] = useState([]);
     const [activeForm, setActiveForm] = useState(null);
     const [answers, setAnswers] = useState([]);
@@ -22,13 +26,16 @@ export default function AssessmentScreen() {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState(null);
+    const [user, setUser] = useState(null);
+    const [settingsVisible, setSettingsVisible] = useState(false);
 
     useEffect(() => {
         AsyncStorage.getItem('aura_user').then((stored) => {
             if (stored) {
-                const user = JSON.parse(stored);
-                setUserId(user.id);
-                loadData(user.id);
+                const u = JSON.parse(stored);
+                setUserId(u.id);
+                setUser(u);
+                loadData(u.id);
             }
         });
     }, []);
@@ -204,7 +211,21 @@ export default function AssessmentScreen() {
     // ── LIST VIEW ──
     return (
         <ScrollView style={[styles.container, { backgroundColor: colors.bg }]} contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}>
-            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>{t('assessment.title')}</Text>
+            <View style={styles.headerRow}>
+                <Text style={[styles.pageTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('assessment.title')}</Text>
+                <TouchableOpacity
+                    style={[styles.avatarBtn, { borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(16,185,129,0.35)' }]}
+                    onPress={() => setSettingsVisible(true)}
+                    activeOpacity={0.8}
+                >
+                    <LinearGradient
+                        colors={[colors.primary, colors.secondary || colors.primary]}
+                        style={StyleSheet.absoluteFillObject}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    />
+                    <Text style={styles.avatarText}>{user?.name?.[0] || 'U'}</Text>
+                </TouchableOpacity>
+            </View>
 
             {loading ? (
                 <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 40 }} />
@@ -214,7 +235,7 @@ export default function AssessmentScreen() {
                     {questionnaires.map((q) => (
                         <TouchableOpacity key={q.id} style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => startForm(q.id)} activeOpacity={0.8}>
                             <View style={[styles.actionIcon, { backgroundColor: colors.primaryDim }]}>
-                                <Text style={styles.actionIconText}>📋</Text>
+                                <Feather name="clipboard" size={22} color={colors.primary} />
                             </View>
                             <View style={styles.actionText}>
                                 <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>{q.name}</Text>
@@ -242,6 +263,8 @@ export default function AssessmentScreen() {
                     )}
                 </>
             )}
+
+            <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
         </ScrollView>
     );
 }
@@ -250,6 +273,9 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     content: { padding: Spacing.md, paddingBottom: 32 },
     pageTitle: { ...Fonts.heavy, fontSize: 28, marginBottom: Spacing.lg },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg },
+    avatarBtn: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+    avatarText: { fontWeight: '700', color: '#fff', fontSize: 16 },
     sectionLabel: { ...Fonts.semibold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.sm },
 
     backBtn: { marginBottom: Spacing.md },

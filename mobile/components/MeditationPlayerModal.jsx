@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme, Fonts, Spacing, Radius } from '../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,27 @@ export default function MeditationPlayerModal({ visible, session, onClose }) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
     const [sound, setSound] = useState(null);
+    const audioConfigured = useRef(false);
+
+    // Configure audio session for mobile playback once
+    useEffect(() => {
+        const configureAudio = async () => {
+            if (audioConfigured.current) return;
+            try {
+                await Audio.setAudioModeAsync({
+                    allowsRecordingIOS: false,
+                    playsInSilentModeIOS: true,
+                    staysActiveInBackground: true,
+                    shouldDuckAndroid: true,
+                });
+                audioConfigured.current = true;
+                console.log('[Audio] Audio mode configured successfully');
+            } catch (e) {
+                console.warn('[Audio] Failed to configure audio mode:', e);
+            }
+        };
+        configureAudio();
+    }, []);
 
     useEffect(() => {
         if (visible && session) {
@@ -33,19 +54,40 @@ export default function MeditationPlayerModal({ visible, session, onClose }) {
             if (isPlaying && session?.audioUrl) {
                 if (!sound) {
                     try {
+                        // Ensure audio mode is set before every play attempt
+                        await Audio.setAudioModeAsync({
+                            allowsRecordingIOS: false,
+                            playsInSilentModeIOS: true,
+                            staysActiveInBackground: true,
+                            shouldDuckAndroid: true,
+                        });
+
                         const audioSource = typeof session.audioUrl === 'string'
                             ? { uri: session.audioUrl }
                             : session.audioUrl;
+
+                        console.log('[Audio] Loading audio source:', typeof session.audioUrl === 'string' ? session.audioUrl : 'bundled asset');
                         const { sound: newSound } = await Audio.Sound.createAsync(
                             audioSource,
-                            { shouldPlay: true, isLooping: true }
+                            { shouldPlay: true, isLooping: true, volume: 1.0 }
                         );
+                        console.log('[Audio] Sound loaded and playing');
                         setSound(newSound);
                     } catch (e) {
-                        console.log('Audio load error:', e);
+                        console.error('[Audio] Audio load error:', e);
+                        Alert.alert(
+                            'Audio Error',
+                            'Could not load the meditation audio. Please try again.',
+                            [{ text: 'OK' }]
+                        );
+                        setIsPlaying(false);
                     }
                 } else {
-                    await sound.playAsync();
+                    try {
+                        await sound.playAsync();
+                    } catch (e) {
+                        console.error('[Audio] Play error:', e);
+                    }
                 }
             } else if (!isPlaying && sound) {
                 try { await sound.pauseAsync(); } catch (e) { /* already unloaded */ }

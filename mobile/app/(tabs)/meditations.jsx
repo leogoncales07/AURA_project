@@ -1,12 +1,15 @@
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
 } from 'react-native';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useI18n } from '../../i18n';
 import { useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BreathingTool from '../../components/BreathingTool';
 import MeditationPlayerModal from '../../components/MeditationPlayerModal';
-import { useState } from 'react';
+import SettingsModal from '../../components/SettingsModal';
 
 const SESSION_COLORS = { accentBlue: '#4FC3F7', accentPink: '#FF6B9D', accentMint: '#30D158' };
 
@@ -17,16 +20,39 @@ const SESSIONS = [
 
 export default function MeditationsScreen() {
     const { t } = useI18n();
-    const { colors } = useTheme();
+    const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
+    const isDark = theme === 'dark';
     const [activeSession, setActiveSession] = useState(null);
+    const [user, setUser] = useState(null);
+    const [settingsVisible, setSettingsVisible] = useState(false);
+
+    useEffect(() => {
+        AsyncStorage.getItem('aura_user').then((stored) => {
+            if (stored) setUser(JSON.parse(stored));
+        });
+    }, []);
 
     return (
         <ScrollView
             style={[styles.container, { backgroundColor: colors.bg }]}
             contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
         >
-            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>{t('meditations.title')}</Text>
+            <View style={styles.headerRow}>
+                <Text style={[styles.pageTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('meditations.title')}</Text>
+                <TouchableOpacity
+                    style={[styles.avatarBtn, { borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(16,185,129,0.35)' }]}
+                    onPress={() => setSettingsVisible(true)}
+                    activeOpacity={0.8}
+                >
+                    <LinearGradient
+                        colors={[colors.primary, colors.secondary || colors.primary]}
+                        style={StyleSheet.absoluteFillObject}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    />
+                    <Text style={styles.avatarText}>{user?.name?.[0] || 'U'}</Text>
+                </TouchableOpacity>
+            </View>
 
             {/* Featured card */}
             <View style={[styles.featuredCard, { backgroundColor: SESSION_COLORS.accentMint + '15', borderColor: SESSION_COLORS.accentMint + '30' }]}>
@@ -92,6 +118,7 @@ export default function MeditationsScreen() {
                 session={activeSession}
                 onClose={() => setActiveSession(null)}
             />
+            <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
         </ScrollView>
     );
 }
@@ -100,6 +127,9 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     content: { padding: Spacing.md, paddingBottom: 32 },
     pageTitle: { ...Fonts.heavy, fontSize: 28, marginBottom: Spacing.lg },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg },
+    avatarBtn: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+    avatarText: { fontWeight: '700', color: '#fff', fontSize: 16 },
     sectionLabel: { ...Fonts.semibold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.sm },
 
     featuredCard: {

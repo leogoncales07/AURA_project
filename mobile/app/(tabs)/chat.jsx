@@ -2,17 +2,19 @@ import { useState, useEffect, useRef } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, FlatList,
     StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform,
-    Modal, Dimensions
+    Dimensions, Pressable
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, interpolate } from 'react-native-reanimated';
 import { api } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import { COLORS, useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
+const SIDEBAR_WIDTH = width * 0.78;
 
 export default function ChatScreen() {
     const { t, locale } = useI18n();
@@ -29,9 +31,25 @@ export default function ChatScreen() {
     // Multi-thread state
     const [threads, setThreads] = useState([]);
     const [currentThreadId, setCurrentThreadId] = useState(null);
-    const [showHistory, setShowHistory] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     
     const listRef = useRef(null);
+
+    // Sidebar animation
+    const sidebarAnim = useSharedValue(0); // 0 = closed, 1 = open
+
+    useEffect(() => {
+        sidebarAnim.value = withTiming(sidebarOpen ? 1 : 0, { duration: 280, easing: Easing.bezier(0.25, 0.1, 0.25, 1) });
+    }, [sidebarOpen]);
+
+    const sidebarStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: interpolate(sidebarAnim.value, [0, 1], [SIDEBAR_WIDTH, 0]) }],
+    }));
+
+    const scrimStyle = useAnimatedStyle(() => ({
+        opacity: sidebarAnim.value,
+        pointerEvents: sidebarAnim.value > 0.01 ? 'auto' : 'none',
+    }));
 
     useEffect(() => {
         AsyncStorage.getItem('aura_user').then((stored) => {
@@ -56,7 +74,7 @@ export default function ChatScreen() {
 
     const loadThreadMessages = async (uid, threadId) => {
         setCurrentThreadId(threadId);
-        setShowHistory(false);
+        setSidebarOpen(false);
         setMessages([]); // Clear visually while loading
         const { data } = await api.getConversationMessages(uid, threadId);
         if (data?.messages) {
@@ -72,14 +90,14 @@ export default function ChatScreen() {
     const handleNewChat = () => {
         setCurrentThreadId(null);
         setMessages([]);
-        setShowHistory(false);
+        setSidebarOpen(false);
     };
 
     const handleDeleteThread = async (threadId) => {
         setThreads(prev => prev.filter(t => t.id !== threadId));
         if (currentThreadId === threadId) {
             handleNewChat();
-            setShowHistory(true); // Keep history open since we deleted the active one
+            setSidebarOpen(true); // Keep sidebar open since we deleted the active one
         }
         await api.deleteConversation(userId, threadId);
     };
@@ -166,8 +184,8 @@ export default function ChatScreen() {
                             <Text style={[styles.botStatus, { color: colors.accentMint }]}>● {t('chat.botStatus')}</Text>
                         </View>
                     </View>
-                    <TouchableOpacity style={[styles.historyBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]} onPress={() => setShowHistory(true)}>
-                        <Text style={[styles.historyBtnIcon, { color: colors.textPrimary }]}>☰</Text>
+                    <TouchableOpacity style={[styles.historyBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]} onPress={() => setSidebarOpen(!sidebarOpen)}>
+                        <Text style={[styles.historyBtnIcon, { color: colors.textPrimary }]}>💬</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -233,55 +251,57 @@ export default function ChatScreen() {
                 </View>
             </KeyboardAvoidingView>
 
-            {/* Sliding History Modal */}
-            <Modal
-                visible={showHistory}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={() => setShowHistory(false)}
-            >
-                <BlurView intensity={90} tint="dark" style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.lg }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Chat History</Text>
-                            <TouchableOpacity onPress={() => setShowHistory(false)} style={styles.closeBtn}>
-                                <Text style={styles.closeBtnText}>✕</Text>
-                            </TouchableOpacity>
-                        </View>
+            {/* Scrim overlay — tap to close sidebar */}
+            <Animated.View style={[styles.scrim, scrimStyle]}>
+                <Pressable style={StyleSheet.absoluteFill} onPress={() => setSidebarOpen(false)} />
+            </Animated.View>
 
-                        <TouchableOpacity style={styles.newChatCard} onPress={handleNewChat}>
-                            <LinearGradient colors={['rgba(16,185,129,0.2)', 'transparent']} style={StyleSheet.absoluteFillObject} />
-                            <Text style={styles.newChatText}>+ New Conversation</Text>
+            {/* Sliding Sidebar */}
+            <Animated.View style={[styles.sidebar, { paddingTop: insets.top + Spacing.md, paddingBottom: insets.bottom + Spacing.md, backgroundColor: colors.surface, borderLeftColor: colors.border }, sidebarStyle]}>
+                <View style={styles.sidebarInner}>
+                    {/* Sidebar Header */}
+                    <View style={styles.sidebarHeader}>
+                        <Text style={[styles.sidebarTitle, { color: colors.textPrimary }]}>💬 Conversations</Text>
+                        <TouchableOpacity onPress={() => setSidebarOpen(false)} style={[styles.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]}>
+                            <Text style={[styles.closeBtnText, { color: colors.textPrimary }]}>✕</Text>
                         </TouchableOpacity>
-
-                        <FlatList
-                            data={threads}
-                            keyExtractor={(item) => String(item.id)}
-                            renderItem={({ item }) => (
-                                <View style={[styles.threadCard, currentThreadId === item.id && styles.threadCardActive]}>
-                                    <TouchableOpacity 
-                                        style={{ flex: 1, padding: Spacing.md }}
-                                        onPress={() => loadThreadMessages(userId, item.id)}
-                                    >
-                                        <Text style={[styles.threadTitle, currentThreadId === item.id && styles.threadTitleActive]} numberOfLines={1}>
-                                            💬 {item.title || 'Conversation'}
-                                        </Text>
-                                        <Text style={styles.threadDate}>{new Date(item.updatedAt || item.updated_at).toLocaleDateString()}</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity 
-                                        style={{ padding: Spacing.md, justifyContent: 'center' }}
-                                        onPress={() => handleDeleteThread(item.id)}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text style={{ fontSize: 18, opacity: 0.8 }}>🗑️</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
-                            contentContainerStyle={styles.threadList}
-                        />
                     </View>
-                </BlurView>
-            </Modal>
+
+                    {/* New Chat Button */}
+                    <TouchableOpacity style={styles.newChatCard} onPress={handleNewChat}>
+                        <LinearGradient colors={['rgba(16,185,129,0.2)', 'transparent']} style={StyleSheet.absoluteFillObject} />
+                        <Text style={styles.newChatText}>+ New Chat</Text>
+                    </TouchableOpacity>
+
+                    {/* Thread List */}
+                    <FlatList
+                        data={threads}
+                        keyExtractor={(item) => String(item.id)}
+                        renderItem={({ item }) => (
+                            <View style={[styles.threadCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }, currentThreadId === item.id && styles.threadCardActive]}>
+                                <TouchableOpacity 
+                                    style={{ flex: 1, padding: Spacing.sm, paddingHorizontal: Spacing.md }}
+                                    onPress={() => loadThreadMessages(userId, item.id)}
+                                >
+                                    <Text style={[styles.threadTitle, { color: colors.textSecondary }, currentThreadId === item.id && styles.threadTitleActive]} numberOfLines={1}>
+                                        {item.title || 'Conversation'}
+                                    </Text>
+                                    <Text style={[styles.threadDate, { color: colors.textTertiary }]}>{new Date(item.updatedAt || item.updated_at).toLocaleDateString()}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={{ padding: Spacing.sm, justifyContent: 'center' }}
+                                    onPress={() => handleDeleteThread(item.id)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={{ fontSize: 16, opacity: 0.6 }}>🗑️</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                        contentContainerStyle={styles.threadList}
+                        showsVerticalScrollIndicator={false}
+                    />
+                </View>
+            </Animated.View>
         </View>
     );
 }
@@ -383,34 +403,53 @@ const styles = StyleSheet.create({
     sendBtnDisabled: { opacity: 0.5 },
     sendBtnText: { ...Fonts.heavy, color: '#fff', fontSize: 24, marginBottom: 4 },
 
-    /* Modal Styles */
-    modalOverlay: { flex: 1 },
-    modalContent: { flex: 1, backgroundColor: 'rgba(2, 6, 23, 0.6)', padding: Spacing.lg },
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.xl },
-    modalTitle: { ...Fonts.serif, fontSize: 28, color: COLORS.textPrimary },
-    closeBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20 },
-    closeBtnText: { color: COLORS.textPrimary, fontSize: 16, ...Fonts.bold },
+    /* Sidebar Styles */
+    scrim: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        zIndex: 90,
+    },
+    sidebar: {
+        position: 'absolute',
+        top: 0, bottom: 0, right: 0,
+        width: SIDEBAR_WIDTH,
+        zIndex: 100,
+        overflow: 'hidden',
+        borderLeftWidth: 1,
+        borderLeftColor: 'rgba(255,255,255,0.08)',
+    },
+    sidebarInner: {
+        flex: 1,
+        padding: Spacing.md,
+    },
+    sidebarHeader: {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    sidebarTitle: { ...Fonts.bold, fontSize: 20, color: COLORS.textPrimary },
+    closeBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 18 },
+    closeBtnText: { color: COLORS.textPrimary, fontSize: 14, ...Fonts.bold },
 
     newChatCard: {
-        padding: Spacing.lg, borderRadius: Radius.lg,
+        padding: Spacing.md, borderRadius: Radius.md,
         borderWidth: 1, borderColor: COLORS.primary,
         alignItems: 'center', justifyContent: 'center',
-        marginBottom: Spacing.lg, overflow: 'hidden'
+        marginBottom: Spacing.md, overflow: 'hidden'
     },
-    newChatText: { ...Fonts.semibold, color: COLORS.primary, fontSize: 16 },
+    newChatText: { ...Fonts.semibold, color: COLORS.primary, fontSize: 14 },
 
-    threadList: { paddingBottom: 100 },
+    threadList: { paddingBottom: 80 },
     threadCard: {
         flexDirection: 'row', alignItems: 'center',
         borderRadius: Radius.md,
         backgroundColor: 'rgba(255,255,255,0.05)',
-        marginBottom: Spacing.sm, borderWidth: 1, borderColor: 'transparent',
+        marginBottom: Spacing.xs, borderWidth: 1, borderColor: 'transparent',
     },
     threadCardActive: {
         backgroundColor: 'rgba(16,185,129,0.1)',
         borderColor: 'rgba(16,185,129,0.3)',
     },
-    threadTitle: { ...Fonts.medium, color: COLORS.textSecondary, fontSize: 16, marginBottom: 4 },
+    threadTitle: { ...Fonts.medium, color: COLORS.textSecondary, fontSize: 14, marginBottom: 2 },
     threadTitleActive: { color: COLORS.primary, ...Fonts.bold },
-    threadDate: { ...Fonts.regular, color: COLORS.textTertiary, fontSize: 12 },
+    threadDate: { ...Fonts.regular, color: COLORS.textTertiary, fontSize: 11 },
 });

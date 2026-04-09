@@ -13,6 +13,7 @@ import { api } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import { useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import SettingsModal from '../../components/SettingsModal';
 import Skeleton from '../../components/Skeleton';
 
@@ -283,7 +284,7 @@ export default function DashboardScreen() {
                             style={[styles.actionCard, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]}>
                             {loading ? <Skeleton width={48} height={48} borderRadius={12} /> : (
                                 <View style={[styles.actionIcon, { backgroundColor: colors.primaryDim }]}>
-                                    <Text style={styles.actionIconText}>📋</Text>
+                                    <Feather name="clipboard" size={24} color={colors.primary} />
                                 </View>
                             )}
                             <View style={styles.actionText}>
@@ -308,7 +309,7 @@ export default function DashboardScreen() {
                             style={[styles.actionCard, { backgroundColor: colors.card, borderColor: isDark ? 'rgba(255,255,255,0.08)' : colors.border }]}>
                              {loading ? <Skeleton width={48} height={48} borderRadius={12} /> : (
                                 <View style={[styles.actionIcon, { backgroundColor: 'rgba(48,209,88,0.15)' }]}>
-                                    <Text style={styles.actionIconText}>🌬️</Text>
+                                    <Feather name="feather" size={24} color="#30D158" />
                                 </View>
                             )}
                             <View style={styles.actionText}>

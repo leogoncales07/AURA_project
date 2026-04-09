@@ -9,7 +9,8 @@ import {
   BarChart3, 
   Moon, 
   Leaf, 
-  Heart, 
+  ClipboardCheck, 
+  MessageSquare, 
   Sparkles, 
   Settings
 } from "lucide-react";
@@ -29,13 +30,13 @@ export default function AuraSidebar() {
   const mainLinks = [
     { label: t('nav.home'),       href: "/dashboard",   icon: <LayoutDashboard size={18} strokeWidth={1.75} /> },
     { label: t('nav.progress'),   href: "/reports",     icon: <BarChart3 size={18} strokeWidth={1.75} /> },
-    { label: t('nav.chat'),       href: "/chat",        icon: <Sparkles size={18} strokeWidth={1.75} /> },
+    { label: t('nav.chat'),       href: "/chat",        icon: <MessageSquare size={18} strokeWidth={1.75} /> },
   ];
 
   const wellnessLinks = [
     { label: t('nav.sleep'),        href: "/sleep",       icon: <Moon size={18} strokeWidth={1.75} /> },
     { label: t('nav.pause'),        href: "/meditations", icon: <Leaf size={18} strokeWidth={1.75} /> },
-    { label: t('assessment.title'), href: "/inqueritos", icon: <Heart size={18} strokeWidth={1.75} /> },
+    { label: t('assessment.title'), href: "/inqueritos", icon: <ClipboardCheck size={18} strokeWidth={1.75} /> },
   ];
 
   const bottomLinks = [

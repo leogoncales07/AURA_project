@@ -2,19 +2,25 @@ import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useTheme, Fonts } from '../../constants/Theme';
 import { useI18n } from '../../i18n';
+import { Feather } from '@expo/vector-icons';
 
-function TabSymbol({ symbol, focused, colors }) {
-    const symbols = {
-        'house.fill':      '🏠',
-        'bubble.left.fill':'💬',
-        checklist:         '📋',
-        wind:              '🌬️',
-        'chart.bar.fill':  '📊',
-    };
+const TAB_ICONS = {
+    dashboard:   'grid',
+    chat:        'message-square',
+    assessment:  'clipboard',
+    meditations: 'feather',
+    reports:     'bar-chart-2',
+};
+
+function TabIcon({ name, focused, colors }) {
+    const iconName = TAB_ICONS[name];
+    if (!iconName) return null;
     return (
-        <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.45 }}>
-            {symbols[symbol] || '•'}
-        </Text>
+        <Feather
+            name={iconName}
+            size={21}
+            color={focused ? colors.primary : colors.textTertiary}
+        />
     );
 }
 
@@ -46,7 +52,7 @@ export default function TabsLayout() {
                 options={{
                     title: t('tabs.dashboard'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="house.fill" focused={focused} colors={colors} />
+                        <TabIcon name="dashboard" focused={focused} colors={colors} />
                     ),
                 }}
             />
@@ -55,7 +61,7 @@ export default function TabsLayout() {
                 options={{
                     title: t('tabs.chat'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="bubble.left.fill" focused={focused} colors={colors} />
+                        <TabIcon name="chat" focused={focused} colors={colors} />
                     ),
                 }}
             />
@@ -64,7 +70,7 @@ export default function TabsLayout() {
                 options={{
                     title: t('tabs.assessment'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="checklist" focused={focused} colors={colors} />
+                        <TabIcon name="assessment" focused={focused} colors={colors} />
                     ),
                 }}
             />
@@ -73,7 +79,7 @@ export default function TabsLayout() {
                 options={{
                     title: t('tabs.meditations'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="wind" focused={focused} colors={colors} />
+                        <TabIcon name="meditations" focused={focused} colors={colors} />
                     ),
                 }}
             />
@@ -82,7 +88,7 @@ export default function TabsLayout() {
                 options={{
                     title: t('tabs.reports'),
                     tabBarIcon: ({ focused }) => (
-                        <TabSymbol symbol="chart.bar.fill" focused={focused} colors={colors} />
+                        <TabIcon name="reports" focused={focused} colors={colors} />
                     ),
                 }}
             />
