@@ -43,33 +43,6 @@
           "timestamp": "2026-04-08T16:38:52.767Z"
         }
       ]
-    },
-    {
-      "id": "1775665613171",
-      "title": "Hi",
-      "updatedAt": "2026-04-08T16:27:14.320Z",
-      "messages": [
-        {
-          "role": "user",
-          "message": "Hi",
-          "timestamp": "2026-04-08T16:26:55.171Z"
-        },
-        {
-          "role": "assistant",
-          "message": "Hi there! I'm your AURA Assistant, here to support you on your well-being journey. It's great to connect with you. How can I assist you today?",
-          "timestamp": "2026-04-08T16:26:55.171Z"
-        },
-        {
-          "role": "user",
-          "message": "I'm feeling really sad today",
-          "timestamp": "2026-04-08T16:27:14.320Z"
-        },
-        {
-          "role": "assistant",
-          "message": "I'm so sorry to hear you're feeling really sad today. It takes courage to acknowledge those feelings, and I want you to know you're not alone.\n\nTo help us understand a bit more about what you're experiencing, you might find it helpful to take the PHQ-9 questionnaire. You can find it, along with other helpful tools, on the \"Inquéritos\" (Questionnaires) page in the app.",
-          "timestamp": "2026-04-08T16:27:14.320Z"
-        }
-      ]
     }
   ]
 }

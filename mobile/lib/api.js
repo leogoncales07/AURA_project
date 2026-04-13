@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ── API URL (uses .env — update IP if your machine changes networks) ──
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.144:8000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.68.56:8000';
 const OWNER_SECRET = 'rRA5utI-P45PjhV3HP1gYLmDCSbFL29l-uqunqqtArV8mohJk9Ov1R2QSGKYkZXN';
 
 async function fetchApi(endpoint, options = {}) {
