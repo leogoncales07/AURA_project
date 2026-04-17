@@ -273,3 +273,155 @@
   color: var(--aura-ghost);
   text-transform: uppercase;
 }
+
+/* New Elements Styling */
+.logButton {
+  margin-top: 16px;
+  background: var(--aura-surface);
+  border: 1px solid var(--aura-border);
+  color: var(--aura-white);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.logButton:hover {
+  background: var(--aura-depth);
+  border-color: var(--aura-white);
+}
+
+.timeframeTabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  border-radius: var(--radius-full);
+  margin-bottom: 24px;
+  border: 1px solid var(--aura-border);
+}
+
+.timeframeTab {
+  background: transparent;
+  border: none;
+  color: var(--aura-ghost);
+  padding: 6px 16px;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timeframeTab:hover {
+  color: var(--aura-white);
+}
+
+.timeframeTabActive {
+  background: var(--aura-surface);
+  color: var(--aura-white);
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Log Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  background: var(--aura-bg);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+}
+
+.modalContent h3 {
+  color: var(--aura-white);
+  margin: 0 0 16px 0;
+  font-family: var(--font-fraunces), serif;
+  font-size: var(--text-xl);
+}
+
+.modalContent p {
+  color: var(--aura-ghost);
+  font-size: var(--text-sm);
+  margin-bottom: 24px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.inputGroup label {
+  color: var(--aura-muted);
+  font-size: var(--text-xs);
+}
+
+.inputGroup input {
+  background: var(--aura-surface);
+  border: 1px solid var(--aura-border);
+  color: var(--aura-white);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: var(--aura-white);
+}
+
+.previewText {
+  color: var(--aura-aurora-3);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin: 16px 0;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancelBtn {
+  background: transparent;
+  color: var(--aura-muted);
+  border: none;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+
+.saveBtn {
+  background: var(--aura-gradient-primary);
+  color: var(--aura-bg);
+  border: none;
+  padding: 10px 24px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.saveBtn:hover {
+  opacity: 0.85;
+}

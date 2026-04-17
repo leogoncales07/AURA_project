@@ -4,7 +4,8 @@
         "chat": "Chat",
         "assessment": "Testes",
         "meditations": "Pausar",
-        "reports": "Progresso"
+        "reports": "Progresso",
+        "sleep": "Sono"
     },
     "common": {
         "error": "Ocorreu um erro. Tente novamente.",
@@ -192,5 +193,29 @@
         "loggingOut": "A terminar...",
         "version": "Versão",
         "profile": "Perfil"
+    },
+    "sleepTab": {
+        "title": "Sono",
+        "connecting": "A conectar...",
+        "connected": "Conectado",
+        "day": "Dia",
+        "week": "Semana",
+        "month": "Mês",
+        "year": "Ano",
+        "scoreTitle": "Pontuação",
+        "scoreComparison": "Dormiu melhor que {percent}% dos utilizadores",
+        "deepSleep": "Sono profundo",
+        "lightSleep": "Sono leve",
+        "rem": "REM",
+        "awake": "Tempo acordado",
+        "naps": "Sestas",
+        "breathingQuality": "Qualidade da respiração",
+        "logData": "Registar Sono",
+        "bedTime": "Hora de ir para a cama",
+        "wakeUpTime": "Hora de acordar",
+        "aiReview": "Análise IA",
+        "aiReviewDesc": "Adormeceu mais cedo que 8% das pessoas. Teve um sono profundo mais longo que 22% das pessoas.",
+        "meditationPrep": "Protocolo",
+        "meditationPrepDesc": "Prepare a sua mente para um descanso profundo."
     }
 }

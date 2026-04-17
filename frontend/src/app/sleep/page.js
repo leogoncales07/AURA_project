@@ -1,12 +1,19 @@
 'use client';
 import { Activity, CheckCircle2, Coffee, Moon, Sun, Wind, Zap } from 'lucide-react';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import Card from '@/components/Card';
 import styles from './page.module.css';
 
 export default function SleepPage() {
+  const [sleepLogs, setSleepLogs] = useState([]);
+  const [timeframe, setTimeframe] = useState('Day');
+
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [bedTimeInput, setBedTimeInput] = useState('23:30');
+  const [wakeTimeInput, setWakeTimeInput] = useState('07:00');
+
   const sleepScore = 84;
   
   // Mock data for weekly chart
@@ -20,9 +27,99 @@ export default function SleepPage() {
     { day: 'S', duration: 8.5, quality: 88 },
   ];
 
+  // Load from local storage
+  useEffect(() => {
+    const saved = window.localStorage.getItem('aura_sleep_logs_array');
+    if (saved) {
+      try {
+        setSleepLogs(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  const calculateHours = (bed, wake) => {
+    const bedParts = bed.split(':');
+    const wakeParts = wake.split(':');
+    if (bedParts.length !== 2 || wakeParts.length !== 2) return null;
+    
+    const bedH = parseInt(bedParts[0], 10);
+    const bedM = parseInt(bedParts[1], 10);
+    const wakeH = parseInt(wakeParts[0], 10);
+    const wakeM = parseInt(wakeParts[1], 10);
+    
+    if (isNaN(bedH) || isNaN(bedM) || isNaN(wakeH) || isNaN(wakeM)) return null;
+
+    const bedDecimal = bedH + (bedM / 60);
+    const wakeDecimal = wakeH + (wakeM / 60);
+
+    let diff = wakeDecimal - bedDecimal;
+    if (diff <= 0) diff += 24;
+    return parseFloat(diff.toFixed(1));
+  };
+
+  const handleSaveLog = () => {
+    const calculatedHours = calculateHours(bedTimeInput, wakeTimeInput) || 8;
+    setLogModalVisible(false);
+    
+    const newLog = {
+      id: Date.now().toString(),
+      bedTime: bedTimeInput,
+      wakeTime: wakeTimeInput,
+      hours: calculatedHours,
+      timestamp: new Date().toISOString()
+    };
+    const updated = [newLog, ...sleepLogs];
+    setSleepLogs(updated);
+    window.localStorage.setItem('aura_sleep_logs_array', JSON.stringify(updated));
+  };
+
+  const getAggregatedData = () => {
+    if (!sleepLogs || !sleepLogs.length) return null;
+    const now = new Date();
+    let filtered = [];
+    
+    if (timeframe === 'Day') {
+         return sleepLogs[0]; 
+    } else if (timeframe === 'Week') {
+         const limit = new Date(now.setDate(now.getDate() - 7));
+         filtered = sleepLogs.filter(l => new Date(l.timestamp) >= limit);
+    } else if (timeframe === 'Month') {
+         const limit = new Date(now.setDate(now.getDate() - 30));
+         filtered = sleepLogs.filter(l => new Date(l.timestamp) >= limit);
+    } else if (timeframe === 'Year') {
+         const limit = new Date(now.setFullYear(now.getFullYear() - 1));
+         filtered = sleepLogs.filter(l => new Date(l.timestamp) >= limit);
+    }
+
+    if (!filtered.length) return sleepLogs[0];
+
+    const avgHours = filtered.reduce((acc, obj) => acc + obj.hours, 0) / filtered.length;
+    return {
+         hours: parseFloat(avgHours.toFixed(1)),
+         bedTime: "--:--", 
+         isAvg: true
+    };
+  };
+
+  const displayData = getAggregatedData();
+  const displayTime = displayData ? (displayData.isAvg ? `${displayData.hours}h` : displayData.bedTime) : "22:45";
+  const subText = displayData ? (displayData.isAvg ? "AVERAGE SLEEP" : "LOGGED BED TIME") : "WIND DOWN";
+
   return (
     <AppShell title="sleep sanctuary">
       <div className={`${styles.container} fade-up-stagger`}>
+        
+        <div className={styles.timeframeTabs} style={{ alignSelf: 'center', margin: '0 auto', width: 'fit-content' }}>
+          {['Day', 'Week', 'Month', 'Year'].map(tab => (
+            <button 
+              key={tab} 
+              className={`${styles.timeframeTab} ${timeframe === tab ? styles.timeframeTabActive : ''}`}
+              onClick={() => setTimeframe(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
         
         {/* Hero Section: 24h Clock Arc */}
         <section className={styles.hero}>
@@ -71,8 +168,15 @@ export default function SleepPage() {
             </svg>
             
             <div className={styles.clockTime}>
-              <h2>22:45</h2>
-              <p>wind down</p>
+              <h2>{displayTime}</h2>
+              <p>{subText}</p>
+              {displayData && !displayData.isAvg && (
+                <p style={{ color: '#5B8AF0', fontWeight: 'bold' }}>{displayData.hours} HRS SLEPT</p>
+              )}
+              
+              <button className={styles.logButton} onClick={() => setLogModalVisible(true)} style={{ margin: '16px auto 0' }}>
+                <Wind size={16} /> Log Sleep
+              </button>
             </div>
           </div>
 
@@ -198,6 +302,46 @@ export default function SleepPage() {
         </section>
 
       </div>
+
+      {logModalVisible && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3>Log Sleep Data</h3>
+            <p>Input your times in HH:MM format. We will calculate the total hours automatically.</p>
+            
+            <div className={styles.inputGroup}>
+              <label>Bed Time (e.g. 23:30)</label>
+              <input 
+                type="text" 
+                value={bedTimeInput} 
+                onChange={(e) => setBedTimeInput(e.target.value)} 
+                placeholder="23:30" 
+              />
+            </div>
+            
+            <div className={styles.inputGroup}>
+              <label>Wake Time (e.g. 07:15)</label>
+              <input 
+                type="text" 
+                value={wakeTimeInput} 
+                onChange={(e) => setWakeTimeInput(e.target.value)} 
+                placeholder="07:15" 
+              />
+            </div>
+
+            {calculateHours(bedTimeInput, wakeTimeInput) !== null && (
+              <div className={styles.previewText}>
+                {calculateHours(bedTimeInput, wakeTimeInput)} hours total
+              </div>
+            )}
+            
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={() => setLogModalVisible(false)}>Cancel</button>
+              <button className={styles.saveBtn} onClick={handleSaveLog}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

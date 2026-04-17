@@ -10,6 +10,7 @@ const TAB_ICONS = {
     assessment:  'clipboard',
     meditations: 'feather',
     reports:     'bar-chart-2',
+    sleep:       'moon',
 };
 
 function TabIcon({ name, focused, colors }) {
@@ -89,6 +90,15 @@ export default function TabsLayout() {
                     title: t('tabs.reports'),
                     tabBarIcon: ({ focused }) => (
                         <TabIcon name="reports" focused={focused} colors={colors} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="sleep"
+                options={{
+                    title: t('tabs.sleep'),
+                    tabBarIcon: ({ focused }) => (
+                        <TabIcon name="sleep" focused={focused} colors={colors} />
                     ),
                 }}
             />

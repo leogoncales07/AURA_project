@@ -4,7 +4,8 @@
         "chat":        "Chat",
         "assessment":  "Tests",
         "meditations": "Pause",
-        "reports":     "Progress"
+        "reports":     "Progress",
+        "sleep":       "Sleep"
     },
     "common": {
         "error": "Something went wrong. Try again.",
@@ -192,5 +193,29 @@
         "loggingOut": "Signing out...",
         "version": "Version",
         "profile": "Profile"
+    },
+    "sleepTab": {
+        "title": "Sleep",
+        "connecting": "Connecting...",
+        "connected": "Connected",
+        "day": "Day",
+        "week": "Week",
+        "month": "Month",
+        "year": "Year",
+        "scoreTitle": "Sleep score",
+        "scoreComparison": "Slept better than {percent}% of users",
+        "deepSleep": "Deep sleep",
+        "lightSleep": "Light sleep",
+        "rem": "REM",
+        "awake": "Time awake",
+        "naps": "Naps",
+        "breathingQuality": "Sleep breathing quality",
+        "logData": "Log Sleep",
+        "bedTime": "Bed Time",
+        "wakeUpTime": "Wake Time",
+        "aiReview": "AI Review",
+        "aiReviewDesc": "You fell asleep earlier than 8% of people. You have longer deep sleep than 22% of people.",
+        "meditationPrep": "Protocol",
+        "meditationPrepDesc": "Prepare your mind for deep rest."
     }
 }
