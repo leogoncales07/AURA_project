@@ -98,7 +98,7 @@ export default function SettingsPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('aura_user');
+    const storedUser = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user')) || sessionStorage.getItem('aura_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       // Optionally sync profile name from stored user
@@ -117,6 +117,8 @@ export default function SettingsPage() {
   const handleLogout = () => {
     localStorage.removeItem('aura_user');
     localStorage.removeItem('aura_token');
+    sessionStorage.removeItem('aura_user');
+    sessionStorage.removeItem('aura_token');
     router.push('/login');
   };
   

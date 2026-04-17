@@ -113,7 +113,15 @@
         "done": "concluído",
         "howDeep": "quão profunda é a tua calma?",
         "reflectSubtitle": "tira um momento para refletir sobre os teus padrões emocionais.",
-        "scoreLabel": "pontuação: {score} — {risk}"
+        "scoreLabel": "pontuação: {score} — {risk}",
+        "riskLabelLow": "Baixo",
+        "riskLabelModerate": "Moderado",
+        "riskLabelHigh": "Alto",
+        "riskLabelSevere": "Severo",
+        "riskDetailsLow": "Risco baixo – Não é necessário acompanhamento profissional.",
+        "riskDetailsModerate": "Risco médio – Monitorização e apoio online.",
+        "riskDetailsHigh": "Risco alto – Encaminhamento imediato para o profissional mais próximo.",
+        "riskDetailsSevere": "Risco alto – Encaminhamento imediato para o profissional mais próximo."
     },
     "meditations": {
         "headerLabel": "sessões guiadas",

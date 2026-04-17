@@ -16,6 +16,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const router = useRouter();
     const { t } = useI18n();
 
@@ -34,8 +35,17 @@ export default function LoginPage() {
             }
 
             if (data && data.access_token) {
-                localStorage.setItem('aura_token', data.access_token);
-                localStorage.setItem('aura_user', JSON.stringify(data.user));
+                if (rememberMe) {
+                    localStorage.setItem('aura_token', data.access_token);
+                    localStorage.setItem('aura_user', JSON.stringify(data.user));
+                    sessionStorage.removeItem('aura_token');
+                    sessionStorage.removeItem('aura_user');
+                } else {
+                    sessionStorage.setItem('aura_token', data.access_token);
+                    sessionStorage.setItem('aura_user', JSON.stringify(data.user));
+                    localStorage.removeItem('aura_token');
+                    localStorage.removeItem('aura_user');
+                }
                 router.push('/dashboard');
             } else {
                 setError(t('login.serverError'));
@@ -107,6 +117,19 @@ export default function LoginPage() {
                         </div>
 
                         {error && <div className={styles.errorMsg}>{error}</div>}
+
+                        <div className={styles.rememberMeWrapper} style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', gap: '8px' }}>
+                            <input 
+                                type="checkbox" 
+                                id="rememberMe" 
+                                checked={rememberMe} 
+                                onChange={(e) => setRememberMe(e.target.checked)} 
+                                style={{ accentColor: 'var(--aura-primary)', width: '16px', height: '16px' }}
+                            />
+                            <label htmlFor="rememberMe" style={{ fontSize: '14px', color: 'var(--aura-text-secondary)', cursor: 'pointer' }}>
+                                {t('login.rememberMe') || 'Remember me'}
+                            </label>
+                        </div>
 
                         <Button
                             variant="primary"

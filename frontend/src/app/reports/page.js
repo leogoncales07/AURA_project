@@ -170,7 +170,7 @@ export default function ReportsPage() {
 
     // ── Load user ──
     useEffect(() => {
-        const stored = localStorage.getItem('aura_user');
+        const stored = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
         if (!stored) { router.push('/login'); return; }
         const u = JSON.parse(stored);
         setUserId(u.id);

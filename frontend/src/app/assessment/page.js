@@ -28,7 +28,7 @@ export default function AssessmentPage() {
     const [userId, setUserId] = useState(null);
 
     useEffect(() => {
-        const stored = localStorage.getItem('aura_user');
+        const stored = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
         const user = stored ? JSON.parse(stored) : null;
         if (user) {
             setUserId(user.id);
@@ -121,8 +121,11 @@ export default function AssessmentPage() {
                                     <span className={formStyles.scoreLabel}>{t('assessment.score')}</span>
                                 </div>
                                 <div className={styles.pill} style={{ background: 'rgba(123, 110, 246, 0.12)', color: 'var(--aura-aurora-1)' }}>
-                                    {result.score_data?.risk_level?.toUpperCase()}
+                                    {t(`assessment.riskLabel${result.score_data?.risk_level?.charAt(0).toUpperCase() + result.score_data?.risk_level?.slice(1)}`) || result.score_data?.risk_level?.toUpperCase()}
                                 </div>
+                                <p style={{ color: 'var(--aura-muted)', fontSize: 'var(--text-sm)', textAlign: 'center', marginTop: '16px', lineHeight: '1.5' }}>
+                                    {t(`assessment.riskDetails${result.score_data?.risk_level?.charAt(0).toUpperCase() + result.score_data?.risk_level?.slice(1)}`)}
+                                </p>
                             </Card>
 
                             {result.ai_summary && (

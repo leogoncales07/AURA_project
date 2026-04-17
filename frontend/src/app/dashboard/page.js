@@ -16,7 +16,7 @@ export default function DashboardPage() {
     const { t } = useI18n();
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('aura_user');
+        const storedUser = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
         if (!storedUser) { router.push('/login'); return; }
         setUser(JSON.parse(storedUser));
         

@@ -113,7 +113,15 @@
         "done": "done",
         "howDeep": "how deep is your calm?",
         "reflectSubtitle": "take a moment to reflect on your emotional patterns.",
-        "scoreLabel": "score: {score} — {risk}"
+        "scoreLabel": "score: {score} — {risk}",
+        "riskLabelLow": "Low",
+        "riskLabelModerate": "Moderate",
+        "riskLabelHigh": "High",
+        "riskLabelSevere": "Severe",
+        "riskDetailsLow": "Low risk – No professional follow-up is needed.",
+        "riskDetailsModerate": "Medium risk – Monitoring and online support.",
+        "riskDetailsHigh": "High risk – Immediate referral to the nearest professional.",
+        "riskDetailsSevere": "High risk – Immediate referral to the nearest professional."
     },
     "meditations": {
         "headerLabel": "guided sessions",

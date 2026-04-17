@@ -3,7 +3,7 @@
     {
       "id": "1776193330668",
       "title": "Hi",
-      "updatedAt": "2026-04-14T19:06:56.621Z",
+      "updatedAt": "2026-04-17T16:31:26.660Z",
       "messages": [
         {
           "role": "user",
@@ -24,6 +24,36 @@
           "role": "assistant",
           "message": "I'm sorry to hear you're feeling sad today. It takes courage to express that, and I'm here to support you.\n\nTo help understand your feelings better, I recommend taking the \"PHQ-9\" questionnaire. You can find it and other helpful tools in the \"Questionnaires\" page of the app.",
           "timestamp": "2026-04-14T19:06:56.621Z"
+        },
+        {
+          "role": "user",
+          "message": "Thank you",
+          "timestamp": "2026-04-17T16:30:52.449Z"
+        },
+        {
+          "role": "assistant",
+          "message": "Your mental health matters. Let's continue this conversation.",
+          "timestamp": "2026-04-17T16:30:52.449Z"
+        },
+        {
+          "role": "user",
+          "message": "Okay, what type of medication should i do",
+          "timestamp": "2026-04-17T16:31:12.023Z"
+        },
+        {
+          "role": "assistant",
+          "message": "Your mental health matters. Let's continue this conversation.",
+          "timestamp": "2026-04-17T16:31:12.023Z"
+        },
+        {
+          "role": "user",
+          "message": "Answer another thing",
+          "timestamp": "2026-04-17T16:31:26.660Z"
+        },
+        {
+          "role": "assistant",
+          "message": "I'm here to support you with your mental wellness journey within AURA, but as an AI, I cannot provide medical advice, including recommendations for medication.\n\nI understand you have another question. Please feel free to share what's on your mind, and I'll do my best to help within my capabilities.",
+          "timestamp": "2026-04-17T16:31:26.660Z"
         }
       ]
     },

@@ -47,7 +47,7 @@ export default function AuraSidebar() {
   const [user, setUser] = React.useState(null);
 
   React.useEffect(() => {
-    const storedUser = localStorage.getItem('aura_user');
+    const storedUser = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }

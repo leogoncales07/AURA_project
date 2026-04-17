@@ -22,6 +22,7 @@ export default function LoginScreen() {
     const [loading, setLoading] = useState(false);
     const [demoLoading, setDemoLoading] = useState(false);
     const [error, setError] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
 
     const isDark = theme === 'dark';
 
@@ -45,6 +46,7 @@ export default function LoginScreen() {
                     name: user.user_metadata?.name || user.name || user.email?.split('@')[0] || 'User',
                 };
                 await AsyncStorage.setItem('aura_user', JSON.stringify(normalizedUser));
+                await AsyncStorage.setItem('aura_remember_me', rememberMe ? 'true' : 'false');
                 router.replace('/(tabs)/dashboard');
             } else {
                 setError(t('login.serverError'));
@@ -155,6 +157,19 @@ export default function LoginScreen() {
 
                             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
+                            <TouchableOpacity 
+                                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg }} 
+                                onPress={() => setRememberMe(!rememberMe)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={[styles.checkbox, rememberMe && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+                                    {rememberMe && <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>✓</Text>}
+                                </View>
+                                <Text style={{ color: colors.textSecondary, fontSize: 14, marginLeft: 8 }}>
+                                    {t('login.rememberMe') || 'Remember me'}
+                                </Text>
+                            </TouchableOpacity>
+
                             {/* Primary button */}
                             <TouchableOpacity
                                 style={[styles.btn, loading && styles.btnDisabled]}
@@ -247,8 +262,13 @@ const styles = StyleSheet.create({
         borderWidth: 1, fontSize: 15, ...Fonts.regular,
         marginBottom: Spacing.sm,
     },
-    inputLast: { marginBottom: Spacing.lg },
+    inputLast: { marginBottom: Spacing.md },
     errorText: { color: '#FF6B9D', fontSize: 13, textAlign: 'center', marginBottom: Spacing.sm },
+    checkbox: {
+        width: 20, height: 20, borderRadius: 4,
+        borderWidth: 1, borderColor: '#aaa',
+        justifyContent: 'center', alignItems: 'center'
+    },
 
     btn: {
         borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center',

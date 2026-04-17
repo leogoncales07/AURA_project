@@ -8,13 +8,24 @@ export default function Index() {
     const router = useRouter();
 
     useEffect(() => {
-        AsyncStorage.getItem('aura_token').then((token) => {
+        const checkAuth = async () => {
+            const rememberMe = await AsyncStorage.getItem('aura_remember_me');
+            if (rememberMe === 'false') {
+                await AsyncStorage.removeItem('aura_token');
+                await AsyncStorage.removeItem('aura_user');
+                await AsyncStorage.removeItem('aura_remember_me');
+                router.replace('/(auth)/login');
+                return;
+            }
+
+            const token = await AsyncStorage.getItem('aura_token');
             if (token) {
                 router.replace('/(tabs)/dashboard');
             } else {
                 router.replace('/(auth)/login');
             }
-        });
+        };
+        checkAuth();
     }, []);
 
     return (

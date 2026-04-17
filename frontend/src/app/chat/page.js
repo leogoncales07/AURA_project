@@ -29,7 +29,7 @@ export default function ChatPage() {
     const textareaRef = useRef(null);
 
     useEffect(() => {
-        const stored = localStorage.getItem('aura_user');
+        const stored = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
         if (stored) {
             const user = JSON.parse(stored);
             setUserId(user.id);

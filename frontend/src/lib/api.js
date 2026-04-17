@@ -19,7 +19,7 @@ async function fetchApi(endpoint, options = {}) {
 
     // Add Auth Token if available
     if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('aura_token');
+        const token = localStorage.getItem('aura_token') || sessionStorage.getItem('aura_token');
         if (token) {
             defaultHeaders['Authorization'] = `Bearer ${token}`;
         }
