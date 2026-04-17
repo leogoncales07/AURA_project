@@ -1,6 +1,33 @@
 {
   "6d62e8a4-8a76-478f-bb3f-324ff5dee2ba": [
     {
+      "id": "1776193330668",
+      "title": "Hi",
+      "updatedAt": "2026-04-14T19:06:56.621Z",
+      "messages": [
+        {
+          "role": "user",
+          "message": "Hi",
+          "timestamp": "2026-04-14T19:02:12.071Z"
+        },
+        {
+          "role": "assistant",
+          "message": "Hello there! It's lovely to hear from you. I'm here to support you on your mental wellness journey within AURA. How can I help you today?",
+          "timestamp": "2026-04-14T19:02:12.071Z"
+        },
+        {
+          "role": "user",
+          "message": "I'm feeling sad",
+          "timestamp": "2026-04-14T19:06:56.621Z"
+        },
+        {
+          "role": "assistant",
+          "message": "I'm sorry to hear you're feeling sad today. It takes courage to express that, and I'm here to support you.\n\nTo help understand your feelings better, I recommend taking the \"PHQ-9\" questionnaire. You can find it and other helpful tools in the \"Questionnaires\" page of the app.",
+          "timestamp": "2026-04-14T19:06:56.621Z"
+        }
+      ]
+    },
+    {
       "id": "1775666373178",
       "title": "Estou me sentindo um pouco mal...",
       "updatedAt": "2026-04-08T16:39:36.102Z",

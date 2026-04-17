@@ -101,7 +101,11 @@
         "results": "Results",
         "score": "Score",
         "aiAnalysis": "AI Analysis",
-        "done": "Done"
+        "done": "Done",
+        "riskDetailsLow": "Low risk – No professional follow-up is needed.",
+        "riskDetailsModerate": "Medium risk – Monitoring and online support.",
+        "riskDetailsHigh": "High risk – Immediate referral to the nearest professional.",
+        "riskDetailsSevere": "High risk – Immediate referral to the nearest professional."
     },
     "meditations": {
         "headerLabel": "Guided Sessions",

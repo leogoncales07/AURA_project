@@ -101,7 +101,11 @@
         "results": "Resultados",
         "score": "Pontuação",
         "aiAnalysis": "Análise IA",
-        "done": "Concluído"
+        "done": "Concluído",
+        "riskDetailsLow": "Risco baixo – Não é necessário acompanhamento profissional.",
+        "riskDetailsModerate": "Risco médio – Monitorização e apoio online.",
+        "riskDetailsHigh": "Risco alto – Encaminhamento imediato para o profissional mais próximo.",
+        "riskDetailsSevere": "Risco alto – Encaminhamento imediato para o profissional mais próximo."
     },
     "meditations": {
         "headerLabel": "Sessões Guiadas",

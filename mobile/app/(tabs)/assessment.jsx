@@ -62,9 +62,6 @@ export default function AssessmentScreen() {
         const newAnswers = [...answers];
         newAnswers[currentQ] = value;
         setAnswers(newAnswers);
-        setTimeout(() => {
-            if (currentQ < activeForm.questions.length - 1) setCurrentQ(currentQ + 1);
-        }, 300);
     };
 
     const handleSubmit = async () => {
@@ -107,9 +104,12 @@ export default function AssessmentScreen() {
                             </View>
                             <View style={[styles.riskBadge, { backgroundColor: riskColors[result.score_data?.risk_level] + '22', borderColor: riskColors[result.score_data?.risk_level] }]}>
                                 <Text style={[styles.riskText, { color: riskColors[result.score_data?.risk_level] }]}>
-                                    {result.score_data?.risk_level?.toUpperCase()}
+                                    {t(`reports.risk${result.score_data?.risk_level?.charAt(0).toUpperCase() + result.score_data?.risk_level?.slice(1)}`) || result.score_data?.risk_level?.toUpperCase()}
                                 </Text>
                             </View>
+                            <Text style={{ fontWeight: '500', fontSize: 14, color: colors.textSecondary, marginTop: 12, textAlign: 'center', paddingHorizontal: 16 }}>
+                                {t(`assessment.riskDetails${result.score_data?.risk_level?.charAt(0).toUpperCase() + result.score_data?.risk_level?.slice(1)}`)}
+                            </Text>
                         </View>
 
                         {result.ai_summary && (
