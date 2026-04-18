@@ -35,7 +35,7 @@ const SECTIONS = [
   { id: 'danger', label: 'Danger Zone', icon: AlertTriangle, group: 'Danger' }
 ];
 
-const INITIAL_STATE = {
+let INITIAL_STATE = {
   profile: {
     name: 'Matheus Silva',
     bio: 'Finding peace in the code and clarity in the mind.',
@@ -98,15 +98,23 @@ export default function SettingsPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user')) || sessionStorage.getItem('aura_user');
+    const storedUser = localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      // Optionally sync profile name from stored user
       const userData = JSON.parse(storedUser);
-      if (userData.name) {
+      setUser(userData);
+      // Sync profile data from stored user
+      const profileUpdate = {};
+      if (userData.display_name || userData.name) profileUpdate.name = userData.display_name || userData.name;
+      if (userData.bio) profileUpdate.bio = userData.bio;
+      if (userData.date_of_birth) profileUpdate.dob = userData.date_of_birth;
+      if (userData.timezone) profileUpdate.timezone = userData.timezone;
+
+      if (Object.keys(profileUpdate).length > 0) {
+        const newProfile = { ...INITIAL_STATE.profile, ...profileUpdate };
+        INITIAL_STATE = { ...INITIAL_STATE, profile: { ...newProfile } };
         setSettings(prev => ({
           ...prev,
-          profile: { ...prev.profile, name: userData.name }
+          profile: newProfile
         }));
       }
     } else {
@@ -137,14 +145,76 @@ export default function SettingsPage() {
 
   const hasChanges = JSON.stringify(settings) !== JSON.stringify(INITIAL_STATE);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSaving(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
-    }, 1500);
+
+    // 1) Always persist profile data to localStorage/sessionStorage first
+    const storage = localStorage.getItem('aura_user') ? localStorage : sessionStorage;
+    const storedUser = JSON.parse(storage.getItem('aura_user') || '{}');
+    storedUser.name = settings.profile.name;
+    storedUser.display_name = settings.profile.name;
+    storedUser.bio = settings.profile.bio;
+    storedUser.date_of_birth = settings.profile.dob;
+    storedUser.timezone = settings.profile.timezone;
+    storage.setItem('aura_user', JSON.stringify(storedUser));
+    setUser(storedUser);
+
+    // 2) Update INITIAL_STATE so hasChanges resets after save
+    INITIAL_STATE = {
+      ...INITIAL_STATE,
+      profile: { ...settings.profile },
+      notifications: { ...settings.notifications },
+      wellness: { ...settings.wellness },
+      sleep: { ...settings.sleep },
+      appearance: { ...settings.appearance },
+      privacy: { ...settings.privacy },
+    };
+
+    // 3) Attempt to persist to backend API (best-effort)
+    try {
+      const token = localStorage.getItem('aura_token') || sessionStorage.getItem('aura_token');
+      const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
+
+      // Profile fields → PATCH /api/v1/account/profile
+      const profilePayload = {
+        display_name: settings.profile.name,
+        bio: settings.profile.bio,
+        date_of_birth: settings.profile.dob,
+        timezone: settings.profile.timezone,
+      };
+
+      await fetch(`${API}/api/v1/account/profile`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(profilePayload)
+      }).catch(() => {}); // silently ignore network failures
+
+      // Settings fields → PATCH /api/v1/settings
+      const settingsPayload = {};
+      if (settings.appearance.theme !== 'dark') settingsPayload.theme = settings.appearance.theme;
+      if (settings.notifications.reminderTime !== '08:00') settingsPayload.daily_reminder_time = settings.notifications.reminderTime;
+      if (settings.notifications.intensity !== 2) settingsPayload.notif_intensity = settings.notifications.intensity;
+      if (settings.sleep.windDown !== '30') settingsPayload.wind_down_minutes = Number(settings.sleep.windDown);
+      if (settings.sleep.sound !== 'Rain') settingsPayload.sleep_sound_pref = settings.sleep.sound;
+
+      if (Object.keys(settingsPayload).length > 0) {
+        await fetch(`${API}/api/v1/settings`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify(settingsPayload)
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.warn('API save failed (changes saved locally):', err.message);
+    }
+
+    setIsSaving(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
   };
 
   const updateSetting = (section, key, value) => {

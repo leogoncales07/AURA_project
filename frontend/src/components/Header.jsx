@@ -25,7 +25,7 @@ export default function Header({ title, scrolled }) {
             WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
             borderBottom: scrolled ? '1px solid var(--border-primary)' : '1px solid transparent',
             transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            maxWidth: '1000px',
+            maxWidth: '1240px',
             width: '100%',
             margin: '0 auto',
         }}>
