@@ -198,15 +198,7 @@
         "notifications": "Notifications",
         "accountSettings": "Account Settings"
     },
-    "sidebar": {
-        "management": "management",
-        "personal": "personal",
-        "profileName": "Matheus Silva",
-        "profileStatus": "Premium",
-        "profile": "profile",
-        "wellness": "wellness",
-        "account": "account"
-    },
+
     "settings": {
         "title": "settings",
         "profile": "personal",
