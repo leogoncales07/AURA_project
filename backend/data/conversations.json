@@ -1,6 +1,23 @@
 {
   "6d62e8a4-8a76-478f-bb3f-324ff5dee2ba": [
     {
+      "id": "1777379094623",
+      "title": "i have bad person on my class,...",
+      "updatedAt": "2026-04-28T12:24:59.204Z",
+      "messages": [
+        {
+          "role": "user",
+          "message": "i have bad person on my class, she is always harrassing me, what can i do with her",
+          "timestamp": "2026-04-28T12:24:59.204Z"
+        },
+        {
+          "role": "assistant",
+          "message": "It sounds incredibly difficult to be going through that, and it's completely understandable that you're feeling this way. Dealing with harassment can be really stressful and emotionally draining. To help you understand and manage the impact this is having, you might find it helpful to take the PSS-10 or GAD-7 questionnaires, which you can find on the \"Inquéritos\" page. Additionally, our \"Meditations\" page offers guided exercises that could help you find some calm.",
+          "timestamp": "2026-04-28T12:24:59.204Z"
+        }
+      ]
+    },
+    {
       "id": "1775666373178",
       "title": "Estou me sentindo um pouco mal...",
       "updatedAt": "2026-04-08T16:39:36.102Z",
@@ -20,7 +37,7 @@
     {
       "id": "1775665668085",
       "title": "Today I'm feeling anxious",
-      "updatedAt": "2026-04-08T16:38:52.767Z",
+      "updatedAt": "2026-04-28T12:13:35.581Z",
       "messages": [
         {
           "role": "user",
@@ -41,6 +58,35 @@
           "role": "assistant",
           "message": "That sounds like a lot of pressure, and it's completely understandable to feel anxious with a hard test coming up. Taking some time to manage that stress can really help.\n\nYou might find it helpful to take the GAD-7 questionnaire to better understand your anxiety, which you can find on the \"Inquéritos\" page. Also, visiting our \"Meditations\" or \"Sleep\" pages might offer some guided exercises to help you relax and prepare for tomorrow.",
           "timestamp": "2026-04-08T16:38:52.767Z"
+        },
+        {
+          "role": "user",
+          "message": "Thank you",
+          "timestamp": "2026-04-28T12:13:35.581Z"
+        },
+        {
+          "role": "assistant",
+          "message": "De nada. Remember, AURA is here to support you through moments like these. Feel free to explore the app's resources whenever you need them.",
+          "timestamp": "2026-04-28T12:13:35.581Z"
+        }
+      ]
+    }
+  ],
+  "demo-presenter-123": [
+    {
+      "id": "1788886949330",
+      "title": "how can i improve my sleep?",
+      "updatedAt": "2026-09-08T17:02:31.217Z",
+      "messages": [
+        {
+          "role": "user",
+          "message": "how can i improve my sleep?",
+          "timestamp": "2026-09-08T17:02:31.217Z"
+        },
+        {
+          "role": "assistant",
+          "message": "It's wonderful that you're looking for ways to improve your sleep. Getting restful sleep is so important for your overall well-being. I recommend exploring the \"Meditations\" or \"Sleep\" pages in the AURA app, where you'll find guided audio exercises specifically designed to help you relax and drift off more easily.",
+          "timestamp": "2026-09-08T17:02:31.217Z"
         }
       ]
     }
