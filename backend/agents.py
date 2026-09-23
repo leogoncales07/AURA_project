@@ -15,7 +15,7 @@ from rate_limiter import rate_limited
 from content_library import MEDITATION_EXERCISES, SLEEP_METHODS
 
 class ClinicalBot:
-    def __init__(self, model_name="gemini-1.5-flash"):
+    def __init__(self, model_name="gemini-2.5-flash"):
         self.llm = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=0.2, # Low temperature for clinical summarization
@@ -55,7 +55,7 @@ class ClinicalBot:
 
 
 class CompanionBot:
-    def __init__(self, model_name="gemini-1.5-flash"):
+    def __init__(self, model_name="gemini-2.5-flash"):
         self.llm = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=0.7, # Higher temperature for more natural conversation

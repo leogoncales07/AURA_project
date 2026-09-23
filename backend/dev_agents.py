@@ -12,7 +12,7 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 class DevTeam:
-    def __init__(self, model_name="gemini-2.0-flash"):
+    def __init__(self, model_name="gemini-2.5-flash"):
         self.llm = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=0.7,

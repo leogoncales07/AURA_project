@@ -39,18 +39,9 @@ app.add_middleware(OwnerAuthMiddleware, owner_secret=settings.owner_secret)
 # ── CORS (allow your frontends) ──
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",   # React web dev
-        "http://localhost:8081",   # Expo dev
-        "http://localhost:19006",  # Expo web
-        "exp://localhost:8081",    # Expo Go
-        "http://10.20.40.45:8081", # Expo on LAN
-        "http://10.20.40.45:3000", # Next.js on LAN
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-        "http://127.0.0.1:8001",
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_origin_regex=r".*",
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

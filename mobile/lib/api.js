@@ -7,10 +7,10 @@ import { Platform } from 'react-native';
 let API_URL = process.env.EXPO_PUBLIC_API_URL;
 if (!API_URL) {
     const hostUri = Constants?.expoConfig?.hostUri || Constants?.manifest?.debuggerHost || '';
-    if (hostUri) {
+    if (hostUri && !hostUri.includes('exp.direct') && !hostUri.includes('tunnel')) {
         API_URL = `http://${hostUri.split(':')[0]}:8000`;
     } else {
-        API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://192.168.68.50:8000';
+        API_URL = Platform.OS === 'android' ? 'http://192.168.68.54:8000' : 'http://192.168.68.54:8000';
     }
 }
 const OWNER_SECRET = 'rRA5utI-P45PjhV3HP1gYLmDCSbFL29l-uqunqqtArV8mohJk9Ov1R2QSGKYkZXN';
