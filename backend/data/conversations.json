@@ -1,6 +1,33 @@
 {
   "6d62e8a4-8a76-478f-bb3f-324ff5dee2ba": [
     {
+      "id": "1790874777311",
+      "title": "Hi",
+      "updatedAt": "2026-10-01T17:15:18.206Z",
+      "messages": [
+        {
+          "role": "user",
+          "message": "Hi",
+          "timestamp": "2026-10-01T17:12:59.171Z"
+        },
+        {
+          "role": "assistant",
+          "message": "Hi there! It's lovely to hear from you. I'm here to support you on your mental wellness journey. Is there anything specific on your mind today, or perhaps something I can help you with in the AURA app?",
+          "timestamp": "2026-10-01T17:12:59.171Z"
+        },
+        {
+          "role": "user",
+          "message": "How was my sleep yesterday",
+          "timestamp": "2026-10-01T17:15:18.206Z"
+        },
+        {
+          "role": "assistant",
+          "message": "It's great you're checking in on your sleep! According to your most recent log, you had 8 hours of sleep. How are you feeling about that, and is there anything else I can help you with in the AURA app today?",
+          "timestamp": "2026-10-01T17:15:18.206Z"
+        }
+      ]
+    },
+    {
       "id": "1777379094623",
       "title": "i have bad person on my class,...",
       "updatedAt": "2026-04-28T12:24:59.204Z",
