@@ -10,7 +10,7 @@ if (!API_URL) {
     if (hostUri && !hostUri.includes('exp.direct') && !hostUri.includes('tunnel')) {
         API_URL = `http://${hostUri.split(':')[0]}:8000`;
     } else {
-        API_URL = Platform.OS === 'android' ? 'http://192.168.68.54:8000' : 'http://192.168.68.54:8000';
+        API_URL = Platform.OS === 'android' ? 'http://192.168.68.50:8000' : 'http://192.168.68.50:8000';
     }
 }
 const OWNER_SECRET = 'rRA5utI-P45PjhV3HP1gYLmDCSbFL29l-uqunqqtArV8mohJk9Ov1R2QSGKYkZXN';
