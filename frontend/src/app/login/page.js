@@ -10,6 +10,7 @@ import { api } from '@/lib/api';
 import { useI18n } from '@/i18n';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -19,6 +20,7 @@ export default function LoginPage() {
     const [rememberMe, setRememberMe] = useState(false);
     const router = useRouter();
     const { t } = useI18n();
+    const { login } = useAuth();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -26,34 +28,16 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const { data, error: apiError } = await api.login(email, password);
+            const res = await login(email, password, rememberMe);
 
-            if (apiError) {
-                setError(apiError === 'Invalid login credentials' ? t('login.invalidCredentials') : apiError);
+            if (res.error) {
+                setError(res.error === 'Invalid login credentials' ? t('login.invalidCredentials') : res.error);
                 setLoading(false);
                 return;
             }
-
-            if (data && data.access_token) {
-                if (rememberMe) {
-                    localStorage.setItem('aura_token', data.access_token);
-                    localStorage.setItem('aura_user', JSON.stringify(data.user));
-                    sessionStorage.removeItem('aura_token');
-                    sessionStorage.removeItem('aura_user');
-                } else {
-                    sessionStorage.setItem('aura_token', data.access_token);
-                    sessionStorage.setItem('aura_user', JSON.stringify(data.user));
-                    localStorage.removeItem('aura_token');
-                    localStorage.removeItem('aura_user');
-                }
-                router.push('/dashboard');
-            } else {
-                setError(t('login.serverError'));
-                setLoading(false);
-            }
         } catch (err) {
             console.error("[Login] Exception:", err);
-            setError(`Connection error: ${err.message}. Check if the backend server and API URL configuration.`);
+            setError(`Connection error: ${err.message}. Check if the backend server is running.`);
             setLoading(false);
         }
     };

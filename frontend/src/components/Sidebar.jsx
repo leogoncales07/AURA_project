@@ -16,11 +16,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useAuth } from '@/context/AuthContext';
 
 export default function AuraSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useI18n();
+  const { user, initials } = useAuth();
 
   const isActive = (href) => {
     if (href === '/dashboard') return pathname === href;
@@ -44,17 +46,9 @@ export default function AuraSidebar() {
   ];
 
   const [open, setOpen] = React.useState(false);
-  const [user, setUser] = React.useState(null);
-
-  React.useEffect(() => {
-    const storedUser = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
 
   const userName = user?.display_name || user?.name || user?.user_metadata?.name || t('sidebar.profileName') || 'User';
-  const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const userInitials = initials || userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <Sidebar open={open} setOpen={setOpen} animate={true}>

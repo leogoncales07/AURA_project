@@ -10,6 +10,7 @@ import { api } from '@/lib/api';
 import { useI18n } from '@/i18n';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SignUpPage() {
     const [name, setName] = useState('');
@@ -19,6 +20,7 @@ export default function SignUpPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const { t } = useI18n();
+    const { signup } = useAuth();
 
     const handleSignUp = async (e) => {
         e.preventDefault();
@@ -26,21 +28,12 @@ export default function SignUpPage() {
         setLoading(true);
 
         try {
-            const { data, error: apiError } = await api.signup(email, password, name);
+            const res = await signup(name, email, password);
 
-            if (apiError) {
-                setError(apiError);
+            if (res.error) {
+                setError(res.error);
                 setLoading(false);
                 return;
-            }
-
-            if (data && data.access_token) {
-                localStorage.setItem('aura_token', data.access_token);
-                localStorage.setItem('aura_user', JSON.stringify(data.user));
-                router.push('/dashboard');
-            } else {
-                setError(t('login.serverError') || 'Unexpected server error.');
-                setLoading(false);
             }
         } catch (err) {
             console.error("[Signup] Exception:", err);

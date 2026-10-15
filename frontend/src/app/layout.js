@@ -22,6 +22,7 @@ import "./globals.css";
 import { I18nProvider } from "@/i18n";
 import AuroraBackground from "@/components/AuroraBackground";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata = {
   title: "AURA | Awareness Understanding & Recovery Assistant",
@@ -39,7 +40,9 @@ export default function RootLayout({ children }) {
           <AuroraBackground />
           <div style={{ position: 'relative', zIndex: 10 }}>
             <I18nProvider>
-              {children}
+              <AuthProvider>
+                {children}
+              </AuthProvider>
             </I18nProvider>
           </div>
         </ThemeProvider>

@@ -4,12 +4,14 @@ import { useRouter } from 'next/navigation';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useI18n } from '@/i18n';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { Bell, User, Sun, Moon } from 'lucide-react';
 
 export default function Header({ title, scrolled }) {
     const router = useRouter();
     const { t } = useI18n();
     const { theme, toggleTheme } = useTheme();
+    const { user, initials } = useAuth();
 
     return (
         <header style={{
@@ -115,9 +117,9 @@ export default function Header({ title, scrolled }) {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: 'var(--bg-pill)',
+                            background: user ? 'var(--brand-gradient)' : 'var(--bg-pill)',
                             border: '1px solid var(--border-pill)',
-                            color: 'var(--fg-muted)',
+                            color: user ? '#fff' : 'var(--fg-muted)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -125,12 +127,16 @@ export default function Header({ title, scrolled }) {
                             transition: 'all 0.2s ease',
                             marginLeft: '6px',
                             padding: 0,
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            boxShadow: user ? '0 2px 8px rgba(16, 185, 129, 0.2)' : 'none'
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-primary)'; e.currentTarget.style.color = 'var(--fg-foreground)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-pill)'; e.currentTarget.style.color = 'var(--fg-muted)'; }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-primary)'; e.currentTarget.style.transform = 'scale(1.05)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-pill)'; e.currentTarget.style.transform = 'scale(1)'; }}
                         aria-label="Profile"
+                        title={user?.name || user?.email || 'Profile'}
                     >
-                        <User size={15} strokeWidth={2} />
+                        {user ? initials : <User size={15} strokeWidth={2} />}
                     </button>
                 </div>
             </div>

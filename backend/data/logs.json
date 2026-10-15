@@ -1,6 +1,12 @@
 {
   "6d62e8a4-8a76-478f-bb3f-324ff5dee2ba": [
     {
+      "mood_score": null,
+      "sleep_hours": 8.8,
+      "notes": "Sleep logged: 8.8h",
+      "timestamp": "2026-10-15T11:46:17.466Z"
+    },
+    {
       "mood_score": 3,
       "sleep_hours": 8,
       "notes": "Logged sleep",

@@ -1,6 +1,32 @@
 import { getQuestionnaire } from '../data/questionnaires.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const assessmentStore = [];
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = path.join(__dirname, '..', '..', 'data');
+const ASSESSMENTS_FILE = path.join(DATA_DIR, 'assessments.json');
+
+const loadAssessments = () => {
+  try {
+    if (fs.existsSync(ASSESSMENTS_FILE)) {
+      return JSON.parse(fs.readFileSync(ASSESSMENTS_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.warn('[data] Could not load assessments:', e.message);
+  }
+  return [];
+};
+
+const saveAssessments = (data) => {
+  try {
+    fs.writeFileSync(ASSESSMENTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('[data] Could not save assessments:', e.message);
+  }
+};
+
+const assessmentStore = loadAssessments();
 
 const scorePHQ9 = (answers) => {
   const total = answers.reduce((sum, value) => sum + value, 0);
@@ -124,6 +150,7 @@ export const submitAssessment = async (req, res) => {
     created_at: new Date().toISOString()
   };
   assessmentStore.push(assessment);
+  saveAssessments(assessmentStore);
 
   return res.status(201).json({ assessment, score_data, ai_summary: assessment.ai_summary });
 };

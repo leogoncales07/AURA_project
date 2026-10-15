@@ -70,9 +70,21 @@ export const api = {
     getUser: (userId) => fetchApi(`/api/v1/account/profile`),
     updateUser: (userId, update) => fetchApi(`/api/v1/account/profile`, { method: 'PATCH', body: update }),
 
+    // Settings
+    getUserSettings: () => fetchApi('/api/v1/settings'),
+    updateUserSettings: (settings) => fetchApi('/api/v1/settings', { method: 'PATCH', body: settings }),
+
     // Daily Logs
     logMood: (userId, mood_score, sleep_hours, notes) => fetchApi('/companion/log', { method: 'POST', body: { user_id: userId, mood_score, sleep_hours, notes } }),
     getLogs: (userId, limit = 14) => fetchApi(`/companion/${userId}/logs?limit=${limit}`),
+
+    // Sleep Logs
+    logSleep: (userId, bedTime, wakeTime, hours, quality, notes) => fetchApi('/companion/sleep', { method: 'POST', body: { user_id: userId, bedTime, wakeTime, hours, quality, notes } }),
+    getSleepLogs: (userId, limit = 30) => fetchApi(`/companion/${userId}/sleep?limit=${limit}`),
+
+    // Dashboard Stats & Reflections
+    getStats: (userId) => fetchApi(`/companion/${userId}/stats`),
+    saveReflection: (userId, text, prompt = '') => fetchApi('/companion/reflection', { method: 'POST', body: { user_id: userId, text, prompt } }),
 
     // Assessments
     listQuestionnaires: () => {

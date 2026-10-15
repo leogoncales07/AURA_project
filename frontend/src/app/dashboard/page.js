@@ -4,28 +4,26 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import { useI18n } from '@/i18n';
-import { Activity, Calendar, MessageCircle, ClipboardList, ChevronRight, Wind, Flame, Leaf, BookOpen, TrendingUp, Sparkles, PenLine } from 'lucide-react';
+import { Activity, Calendar, MessageCircle, ClipboardList, ChevronRight, Wind, Flame, Leaf, BookOpen, TrendingUp, Sparkles, PenLine, Moon, Check } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function DashboardPage() {
     const [user, setUser] = useState(null);
-    const [stats] = useState({ streak: 12, sessions: 48, tasks: '5/5' });
-    const [latestLog] = useState({ mood_score: 8, sleep_hours: 7.5 });
+    const [stats, setStats] = useState({ streak: 0, sessions: 0, tasks: '0/3' });
+    const [latestLog, setLatestLog] = useState({ mood_score: 7, sleep_hours: 7.5 });
     const [loading, setLoading] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const [reflectionText, setReflectionText] = useState('');
+    const [savingReflection, setSavingReflection] = useState(false);
+    const [reflectionSaved, setReflectionSaved] = useState(false);
     const router = useRouter();
     const { t } = useI18n();
 
-    // Weekly mood data (simulated — would come from API)
-    const weeklyMood = [6, 7, 5, 8, 7, 9, 8];
+    // Weekly mood data (powered by live API)
+    const [weeklyMood, setWeeklyMood] = useState([7, 7, 7, 7, 7, 7, 7]);
 
-    // Recent activity (simulated)
-    const recentActivities = [
-        { type: 'assessment', icon: <ClipboardList size={16} />, text: t('dashboard.activityAssessment', { name: 'GAD-7' }), time: t('dashboard.timeAgo1'), color: '#8b5cf6' },
-        { type: 'meditation', icon: <Leaf size={16} />, text: t('dashboard.activityMeditation', { duration: '10min' }), time: t('dashboard.timeAgo2'), color: '#10b981' },
-        { type: 'streak', icon: <Flame size={16} />, text: t('dashboard.activityStreak', { days: '12' }), time: t('dashboard.timeAgo3'), color: '#f59e0b' },
-        { type: 'chat', icon: <BookOpen size={16} />, text: t('dashboard.activityChat'), time: t('dashboard.timeAgo4'), color: '#06b6d4' },
-    ];
+    // Recent activity (powered by live API)
+    const [recentActivities, setRecentActivities] = useState([]);
 
     const weekdays = [
         t('dashboard.weekdayMon'), t('dashboard.weekdayTue'), t('dashboard.weekdayWed'),
@@ -33,22 +31,108 @@ export default function DashboardPage() {
         t('dashboard.weekdaySun'),
     ];
 
+    const formatRelativeTime = (isoString) => {
+        if (!isoString) return 'Today';
+        try {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffHours < 1) return t('dashboard.timeAgo1') || 'Just now';
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays === 1) return 'Yesterday';
+            return `${diffDays}d ago`;
+        } catch (e) {
+            return 'Recent';
+        }
+    };
+
     useEffect(() => {
         const storedUser = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
         if (!storedUser) { router.push('/login'); return; }
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
         
         // Handle responsive check
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
-        
-        const timer = setTimeout(() => setLoading(false), 600);
+
+        // Fetch live stats from backend
+        const fetchDashboardData = async () => {
+            try {
+                const { data } = await api.getStats(parsedUser.id);
+                if (data) {
+                    setStats({
+                        streak: data.streak ?? 1,
+                        sessions: data.sessions ?? 0,
+                        tasks: data.tasks ?? '0/3',
+                    });
+                    if (data.latestLog) {
+                        setLatestLog(data.latestLog);
+                    }
+                    if (Array.isArray(data.weeklyMood) && data.weeklyMood.length === 7) {
+                        setWeeklyMood(data.weeklyMood);
+                    }
+                    if (data.latestReflection) {
+                        setReflectionText(data.latestReflection);
+                    }
+                    if (data.recentActivities && data.recentActivities.length > 0) {
+                        const mapped = data.recentActivities.map(a => {
+                            let icon = <Sparkles size={16} />;
+                            if (a.type === 'assessment') icon = <ClipboardList size={16} />;
+                            else if (a.type === 'sleep') icon = <Moon size={16} />;
+                            else if (a.type === 'chat') icon = <BookOpen size={16} />;
+                            return {
+                                type: a.type,
+                                icon,
+                                text: a.text,
+                                time: formatRelativeTime(a.time),
+                                color: a.color || '#10b981'
+                            };
+                        });
+                        setRecentActivities(mapped);
+                    } else {
+                        // Friendly onboarding activities
+                        setRecentActivities([
+                            { type: 'welcome', icon: <Sparkles size={16} />, text: 'Welcome to AURA Sanctuary', time: 'Today', color: '#10b981' },
+                            { type: 'assessment', icon: <ClipboardList size={16} />, text: 'Complete your first questionnaire', time: 'Recommended', color: '#8b5cf6' },
+                            { type: 'sleep', icon: <Moon size={16} />, text: 'Track your first night in Sleep tab', time: 'Tonight', color: '#5B8AF0' },
+                        ]);
+                    }
+                }
+            } catch (err) {
+                console.warn('Could not load dashboard stats:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+
         return () => {
-          clearTimeout(timer);
           window.removeEventListener('resize', checkMobile);
         };
-    }, []);
+    }, [router]);
+
+    const handleSaveReflection = async () => {
+        if (!reflectionText.trim() || !user?.id) return;
+        setSavingReflection(true);
+        try {
+            await api.saveReflection(user.id, reflectionText);
+            setReflectionSaved(true);
+            const { data } = await api.getStats(user.id);
+            if (data) {
+                setStats(prev => ({ ...prev, tasks: data.tasks, streak: data.streak }));
+            }
+        } catch (e) {
+            console.warn('Failed to save reflection:', e);
+        } finally {
+            setSavingReflection(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -439,17 +523,24 @@ export default function DashboardPage() {
                     padding: '36px',
                     boxShadow: 'var(--shadow-sm)',
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                        <PenLine size={16} style={{ color: 'var(--brand-primary)' }} />
-                        <span style={{
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.12em',
-                            color: 'var(--fg-muted)',
-                        }}>
-                            {t('dashboard.dailyReflectionTitle')}
-                        </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <PenLine size={16} style={{ color: 'var(--brand-primary)' }} />
+                            <span style={{
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.12em',
+                                color: 'var(--fg-muted)',
+                            }}>
+                                {t('dashboard.dailyReflectionTitle')}
+                            </span>
+                        </div>
+                        {reflectionSaved && (
+                            <span style={{ fontSize: '12px', color: 'var(--brand-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Check size={14} /> Saved
+                            </span>
+                        )}
                     </div>
                     <p style={{
                         fontFamily: 'var(--font-fraunces), serif',
@@ -464,7 +555,10 @@ export default function DashboardPage() {
                     </p>
                     <textarea
                         value={reflectionText}
-                        onChange={(e) => setReflectionText(e.target.value)}
+                        onChange={(e) => {
+                            setReflectionText(e.target.value);
+                            if (reflectionSaved) setReflectionSaved(false);
+                        }}
                         placeholder={t('dashboard.reflectionPlaceholder')}
                         rows={3}
                         style={{
@@ -484,6 +578,29 @@ export default function DashboardPage() {
                         onFocus={(e) => { e.target.style.borderColor = 'var(--brand-primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
                         onBlur={(e) => { e.target.style.borderColor = 'var(--border-pill)'; e.target.style.boxShadow = 'none'; }}
                     />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '14px' }}>
+                        <button
+                            onClick={handleSaveReflection}
+                            disabled={savingReflection || !reflectionText.trim()}
+                            style={{
+                                padding: '10px 22px',
+                                background: 'var(--brand-primary)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '100px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                cursor: savingReflection || !reflectionText.trim() ? 'not-allowed' : 'pointer',
+                                opacity: savingReflection || !reflectionText.trim() ? 0.6 : 1,
+                                transition: 'all 0.2s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}
+                        >
+                            {savingReflection ? 'Saving...' : 'Save Reflection'}
+                        </button>
+                    </div>
                 </div>
 
             </div>

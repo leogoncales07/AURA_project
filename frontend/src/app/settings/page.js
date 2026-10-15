@@ -87,47 +87,43 @@ let INITIAL_STATE = {
   }
 };
 
+import { useAuth } from '@/context/AuthContext';
+
 export default function SettingsPage() {
   const router = useRouter();
+  const { user, updateUser, logout } = useAuth();
   const [activeSection, setActiveSection] = useState('profile');
   const [settings, setSettings] = useState(INITIAL_STATE);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [expandedRow, setExpandedRow] = useState(null); // 'email' or 'password'
   const [highlightEmail, setHighlightEmail] = useState(false);
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user');
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
-      // Sync profile data from stored user
+    if (user) {
       const profileUpdate = {};
-      if (userData.display_name || userData.name) profileUpdate.name = userData.display_name || userData.name;
-      if (userData.bio) profileUpdate.bio = userData.bio;
-      if (userData.date_of_birth) profileUpdate.dob = userData.date_of_birth;
-      if (userData.timezone) profileUpdate.timezone = userData.timezone;
+      if (user.display_name || user.name) profileUpdate.name = user.display_name || user.name;
+      if (user.bio) profileUpdate.bio = user.bio;
+      if (user.date_of_birth) profileUpdate.dob = user.date_of_birth;
+      if (user.timezone) profileUpdate.timezone = user.timezone;
 
-      if (Object.keys(profileUpdate).length > 0) {
-        const newProfile = { ...INITIAL_STATE.profile, ...profileUpdate };
-        INITIAL_STATE = { ...INITIAL_STATE, profile: { ...newProfile } };
-        setSettings(prev => ({
-          ...prev,
-          profile: newProfile
-        }));
-      }
-    } else {
-      router.push('/login');
+      const accountUpdate = {};
+      if (user.email) accountUpdate.email = user.email;
+
+      const newProfile = { ...INITIAL_STATE.profile, ...profileUpdate };
+      const newAccount = { ...INITIAL_STATE.account, ...accountUpdate };
+      INITIAL_STATE = { ...INITIAL_STATE, profile: newProfile, account: newAccount };
+
+      setSettings(prev => ({
+        ...prev,
+        profile: newProfile,
+        account: newAccount
+      }));
     }
-  }, [router]);
+  }, [user]);
 
   const handleLogout = () => {
-    localStorage.removeItem('aura_user');
-    localStorage.removeItem('aura_token');
-    sessionStorage.removeItem('aura_user');
-    sessionStorage.removeItem('aura_token');
-    router.push('/login');
+    logout();
   };
   
   // Refs for scrolling to sections
@@ -157,7 +153,13 @@ export default function SettingsPage() {
     storedUser.date_of_birth = settings.profile.dob;
     storedUser.timezone = settings.profile.timezone;
     storage.setItem('aura_user', JSON.stringify(storedUser));
-    setUser(storedUser);
+    updateUser({
+      name: settings.profile.name,
+      display_name: settings.profile.name,
+      bio: settings.profile.bio,
+      date_of_birth: settings.profile.dob,
+      timezone: settings.profile.timezone
+    });
 
     // 2) Update INITIAL_STATE so hasChanges resets after save
     INITIAL_STATE = {

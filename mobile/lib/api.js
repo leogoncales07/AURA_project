@@ -3,16 +3,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-// ── API URL (Dynamic or .env) ──
-let API_URL = process.env.EXPO_PUBLIC_API_URL;
-if (!API_URL) {
-    const hostUri = Constants?.expoConfig?.hostUri || Constants?.manifest?.debuggerHost || '';
-    if (hostUri && !hostUri.includes('exp.direct') && !hostUri.includes('tunnel')) {
-        API_URL = `http://${hostUri.split(':')[0]}:8000`;
-    } else {
-        API_URL = Platform.OS === 'android' ? 'http://192.168.68.50:8000' : 'http://192.168.68.50:8000';
-    }
+// ── API URL — always derived from Expo's Metro host (same machine, port 8000) ──
+// This avoids hardcoded IPs that break whenever the router reassigns a new address.
+const _hostUri =
+    Constants?.expoConfig?.hostUri ||       // Expo SDK 46+
+    Constants?.manifest2?.extra?.expoGo?.debuggerHost || // Expo Go
+    Constants?.manifest?.debuggerHost ||    // Legacy
+    '';
+
+let API_URL;
+if (_hostUri && !_hostUri.includes('exp.direct') && !_hostUri.includes('tunnel')) {
+    // Extract just the IP (strip the Metro port e.g. "192.168.68.51:8081" → "192.168.68.51")
+    API_URL = `http://${_hostUri.split(':')[0]}:8000`;
+} else {
+    // Fallback: read from .env or last-known IP
+    API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.68.51:8000';
 }
+
+console.log('[API] Base URL:', API_URL);
 const OWNER_SECRET = 'rRA5utI-P45PjhV3HP1gYLmDCSbFL29l-uqunqqtArV8mohJk9Ov1R2QSGKYkZXN';
 
 async function fetchApi(endpoint, options = {}) {
@@ -88,6 +96,24 @@ export const api = {
         }),
     getLogs: (userId, limit = 14) =>
         fetchApi(`/companion/${userId}/logs?limit=${limit}`),
+
+    // Sleep Logs
+    logSleep: (userId, bedTime, wakeTime, hours, quality, notes) =>
+        fetchApi('/companion/sleep', {
+            method: 'POST',
+            body: { user_id: userId, bedTime, wakeTime, hours, quality, notes },
+        }),
+    getSleepLogs: (userId, limit = 30) =>
+        fetchApi(`/companion/${userId}/sleep?limit=${limit}`),
+
+    // Dashboard Stats & Reflections
+    getStats: (userId) =>
+        fetchApi(`/companion/${userId}/stats`),
+    saveReflection: (userId, text, prompt = '') =>
+        fetchApi('/companion/reflection', {
+            method: 'POST',
+            body: { user_id: userId, text, prompt },
+        }),
 
     // Assessments
     listQuestionnaires: async () => {

@@ -70,7 +70,6 @@ export default function SleepTab() {
     
     const [user, setUser] = useState(null);
     const [settingsVisible, setSettingsVisible] = useState(false);
-    const [watchSynced, setWatchSynced] = useState(false);
     
     const [sleepLogs, setSleepLogs] = useState([]);
     const [timeframe, setTimeframe] = useState('Day');
@@ -241,24 +240,7 @@ export default function SleepTab() {
                     </View>
                 </View>
 
-                {/* Smartwatch Setup */}
-                <TouchableOpacity 
-                    style={[styles.watchCard, { backgroundColor: colors.surface }]}
-                    onPress={() => setWatchSynced(true)}
-                >
-                    <View style={[styles.iconBox, { backgroundColor: watchSynced ? 'rgba(16,185,129,0.15)' : 'rgba(158,158,158,0.15)' }]}>
-                        <Feather name="watch" size={18} color={watchSynced ? colors.primary : colors.textTertiary} />
-                    </View>
-                    <View style={styles.watchTextContainer}>
-                        <Text style={[styles.watchTitle, { color: colors.textPrimary }]}>
-                            {watchSynced ? "Smartwatch Synced" : "Connect Smartwatch"}
-                        </Text>
-                        <Text style={[styles.watchSubtitle, { color: colors.textTertiary }]}>
-                            {watchSynced ? "Activity tracking active" : "Sync devices for accurate data"}
-                        </Text>
-                    </View>
-                    {watchSynced && <Feather name="check" size={20} color={colors.primary} />}
-                </TouchableOpacity>
+
 
                 {/* Tonight's Protocol */}
                 <Text style={[styles.sectionHeading, { color: colors.textSecondary, marginTop: Spacing.xl }]}>
@@ -357,18 +339,7 @@ export default function SleepTab() {
                     </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.protocolCard, { backgroundColor: colors.surface, borderLeftColor: '#5B8AF0' }]}>
-                    <View style={[styles.iconBox, { backgroundColor: 'rgba(91,138,240,0.15)' }]}>
-                        <Feather name="bell" size={18} color="#5B8AF0" />
-                    </View>
-                    <View style={styles.protocolInfo}>
-                        <View style={styles.protocolHeaderRow}>
-                            <Text style={[styles.protocolTitle, { color: colors.textPrimary }]}>Smart Alarm (Beta)</Text>
-                            <Text style={[styles.protocolTime, { color: colors.textTertiary }]}>Off</Text>
-                        </View>
-                        <Text style={[styles.protocolDesc, { color: colors.textTertiary }]}>Wakes you during a light sleep cycle.</Text>
-                    </View>
-                </TouchableOpacity>
+
 
                 <View style={{ height: 40 }} />
             </ScrollView>
@@ -749,31 +720,5 @@ const styles = StyleSheet.create({
         fontWeight: Fonts.bold.fontWeight,
         color: '#fff', fontSize: 14, zIndex: 10,
     },
-    watchCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: Spacing.md,
-        borderRadius: Radius.md,
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-        elevation: 1,
-        marginTop: Spacing.md,
-    },
-    watchTextContainer: {
-        flex: 1,
-    },
-    watchTitle: {
-        fontSize: 15,
-        fontFamily: Fonts.medium.fontFamily,
-        fontWeight: Fonts.medium.fontWeight,
-    },
-    watchSubtitle: {
-        fontSize: 12,
-        fontFamily: Fonts.regular.fontFamily,
-        fontWeight: Fonts.regular.fontWeight,
-    },
+
 });

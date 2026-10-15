@@ -5,19 +5,20 @@ import React, { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import Card from '@/components/Card';
 import styles from './page.module.css';
+import { api } from '@/lib/api';
 
 export default function SleepPage() {
+  const [user, setUser] = useState(null);
   const [sleepLogs, setSleepLogs] = useState([]);
   const [timeframe, setTimeframe] = useState('Day');
+  const [sleepScore, setSleepScore] = useState(84);
 
   const [logModalVisible, setLogModalVisible] = useState(false);
   const [bedTimeInput, setBedTimeInput] = useState('23:30');
   const [wakeTimeInput, setWakeTimeInput] = useState('07:00');
 
-  const sleepScore = 84;
-  
-  // Mock data for weekly chart
-  const weeklyData = [
+  // Dynamic weekly chart data
+  const [weeklyData, setWeeklyData] = useState([
     { day: 'M', duration: 7.2, quality: 80 },
     { day: 'T', duration: 6.8, quality: 75 },
     { day: 'W', duration: 8.1, quality: 90 },
@@ -25,16 +26,90 @@ export default function SleepPage() {
     { day: 'F', duration: 7.0, quality: 78 },
     { day: 'S', duration: 9.2, quality: 95 },
     { day: 'S', duration: 8.5, quality: 88 },
-  ];
+  ]);
 
-  // Load from local storage
+  const updateMetricsFromLogs = (logs) => {
+    if (!logs || !logs.length) return;
+    
+    // Average quality score
+    const totalQ = logs.reduce((acc, l) => acc + (l.quality || 80), 0);
+    const avgScore = Math.round(totalQ / logs.length);
+    setSleepScore(avgScore);
+
+    // Compute weekly data (last 7 days)
+    const daysShort = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const newWeekly = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dStr = d.toISOString().split('T')[0];
+      const found = logs.find(l => (l.timestamp || '').startsWith(dStr));
+      const dayLabel = daysShort[d.getDay()];
+      if (found) {
+        newWeekly.push({
+          day: dayLabel,
+          duration: found.hours,
+          quality: found.quality || 80
+        });
+      } else {
+        newWeekly.push({
+          day: dayLabel,
+          duration: 7.5,
+          quality: 75
+        });
+      }
+    }
+    setWeeklyData(newWeekly);
+  };
+
+  // Load from local storage and backend API
   useEffect(() => {
-    const saved = window.localStorage.getItem('aura_sleep_logs_array');
-    if (saved) {
+    const stored = window.localStorage.getItem('aura_user') || window.sessionStorage.getItem('aura_user');
+    let currentUser = null;
+    if (stored) {
       try {
-        setSleepLogs(JSON.parse(saved));
+        currentUser = JSON.parse(stored);
+        setUser(currentUser);
       } catch (e) {}
     }
+
+    const loadData = async () => {
+      // 1. Instant local storage cache
+      const saved = window.localStorage.getItem('aura_sleep_logs_array');
+      let localLogs = [];
+      if (saved) {
+        try {
+          localLogs = JSON.parse(saved);
+          setSleepLogs(localLogs);
+          updateMetricsFromLogs(localLogs);
+        } catch (e) {}
+      }
+
+      // 2. Fetch from backend API
+      if (currentUser?.id) {
+        try {
+          const { data } = await api.getSleepLogs(currentUser.id, 30);
+          if (data && data.logs && data.logs.length > 0) {
+            setSleepLogs(data.logs);
+            updateMetricsFromLogs(data.logs);
+            window.localStorage.setItem('aura_sleep_logs_array', JSON.stringify(data.logs));
+          } else if (localLogs.length > 0) {
+            // Push latest local log to server
+            api.logSleep(
+              currentUser.id,
+              localLogs[0].bedTime,
+              localLogs[0].wakeTime,
+              localLogs[0].hours,
+              localLogs[0].quality
+            );
+          }
+        } catch (err) {
+          console.warn('Failed to fetch sleep logs:', err);
+        }
+      }
+    };
+
+    loadData();
   }, []);
 
   const calculateHours = (bed, wake) => {
@@ -57,20 +132,32 @@ export default function SleepPage() {
     return parseFloat(diff.toFixed(1));
   };
 
-  const handleSaveLog = () => {
+  const handleSaveLog = async () => {
     const calculatedHours = calculateHours(bedTimeInput, wakeTimeInput) || 8;
     setLogModalVisible(false);
     
+    const quality = calculatedHours >= 7 && calculatedHours <= 9 ? 88 : calculatedHours < 7 ? 68 : 75;
     const newLog = {
       id: Date.now().toString(),
       bedTime: bedTimeInput,
       wakeTime: wakeTimeInput,
       hours: calculatedHours,
+      quality,
       timestamp: new Date().toISOString()
     };
+
     const updated = [newLog, ...sleepLogs];
     setSleepLogs(updated);
+    updateMetricsFromLogs(updated);
     window.localStorage.setItem('aura_sleep_logs_array', JSON.stringify(updated));
+
+    if (user?.id) {
+      try {
+        await api.logSleep(user.id, bedTimeInput, wakeTimeInput, calculatedHours, quality);
+      } catch (err) {
+        console.warn('Failed to sync sleep log to server:', err);
+      }
+    }
   };
 
   const getAggregatedData = () => {
