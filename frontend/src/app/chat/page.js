@@ -1,5 +1,5 @@
 'use client';
-import { Send, Sparkles, Plus, MessageSquare, Trash2 } from 'lucide-react';
+import { Send, Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import styles from './page.module.css';
 import AppShell from '@/components/AppShell';
@@ -201,7 +201,11 @@ export default function ChatPage() {
                 <div className={styles.chatContainer}>
                     <header className={styles.chatHeader}>
                       <div className={styles.avatar}>
-                        <div className={styles.statusDot} />
+                        <img 
+                          src="/aura-ai-logo.png" 
+                          alt="AURA AI"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                        />
                       </div>
                       <div className={styles.headerInfo}>
                         <h2>{t('chat.botName')}</h2>
@@ -212,8 +216,12 @@ export default function ChatPage() {
                     <main className={styles.chatArea}>
                         {messages.length === 0 && !sending && (
                             <div className={styles.emptyState}>
-                                <div style={{ marginBottom: '16px', opacity: 0.6 }}>
-                                  <Sparkles size={40} color="var(--aura-aurora-1)" />
+                                <div style={{ marginBottom: '16px', opacity: 0.85 }}>
+                                  <img 
+                                    src="/aura-ai-logo.png" 
+                                    alt="AURA AI"
+                                    style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', boxShadow: '0 0 24px rgba(16,185,129,0.4)' }}
+                                  />
                                 </div>
                                 <p className="label-text">{t('chat.label')}</p>
                                 <h3 style={{ fontFamily: 'var(--aura-font-serif)', fontSize: 'var(--text-xl)', color: 'var(--fg-foreground)', fontWeight: 400 }}>{t('chat.emptyState')}</h3>

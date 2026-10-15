@@ -39,8 +39,19 @@ def main():
     print(f"\n{Fore.GREEN}Servers are starting up!{Style.RESET_ALL}")
     print(f"{Fore.MAGENTA}App (Local): http://localhost:3000{Style.RESET_ALL}")
     print(f"{Fore.MAGENTA}App (Network): Look at the FRONTEND terminal output for the Network URL (usually http://<Your-IP>:3000){Style.RESET_ALL}")
-    print(f"{Fore.CYAN}API Docs: http://localhost:8000/docs{Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW}Keep this window open. Press Ctrl+C to stop both.{Style.RESET_ALL}\n")
+
+    # Automatically open the web browser
+    import threading
+    import webbrowser
+    def open_browser():
+        time.sleep(3)
+        try:
+            webbrowser.open("http://localhost:3000")
+        except Exception:
+            pass
+    threading.Thread(target=open_browser, daemon=True).start()
+
 
     try:
         while True:

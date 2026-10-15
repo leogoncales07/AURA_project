@@ -11,7 +11,6 @@ import {
   Leaf, 
   ClipboardCheck, 
   MessageSquare, 
-  Sparkles, 
   Settings
 } from "lucide-react";
 import Link from "next/link";
@@ -141,7 +140,7 @@ export default function AuraSidebar() {
                 height: '32px',
                 borderRadius: open ? '10px' : '50%',
                 background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -154,8 +153,12 @@ export default function AuraSidebar() {
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.transform = 'scale(1.02)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              <Sparkles size={16} strokeWidth={2} />
-              {open && <span style={{ fontSize: '13px', fontWeight: 600 }}>ask aura</span>}
+              <img 
+                src="/aura-ai-logo.png" 
+                alt="AURA AI" 
+                style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} 
+              />
+              {open && <span style={{ fontSize: '13px', fontWeight: 600 }}>ask AURA AI</span>}
             </button>
           </div>
 
