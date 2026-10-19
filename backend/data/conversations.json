@@ -3,7 +3,7 @@
     {
       "id": "1790874777311",
       "title": "Hi",
-      "updatedAt": "2026-10-01T17:15:18.206Z",
+      "updatedAt": "2026-10-19T17:37:13.928Z",
       "messages": [
         {
           "role": "user",
@@ -24,6 +24,16 @@
           "role": "assistant",
           "message": "It's great you're checking in on your sleep! According to your most recent log, you had 8 hours of sleep. How are you feeling about that, and is there anything else I can help you with in the AURA app today?",
           "timestamp": "2026-10-01T17:15:18.206Z"
+        },
+        {
+          "role": "user",
+          "message": "Has my sleep been good lately?",
+          "timestamp": "2026-10-19T17:37:13.928Z"
+        },
+        {
+          "role": "assistant",
+          "message": "It's great you're keeping an eye on your sleep patterns! Looking at your recent logs, your sleep has been quite consistent, ranging from 8 to 9 hours. How are you feeling overall with that amount of rest?",
+          "timestamp": "2026-10-19T17:37:13.928Z"
         }
       ]
     },
