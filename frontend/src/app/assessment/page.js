@@ -240,7 +240,7 @@ export default function AssessmentPage() {
                             </div>
                             <div>
                                 <h2 style={{ fontFamily: 'var(--aura-font-serif)', fontSize: 'var(--text-xl)', color: 'white' }}>{t('assessment.howDeep')}</h2>
-                                <p style={{ color: 'var(--bg-pill)', fontSize: 'var(--text-sm)' }}>{t('assessment.reflectSubtitle')}</p>
+                                <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 'var(--text-sm)' }}>{t('assessment.reflectSubtitle')}</p>
                             </div>
                         </div>
                     </Card>
