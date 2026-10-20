@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import styles from './page.module.css';
 import AppShell from '@/components/AppShell';
+import { useI18n } from '@/i18n';
 import { 
   AuraToggle, 
   AuraToggleRow,
@@ -23,17 +24,6 @@ import {
   DualSlider
 } from './components/Controls';
 
-const SECTIONS = [
-  { id: 'profile', label: 'Profile', icon: User, group: 'Personal' },
-  { id: 'account', label: 'Account & Security', icon: Shield, group: 'Account' },
-  { id: 'notifications', label: 'Notifications', icon: Bell, group: 'Account' },
-  { id: 'wellness', label: 'Wellness Preferences', icon: Check, group: 'Wellness' },
-  { id: 'sleep', label: 'Sleep Settings', icon: Moon, group: 'Wellness' },
-  { id: 'appearance', label: 'Appearance', icon: Eye, group: 'System' },
-  { id: 'data', label: 'Data & Privacy', icon: Database, group: 'System' },
-  { id: 'integrations', label: 'Integrations', icon: Puzzle, group: 'System' },
-  { id: 'danger', label: 'Danger Zone', icon: AlertTriangle, group: 'Danger' }
-];
 
 let INITIAL_STATE = {
   profile: {
@@ -91,8 +81,29 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const { user, updateUser, logout } = useAuth();
   const [activeSection, setActiveSection] = useState('profile');
+
+  const SECTIONS = [
+    { id: 'profile', label: t('settings.navProfile'), icon: User, group: 'Personal' },
+    { id: 'account', label: t('settings.navAccountSecurity'), icon: Shield, group: 'Account' },
+    { id: 'notifications', label: t('settings.navNotifications'), icon: Bell, group: 'Account' },
+    { id: 'wellness', label: t('settings.navWellness'), icon: Check, group: 'Wellness' },
+    { id: 'sleep', label: t('settings.navSleep'), icon: Moon, group: 'Wellness' },
+    { id: 'appearance', label: t('settings.navAppearance'), icon: Eye, group: 'System' },
+    { id: 'data', label: t('settings.navDataPrivacy'), icon: Database, group: 'System' },
+    { id: 'integrations', label: t('settings.navIntegrations'), icon: Puzzle, group: 'System' },
+    { id: 'danger', label: t('settings.navDangerZone'), icon: AlertTriangle, group: 'Danger' }
+  ];
+
+  const groupLabels = {
+    Personal: t('settings.navGroupPersonal'),
+    Account: t('settings.navGroupAccount'),
+    Wellness: t('settings.navGroupWellness'),
+    System: t('settings.navGroupSystem'),
+    Danger: t('settings.navGroupDanger')
+  };
   const [settings, setSettings] = useState(INITIAL_STATE);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -257,7 +268,7 @@ export default function SettingsPage() {
       <nav className={styles.sidebar}>
         {groups.map(group => (
           <div key={group} className={styles.navGroup}>
-            <div className={styles.navGroupLabel}>{group}</div>
+            <div className={styles.navGroupLabel}>{groupLabels[group] || group}</div>
             {SECTIONS.filter(s => s.group === group).map(section => (
               <div 
                 key={section.id} 
@@ -274,7 +285,7 @@ export default function SettingsPage() {
                 style={{ marginTop: 8 }}
               >
                 <LogOut size={14} style={{ marginRight: 8 }} />
-                Log Out
+                {t('settings.navLogOut')}
               </div>
             )}
           </div>
@@ -284,7 +295,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <AppShell title="settings & preferences">
+    <AppShell title={t('settings.title')}>
       <div className={styles.settingsContainer}>
         {renderNav()}
 
@@ -292,8 +303,8 @@ export default function SettingsPage() {
           {/* PROFILE */}
           <section id="profile" ref={sectionRefs.profile} className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Profile</h2>
-              <p className={styles.sectionSubtitle}>Manage your public identity and personal details.</p>
+              <h2 className={styles.sectionTitle}>{t('settings.profileTitle')}</h2>
+              <p className={styles.sectionSubtitle}>{t('settings.profileSubtitle')}</p>
             </div>
             
             <SettingCard>
@@ -305,32 +316,32 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span className={styles.label}>Avatar Image</span>
-                  <p className={styles.description}>JPG, PNG or GIF. Max 2MB.</p>
+                  <span className={styles.label}>{t('settings.avatarLabel')}</span>
+                  <p className={styles.description}>{t('settings.avatarDesc')}</p>
                 </div>
               </div>
 
-              <AuraSettingRow label="Display Name">
+              <AuraSettingRow label={t('settings.displayName')}>
                 <Input 
                   value={settings.profile.name} 
                   onChange={(val) => updateSetting('profile', 'name', val)}
                 />
               </AuraSettingRow>
-              <AuraSettingRow label="Bio">
+              <AuraSettingRow label={t('settings.bio')}>
                 <Textarea 
                   value={settings.profile.bio} 
                   onChange={(val) => updateSetting('profile', 'bio', val)}
                   maxLength={120}
                 />
               </AuraSettingRow>
-              <AuraSettingRow label="Date of Birth">
+              <AuraSettingRow label={t('settings.dateOfBirth')}>
                 <Input 
                   type="date"
                   value={settings.profile.dob} 
                   onChange={(val) => updateSetting('profile', 'dob', val)}
                 />
               </AuraSettingRow>
-              <AuraSettingRow label="Timezone">
+              <AuraSettingRow label={t('settings.timezone')}>
                 <AuraSelect 
                   value={settings.profile.timezone}
                   onChange={(val) => updateSetting('profile', 'timezone', val)}
@@ -348,8 +359,8 @@ export default function SettingsPage() {
           {/* ACCOUNT & SECURITY */}
           <section id="account" ref={sectionRefs.account} className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Account & Security</h2>
-              <p className={styles.sectionSubtitle}>Secure your access and connected services.</p>
+              <h2 className={styles.sectionTitle}>{t('settings.accountTitle')}</h2>
+              <p className={styles.sectionSubtitle}>{t('settings.accountSubtitle')}</p>
             </div>
 
             <div className={styles.inlineEditContainer}>
@@ -358,22 +369,22 @@ export default function SettingsPage() {
                 onClick={() => setExpandedRow(expandedRow === 'email' ? null : 'email')}
               >
                 <div className={styles.inlineEditLabel}>
-                  <span className={styles.label}>Email Address</span>
+                  <span className={styles.label}>{t('settings.emailAddress')}</span>
                   <span className={`${styles.inlineEditValue} ${highlightEmail ? styles.valueHighlight : ''}`}>
                     {settings.account.email}
                   </span>
                 </div>
-                <button className={styles.destructiveButton}>Edit</button>
+                <button className={styles.destructiveButton}>{t('settings.edit')}</button>
               </div>
               {expandedRow === 'email' && (
                 <div className={styles.inlineEditContent}>
                   <Input 
-                    placeholder="New email address" 
+                    placeholder={t('settings.newEmailPlaceholder')} 
                     width="100%"
                     onChange={(val) => {/* temp logic */}} 
                   />
                   <div className={styles.inlineEditActions}>
-                    <button className={styles.destructiveButton} onClick={() => setExpandedRow(null)}>Cancel</button>
+                    <button className={styles.destructiveButton} onClick={() => setExpandedRow(null)}>{t('settings.cancel')}</button>
                     <button 
                       className={styles.saveButton} 
                       onClick={() => {
@@ -382,25 +393,25 @@ export default function SettingsPage() {
                         setTimeout(() => setHighlightEmail(false), 1500);
                       }}
                     >
-                      Confirm
+                      {t('settings.confirm')}
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            <AuraSettingRow label="Password">
-              <button className={styles.destructiveButton}>Change</button>
+            <AuraSettingRow label={t('settings.password')}>
+              <button className={styles.destructiveButton}>{t('settings.change')}</button>
             </AuraSettingRow>
             
             <AuraToggleRow 
-              label="Two-factor Authentication" 
-              description="Add an extra layer of security"
+              label={t('settings.twoFactor')} 
+              description={t('settings.twoFactorDesc')}
               checked={settings.account.twoFactor} 
               onChange={(val) => updateSetting('account', 'twoFactor', val)} 
             />
 
-            <AuraSettingRow label="Connected Accounts">
+            <AuraSettingRow label={t('settings.connectedAccounts')}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div className={styles.chip}><Smartphone size={14} /> Google</div>
                 <div className={styles.chip}><Smartphone size={14} /> Apple</div>
@@ -411,38 +422,38 @@ export default function SettingsPage() {
           {/* NOTIFICATIONS */}
           <section id="notifications" ref={sectionRefs.notifications} className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Notifications</h2>
-              <p className={styles.sectionSubtitle}>Stay balanced with mindful alerts.</p>
+              <h2 className={styles.sectionTitle}>{t('settings.notificationsTitle')}</h2>
+              <p className={styles.sectionSubtitle}>{t('settings.notificationsSubtitle')}</p>
             </div>
 
-            <SettingCard title="Push Notifications">
+            <SettingCard title={t('settings.pushNotifications')}>
               <AuraToggleRow 
-                label="Master Push Toggle" 
+                label={t('settings.masterPushToggle')} 
                 checked={settings.notifications.pushMaster} 
                 onChange={(val) => updateSetting('notifications', 'pushMaster', val)} 
               />
               {settings.notifications.pushMaster && (
                 <>
-                  <AuraSettingRow label="Daily Reminder">
+                  <AuraSettingRow label={t('settings.dailyReminder')}>
                     <Input 
                       type="time" 
                       value={settings.notifications.reminderTime}
                       onChange={(val) => updateSetting('notifications', 'reminderTime', val)}
                     />
                   </AuraSettingRow>
-                  <AuraSettingRow label="Weekly Report">
+                  <AuraSettingRow label={t('settings.weeklyReport')}>
                     <AuraSelect 
                       value={settings.notifications.weeklyReportDay}
                       onChange={(val) => updateSetting('notifications', 'weeklyReportDay', val)}
                       options={[
-                        { value: 'Monday', label: 'Monday' },
-                        { value: 'Sunday', label: 'Sunday' }
+                        { value: 'Monday', label: t('settings.monday') },
+                        { value: 'Sunday', label: t('settings.sunday') }
                       ]}
                       width="140px"
                     />
                   </AuraSettingRow>
                   <AuraToggleRow 
-                    label="Streak Alerts" 
+                    label={t('settings.streakAlerts')} 
                     checked={settings.notifications.streakAlerts} 
                     onChange={(val) => updateSetting('notifications', 'streakAlerts', val)} 
                   />
@@ -450,7 +461,7 @@ export default function SettingsPage() {
               )}
             </SettingCard>
 
-            <SettingCard title="Reminder Intensity">
+            <SettingCard title={t('settings.reminderIntensity')}>
               <div style={{ padding: '8px 0' }}>
                 <AuraSlider 
                   min={1} 
@@ -458,22 +469,22 @@ export default function SettingsPage() {
                   step={1}
                   value={settings.notifications.intensity} 
                   onChange={(val) => updateSetting('notifications', 'intensity', val)} 
-                  leftLabel="Gentle"
-                  rightLabel="Consistent"
+                  leftLabel={t('settings.gentle')}
+                  rightLabel={t('settings.consistent')}
                   showValue={true}
                   stops={[1, 2, 3]}
                 />
               </div>
             </SettingCard>
 
-            <SettingCard title="Email Notifications">
+            <SettingCard title={t('settings.emailNotifications')}>
               <AuraToggleRow 
-                label="Weekly Summary" 
+                label={t('settings.weeklySummary')} 
                 checked={settings.notifications.emailSummary} 
                 onChange={(val) => updateSetting('notifications', 'emailSummary', val)} 
               />
               <AuraToggleRow 
-                label="Product Updates" 
+                label={t('settings.productUpdates')} 
                 checked={settings.notifications.emailProduct} 
                 onChange={(val) => updateSetting('notifications', 'emailProduct', val)} 
               />
@@ -483,21 +494,28 @@ export default function SettingsPage() {
           {/* WELLNESS PREFERENCES */}
           <section id="wellness" ref={sectionRefs.wellness} className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Wellness Preferences</h2>
-              <p className={styles.sectionSubtitle}>Tailor the AI to your lifestyle goals.</p>
+              <h2 className={styles.sectionTitle}>{t('settings.wellnessTitle')}</h2>
+              <p className={styles.sectionSubtitle}>{t('settings.wellnessSubtitle')}</p>
             </div>
 
-            <SettingCard title="Primary Goals">
+            <SettingCard title={t('settings.primaryGoals')}>
               <div className={styles.chipsContainer}>
-                {['Better sleep', 'Stress reduction', 'Focus', 'Mood tracking', 'Mindfulness', 'Energy'].map(goal => (
+                {[
+                  { id: 'Better sleep', label: t('settings.goalBetterSleep') },
+                  { id: 'Stress reduction', label: t('settings.goalStressReduction') },
+                  { id: 'Focus', label: t('settings.goalFocus') },
+                  { id: 'Mood tracking', label: t('settings.goalMoodTracking') },
+                  { id: 'Mindfulness', label: t('settings.goalMindfulness') },
+                  { id: 'Energy', label: t('settings.goalEnergy') }
+                ].map(goal => (
                   <Chip 
-                    key={goal} 
-                    label={goal} 
-                    active={settings.wellness.goals.includes(goal)}
+                    key={goal.id} 
+                    label={goal.label} 
+                    active={settings.wellness.goals.includes(goal.id)}
                     onClick={() => {
-                      const newGoals = settings.wellness.goals.includes(goal)
-                        ? settings.wellness.goals.filter(g => g !== goal)
-                        : [...settings.wellness.goals, goal];
+                      const newGoals = settings.wellness.goals.includes(goal.id)
+                        ? settings.wellness.goals.filter(g => g !== goal.id)
+                        : [...settings.wellness.goals, goal.id];
                       updateSetting('wellness', 'goals', newGoals);
                     }}
                   />
@@ -505,7 +523,7 @@ export default function SettingsPage() {
               </div>
             </SettingCard>
 
-            <SettingCard title="Stress Triggers">
+            <SettingCard title={t('settings.stressTriggers')}>
               <TagInput 
                 tags={settings.wellness.stressTriggers}
                 onAdd={(tag) => updateSetting('wellness', 'stressTriggers', [...settings.wellness.stressTriggers, tag])}
@@ -514,17 +532,17 @@ export default function SettingsPage() {
             </SettingCard>
 
             <SettingCard>
-              <AuraSettingRow label="Wake Time">
+              <AuraSettingRow label={t('settings.wakeTime')}>
                 <Input type="time" value={settings.wellness.wakeTime} onChange={(val) => updateSetting('wellness', 'wakeTime', val)} />
               </AuraSettingRow>
-              <AuraSettingRow label="Average Sleep Target">
+              <AuraSettingRow label={t('settings.avgSleepTarget')}>
                   <SegmentedControl 
                     options={[{value:'6h',label:'6h'},{value:'7h',label:'7h'},{value:'8h',label:'8h'},{value:'9h+',label:'9h+'}]} 
                     value={settings.wellness.sleepTarget}
                     onChange={(val) => updateSetting('wellness', 'sleepTarget', val)}
                   />
               </AuraSettingRow>
-              <AuraSettingRow label="Weekly Check-in Day">
+              <AuraSettingRow label={t('settings.weeklyCheckIn')}>
                   <div style={{ display: 'flex', gap: 4 }}>
                     {['S','M','T','W','T','F','S'].map((d, i) => (
                       <div 
@@ -544,13 +562,13 @@ export default function SettingsPage() {
           {/* SLEEP SETTINGS */}
           <section id="sleep" ref={sectionRefs.sleep} className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Sleep Settings</h2>
-              <p className={styles.sectionSubtitle}>Fine-tune your nightly restoration cycles.</p>
+              <h2 className={styles.sectionTitle}>{t('settings.sleepTitle')}</h2>
+              <p className={styles.sectionSubtitle}>{t('settings.sleepSubtitle')}</p>
             </div>
 
             <SettingCard>
               <AuraSettingRow 
-                label="Bedtime Window" 
+                label={t('settings.bedtimeWindow')} 
                 description={`Target: ${Math.floor(settings.sleep.bedtime[0])}:${(settings.sleep.bedtime[0]%1)*60 || '00'} - ${Math.floor(settings.sleep.bedtime[1])}:${(settings.sleep.bedtime[1]%1)*60 || '00'}`}
               >
                   <DualSlider 
@@ -560,28 +578,33 @@ export default function SettingsPage() {
                     onChange={(val) => updateSetting('sleep', 'bedtime', val)} 
                   />
               </AuraSettingRow>
-              <AuraSettingRow label="Sleep sound preference">
+              <AuraSettingRow label={t('settings.sleepSoundPref')}>
                   <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
-                    {['Rain', 'Brown noise', 'Silence', 'Ocean'].map(s => (
+                    {[
+                      { id: 'Rain', label: t('settings.soundRain') },
+                      { id: 'Brown noise', label: t('settings.soundBrownNoise') },
+                      { id: 'Silence', label: t('settings.soundSilence') },
+                      { id: 'Ocean', label: t('settings.soundOcean') }
+                    ].map(s => (
                       <div 
-                        key={s}
-                        className={`${styles.chip} ${settings.sleep.sound === s ? styles.chipActive : ''}`}
-                        onClick={() => updateSetting('sleep', 'sound', s)}
+                        key={s.id}
+                        className={`${styles.chip} ${settings.sleep.sound === s.id ? styles.chipActive : ''}`}
+                        onClick={() => updateSetting('sleep', 'sound', s.id)}
                       >
-                        {s}
+                        {s.label}
                       </div>
                     ))}
                   </div>
               </AuraSettingRow>
             </SettingCard>
 
-            <SettingCard title="Smart Alarms">
+            <SettingCard title={t('settings.smartAlarms')}>
               <AuraToggleRow 
-                label="Sleep Debt Tracking" 
+                label={t('settings.sleepDebtTracking')} 
                 checked={settings.sleep.debtTracking} 
                 onChange={(val) => updateSetting('sleep', 'debtTracking', val)} 
               />
-              <AuraSettingRow label="Smart Alarm Window">
+              <AuraSettingRow label={t('settings.smartAlarmWindow')}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <AuraToggle checked={settings.sleep.smartAlarm} onChange={(val) => updateSetting('sleep', 'smartAlarm', val)} />
                     <AuraSelect 
@@ -601,19 +624,23 @@ export default function SettingsPage() {
           {/* APPEARANCE */}
           <section id="appearance" ref={sectionRefs.appearance} className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Appearance</h2>
-              <p className={styles.sectionSubtitle}>Customize the UI to your aesthetic preference.</p>
+              <h2 className={styles.sectionTitle}>{t('settings.appearanceTitle')}</h2>
+              <p className={styles.sectionSubtitle}>{t('settings.appearanceSubtitle')}</p>
             </div>
 
-            <AuraSettingRow label="Theme">
+            <AuraSettingRow label={t('settings.theme')}>
                 <SegmentedControl 
-                  options={[{value:'system',label:'System'},{value:'light',label:'Light'},{value:'dark',label:'Dark'}]} 
+                  options={[
+                    {value:'system',label:t('settings.themeSystem')},
+                    {value:'light',label:t('settings.themeLight')},
+                    {value:'dark',label:t('settings.themeDark')}
+                  ]} 
                   value={settings.appearance.theme}
                   onChange={(val) => updateSetting('appearance', 'theme', val)}
                 />
             </AuraSettingRow>
 
-            <AuraSettingRow label="Accent Color">
+            <AuraSettingRow label={t('settings.accentColor')}>
                 <div style={{ display: 'flex', gap: 12 }}>
                   {['#10b981', '#06b6d4', '#14b8a6', '#3b82f6', '#f59e0b', '#fb7185'].map(c => (
                     <div 
@@ -635,13 +662,13 @@ export default function SettingsPage() {
             </AuraSettingRow>
 
             <AuraToggleRow 
-              label="Reduce Motion" 
+              label={t('settings.reduceMotion')} 
               checked={settings.appearance.reduceMotion} 
               onChange={(val) => updateSetting('appearance', 'reduceMotion', val)} 
             />
 
             <AuraToggleRow 
-              label="Dense Mode" 
+              label={t('settings.denseMode')} 
               checked={settings.appearance.denseMode} 
               onChange={(val) => updateSetting('appearance', 'denseMode', val)} 
             />
@@ -650,31 +677,31 @@ export default function SettingsPage() {
           {/* DATA & PRIVACY */}
           <section id="data" ref={sectionRefs.data} className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Data & Privacy</h2>
-              <p className={styles.sectionSubtitle}>Control your data and how it's used.</p>
+              <h2 className={styles.sectionTitle}>{t('settings.dataTitle')}</h2>
+              <p className={styles.sectionSubtitle}>{t('settings.dataSubtitle')}</p>
             </div>
 
             <AuraSettingRow 
-              label="Data Export" 
-              description="Download all your wellness history."
+              label={t('settings.dataExport')} 
+              description={t('settings.dataExportDesc')}
             >
-              <button className={styles.destructiveButton}>Download .JSON</button>
+              <button className={styles.destructiveButton}>{t('settings.downloadJson')}</button>
             </AuraSettingRow>
             
             <AuraToggleRow 
-              label="AI Personalization" 
-              description="Allow AI to use history for personalized plans."
+              label={t('settings.aiPersonalization')} 
+              description={t('settings.aiPersonalizationDesc')}
               checked={settings.privacy.personalization} 
               onChange={(val) => updateSetting('privacy', 'personalization', val)} 
             />
 
-            <AuraSettingRow label="Data Retention">
+            <AuraSettingRow label={t('settings.dataRetention')}>
                 <AuraSelect 
                   value={settings.privacy.retention}
                   onChange={(val) => updateSetting('privacy', 'retention', val)}
                   options={[
-                    {value:'1 year', label:'1 year'},
-                    {value:'Forever', label:'Forever'}
+                    {value:'1 year', label:t('settings.retention1Year')},
+                    {value:'Forever', label:t('settings.retentionForever')}
                   ]}
                   width="140px"
                 />
@@ -684,8 +711,8 @@ export default function SettingsPage() {
           {/* INTEGRATIONS */}
           <section id="integrations" ref={sectionRefs.integrations} className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Integrations</h2>
-              <p className={styles.sectionSubtitle}>Connect with your favorite health apps.</p>
+              <h2 className={styles.sectionTitle}>{t('settings.integrationsTitle')}</h2>
+              <p className={styles.sectionSubtitle}>{t('settings.integrationsSubtitle')}</p>
             </div>
 
             <SettingCard>
@@ -694,8 +721,8 @@ export default function SettingsPage() {
                   <Smartphone color="var(--aura-aurora-1)" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span className={styles.label}>Apple Health / Google Fit</span>
-                  <p className={styles.description}>Sync sleep and activity data automatically.</p>
+                  <span className={styles.label}>{t('settings.healthApps')}</span>
+                  <p className={styles.description}>{t('settings.healthAppsDesc')}</p>
                 </div>
                 <AuraToggle checked={true} onChange={()=>{}} />
               </div>
@@ -707,10 +734,10 @@ export default function SettingsPage() {
                   <Database color="var(--aura-aurora-3)" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span className={styles.label}>Spotify</span>
-                  <p className={styles.description}>Music for your meditations.</p>
+                  <span className={styles.label}>{t('settings.spotify')}</span>
+                  <p className={styles.description}>{t('settings.spotifyDesc')}</p>
                 </div>
-                <button className={styles.destructiveButton}>Connect</button>
+                <button className={styles.destructiveButton}>{t('settings.connect')}</button>
               </div>
             </SettingCard>
           </section>
@@ -718,19 +745,19 @@ export default function SettingsPage() {
           {/* DANGER ZONE */}
           <section id="danger" ref={sectionRefs.danger} className={styles.section}>
             <div className={styles.dangerZone}>
-              <h2 className={styles.dangerTitle}>Danger Zone</h2>
+              <h2 className={styles.dangerTitle}>{t('settings.dangerTitle')}</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <span className={styles.label}>Deactivate Account</span>
-                    <p className={styles.description}>Temporarily disable your profile.</p>
+                    <span className={styles.label}>{t('settings.deactivateAccount')}</span>
+                    <p className={styles.description}>{t('settings.deactivateDesc')}</p>
                   </div>
-                  <button className={styles.destructiveButton}>Deactivate</button>
+                  <button className={styles.destructiveButton}>{t('settings.deactivate')}</button>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <span className={styles.label} style={{ color: '#ef4444' }}>Delete Account</span>
-                    <p className={styles.description}>Permanently remove all data. This cannot be undone.</p>
+                    <span className={styles.label} style={{ color: '#ef4444' }}>{t('settings.deleteAccount')}</span>
+                    <p className={styles.description}>{t('settings.deleteDesc')}</p>
                   </div>
                   {expandedRow !== 'delete' && (
                     <button 
@@ -738,7 +765,7 @@ export default function SettingsPage() {
                       style={{ borderColor: '#ef4444', color: '#ef4444' }}
                       onClick={() => setExpandedRow('delete')}
                     >
-                      Delete Account
+                      {t('settings.deleteAccountBtn')}
                     </button>
                   )}
                 </div>
@@ -746,14 +773,14 @@ export default function SettingsPage() {
                 {expandedRow === 'delete' && (
                   <div className={styles.confirmContainer} style={{ width: '100%', animation: 'expandWidth 400ms var(--ease-spring)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 500 }}>Are you sure? This cannot be undone.</span>
+                      <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('settings.deleteConfirmMsg')}</span>
                       <div className={styles.inlineEditActions}>
-                        <button className={styles.destructiveButton} onClick={() => setExpandedRow(null)}>Cancel</button>
-                        <button className={styles.saveButton} style={{ background: '#ef4444' }} disabled={settings.deleteConfirm !== 'DELETE'}>Confirm Delete</button>
+                        <button className={styles.destructiveButton} onClick={() => setExpandedRow(null)}>{t('settings.cancel')}</button>
+                        <button className={styles.saveButton} style={{ background: '#ef4444' }} disabled={settings.deleteConfirm !== 'DELETE'}>{t('settings.confirmDelete')}</button>
                       </div>
                     </div>
                     <div style={{ marginTop: 12 }}>
-                      <p style={{ fontSize: '12px', color: 'var(--aura-muted)', marginBottom: 8 }}>Type "DELETE" to confirm:</p>
+                      <p style={{ fontSize: '12px', color: 'var(--aura-muted)', marginBottom: 8 }}>{t('settings.typeDelete')}</p>
                       <Input 
                         placeholder="DELETE" 
                         width="100%" 
@@ -776,7 +803,7 @@ export default function SettingsPage() {
           <div className={styles.footerContent}>
             <div className={styles.unsavedIndicator}>
               <div className={styles.unsavedDot} />
-              <span>Unsaved changes</span>
+              <span>{t('settings.unsavedChanges')}</span>
             </div>
             <button 
               className={styles.saveButton} 
@@ -788,10 +815,10 @@ export default function SettingsPage() {
               ) : saveSuccess ? (
                 <>
                   <Check size={18} />
-                  <span>Saved</span>
+                  <span>{t('settings.saved')}</span>
                 </>
               ) : (
-                'Save Changes'
+                t('settings.saveChanges')
               )}
             </button>
           </div>
