@@ -33,6 +33,7 @@
         "demoFailed": "demo access slipped. try again later.",
         "demoButton": "quick entry (demo)",
         "forgotPassword": "forgot your key?",
+        "rememberMe": "remember me",
         "noAccount": "first time?",
         "createAccount": "create your sanctuary"
     },

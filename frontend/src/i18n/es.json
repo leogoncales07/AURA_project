@@ -31,6 +31,7 @@
         "demoFailed": "Acceso de demostración falló. Verifique el backend.",
         "demoButton": "Entrar en Modo de Presentación",
         "forgotPassword": "¿Olvidó su contraseña?",
+        "rememberMe": "recordarme",
         "noAccount": "¿No tienes una cuenta AURA?",
         "createAccount": "Crea la tuya ahora."
     },
