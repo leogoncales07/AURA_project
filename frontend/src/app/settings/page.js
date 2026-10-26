@@ -59,8 +59,6 @@ let INITIAL_STATE = {
     bedtime: [22.5, 23.5], // 10:30 PM - 11:30 PM
     windDown: '30',
     sound: 'Rain',
-    smartAlarm: true,
-    alarmWindow: '30',
     debtTracking: true
   },
   appearance: {
@@ -598,27 +596,6 @@ export default function SettingsPage() {
               </AuraSettingRow>
             </SettingCard>
 
-            <SettingCard title={t('settings.smartAlarms')}>
-              <AuraToggleRow 
-                label={t('settings.sleepDebtTracking')} 
-                checked={settings.sleep.debtTracking} 
-                onChange={(val) => updateSetting('sleep', 'debtTracking', val)} 
-              />
-              <AuraSettingRow label={t('settings.smartAlarmWindow')}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <AuraToggle checked={settings.sleep.smartAlarm} onChange={(val) => updateSetting('sleep', 'smartAlarm', val)} />
-                    <AuraSelect 
-                      value={settings.sleep.alarmWindow}
-                      onChange={(val) => updateSetting('sleep', 'alarmWindow', val)}
-                      options={[
-                        {value:'15',label:'±15 min'},
-                        {value:'30',label:'±30 min'}
-                      ]}
-                      width="120px"
-                    />
-                  </div>
-              </AuraSettingRow>
-            </SettingCard>
           </section>
 
           {/* APPEARANCE */}
@@ -685,7 +662,27 @@ export default function SettingsPage() {
               label={t('settings.dataExport')} 
               description={t('settings.dataExportDesc')}
             >
-              <button className={styles.destructiveButton}>{t('settings.downloadJson')}</button>
+              <button 
+                className={styles.destructiveButton}
+                onClick={async () => {
+                  try {
+                    const res = await api.requestDataExport();
+                    if (res.data?.data) {
+                      const blob = new Blob([JSON.stringify(res.data.data, null, 2)], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `aura_export_${new Date().toISOString().split('T')[0]}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }
+                  } catch (e) {
+                    console.error('Export failed:', e);
+                  }
+                }}
+              >
+                {t('settings.downloadJson')}
+              </button>
             </AuraSettingRow>
             
             <AuraToggleRow 
@@ -776,7 +773,21 @@ export default function SettingsPage() {
                       <span style={{ fontSize: '14px', fontWeight: 500 }}>{t('settings.deleteConfirmMsg')}</span>
                       <div className={styles.inlineEditActions}>
                         <button className={styles.destructiveButton} onClick={() => setExpandedRow(null)}>{t('settings.cancel')}</button>
-                        <button className={styles.saveButton} style={{ background: '#ef4444' }} disabled={settings.deleteConfirm !== 'DELETE'}>{t('settings.confirmDelete')}</button>
+                        <button 
+                          className={styles.saveButton} 
+                          style={{ background: '#ef4444' }} 
+                          disabled={settings.deleteConfirm !== 'DELETE'}
+                          onClick={async () => {
+                            try {
+                              await api.deleteAccount('DELETE');
+                              logout();
+                            } catch (e) {
+                              console.error('Delete failed:', e);
+                            }
+                          }}
+                        >
+                          {t('settings.confirmDelete')}
+                        </button>
                       </div>
                     </div>
                     <div style={{ marginTop: 12 }}>

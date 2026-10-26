@@ -18,9 +18,32 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const [showForgot, setShowForgot] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotMsg, setForgotMsg] = useState('');
+    const [forgotErr, setForgotErr] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
     const router = useRouter();
     const { t } = useI18n();
     const { login } = useAuth();
+
+    const handleForgotPassword = async () => {
+        setForgotErr('');
+        setForgotMsg('');
+        setForgotLoading(true);
+        try {
+            const res = await api.forgotPassword(forgotEmail);
+            if (res.error) {
+                setForgotErr(res.error);
+            } else {
+                setForgotMsg('Link de recuperação enviado com sucesso para o teu email!');
+            }
+        } catch (e) {
+            setForgotErr('Erro ao solicitar recuperação. Tente novamente.');
+        } finally {
+            setForgotLoading(false);
+        }
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -134,10 +157,63 @@ export default function LoginPage() {
                         </button>
 
                         <div className={styles.forgotPasswordWrapper}>
-                            <Link href="#" className={styles.forgotPassword}>{t('login.forgotPassword')}</Link>
+                            <button
+                                type="button"
+                                className={styles.forgotPassword}
+                                onClick={() => {
+                                    setShowForgot(true);
+                                    setForgotEmail(email);
+                                    setForgotMsg('');
+                                    setForgotErr('');
+                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                {t('login.forgotPassword')}
+                            </button>
                         </div>
                     </form>
                 </div>
+
+                {showForgot && (
+                    <div style={{
+                        marginTop: '20px',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        background: 'var(--aura-surface, rgba(255,255,255,0.05))',
+                        border: '1px solid var(--border-primary, rgba(255,255,255,0.1))',
+                        textAlign: 'left'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600 }}>{t('login.forgotPassword')}</span>
+                            <button
+                                type="button"
+                                onClick={() => setShowForgot(false)}
+                                style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', cursor: 'pointer', fontSize: '14px' }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <input
+                            type="email"
+                            placeholder={t('login.emailPlaceholder')}
+                            value={forgotEmail}
+                            onChange={(e) => setForgotEmail(e.target.value)}
+                            className={styles.inputField}
+                            style={{ marginBottom: '10px' }}
+                        />
+                        {forgotMsg && <div style={{ color: '#10b981', fontSize: '13px', marginBottom: '10px' }}>{forgotMsg}</div>}
+                        {forgotErr && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '10px' }}>{forgotErr}</div>}
+                        <Button
+                            variant="primary"
+                            type="button"
+                            disabled={forgotLoading || !forgotEmail}
+                            onClick={handleForgotPassword}
+                            style={{ width: '100%', height: '36px', fontSize: '13px' }}
+                        >
+                            {forgotLoading ? t('login.loading') : (t('common.send') || 'Enviar link de recuperação')}
+                        </Button>
+                    </div>
+                )}
 
                 <p className={styles.signupText}>
                     {t('login.noAccount')} <Link href="/signup" className={styles.signupLink}>{t('login.createAccount')}</Link>

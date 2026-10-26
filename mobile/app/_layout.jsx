@@ -6,7 +6,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { I18nProvider } from '../i18n';
 import { ThemeProvider, useTheme } from '../constants/Theme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-// import { registerForPushNotificationsAsync, scheduleDailyMoodReminder } from '../lib/notifications';
+import { Audio } from 'expo-av';
+import { registerForPushNotificationsAsync, scheduleDailyMoodReminder } from '../lib/notifications';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -17,14 +18,19 @@ function AppShell() {
     useEffect(() => {
         SplashScreen.hideAsync().catch(() => { /* ignore */ });
         
-        // Setup daily push notifications
-        // const initNotifications = async () => {
-        //     const hasPermission = await registerForPushNotificationsAsync();
-        //     if (hasPermission) {
-        //         await scheduleDailyMoodReminder();
-        //     }
-        // };
-        // initNotifications();
+        // 1) Configure audio to play in background (e.g. screen off during meditation/sleep)
+        Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: true,
+            shouldDuckAndroid: true,
+        }).catch((e) => console.warn('Audio mode config error:', e));
+
+        // 2) Setup daily local mood notification reminder
+        registerForPushNotificationsAsync()
+            .then((hasPermission) => {
+                if (hasPermission) scheduleDailyMoodReminder();
+            })
+            .catch(() => {});
     }, []);
 
     return (

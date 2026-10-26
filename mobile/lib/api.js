@@ -81,12 +81,18 @@ export const api = {
         fetchApi('/auth/signup', { method: 'POST', body: { email, password, name } }),
     login: (email, password) =>
         fetchApi('/auth/login', { method: 'POST', body: { email, password } }),
+    forgotPassword: (email) =>
+        fetchApi('/auth/forgot-password', { method: 'POST', body: { email } }),
     getMe: () => fetchApi('/auth/me'),
 
     // User Profile
     getUser: (userId) => fetchApi(`/api/v1/account/profile`),
     updateUser: (userId, update) =>
         fetchApi(`/api/v1/account/profile`, { method: 'PATCH', body: update }),
+    deleteAccount: (confirm = 'DELETE') =>
+        fetchApi('/api/v1/account/delete', { method: 'POST', body: { confirm } }),
+    requestDataExport: () =>
+        fetchApi('/api/v1/account/export', { method: 'POST' }),
 
     // Daily Logs
     logMood: (userId, mood_score, sleep_hours, notes) =>

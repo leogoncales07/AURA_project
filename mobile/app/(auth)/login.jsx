@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
-    KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Dimensions
+    KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Dimensions, Alert
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -79,6 +79,35 @@ export default function LoginScreen() {
             setDemoLoading(false);
         }
     };
+
+    const handleForgotPassword = () => {
+        if (!email) {
+            Alert.alert(
+                t('login.forgotPassword') || 'Recuperar Palavra-passe',
+                'Por favor insira o seu e-mail no campo acima antes de solicitar a recuperação.'
+            );
+            return;
+        }
+        Alert.alert(
+            t('login.forgotPassword') || 'Recuperar Palavra-passe',
+            `Enviar link de recuperação para ${email}?`,
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Enviar',
+                    onPress: async () => {
+                        const res = await api.forgotPassword(email);
+                        if (res.error) {
+                            Alert.alert('Erro', res.error);
+                        } else {
+                            Alert.alert('Sucesso', 'Instruções de recuperação enviadas para o seu e-mail!');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
 
     return (
         <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -204,6 +233,16 @@ export default function LoginScreen() {
                                 ) : (
                                     <Text style={[styles.btnOutlineText, { color: colors.textPrimary }]}>{t('login.demoButton')}</Text>
                                 )}
+                            </TouchableOpacity>
+
+                            <TouchableOpacity 
+                                style={{ alignItems: 'center', marginTop: Spacing.md }} 
+                                onPress={handleForgotPassword}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={{ color: colors.textTertiary, fontSize: 13, textDecorationLine: 'underline' }}>
+                                    {t('login.forgotPassword') || 'Esqueceu-se da palavra-passe?'}
+                                </Text>
                             </TouchableOpacity>
                         </View>
 

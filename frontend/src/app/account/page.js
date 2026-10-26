@@ -1,28 +1,9 @@
-'use client';
-import { ArrowLeft, Camera, Check, CheckCircle2, Circle, Flame, Globe, Info, Loader2, Lock, ShieldCheck, Smartphone, X } from 'lucide-react';
+import { redirect } from 'next/navigation';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+export default function AccountPage() {
+  redirect('/settings');
+}
 
-import styles from './page.module.css';
-import AppShell from '@/components/AppShell';
-import { 
-  Toggle, 
-  Select, 
-  Input, 
-  SegmentedControl, 
-  Chip, 
-  SettingRow 
-} from '../settings/components/Controls';
-
-const INITIAL_ACCOUNT_DATA = {
-  profile: {
-    displayName: 'Matheus Silva',
-    username: 'matheus_aura',
-    avatar: null,
-    memberSince: 'March 2024',
-    streak: 47,
-    reportsCount: 12,
     sessionsCount: 84,
     plan: 'Free'
   },

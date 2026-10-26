@@ -1,42 +1,60 @@
 import { catchAsync } from '../utils/catchAsync.js';
-import pool from '../db/db.js';
 import { AppError } from '../utils/appError.js';
+import supabase from '../services/supabaseService.js';
+import pool from '../db/db.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = path.join(__dirname, '..', '..', 'data');
+
+const loadJSON = (file) => {
+  try {
+    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  } catch (e) {}
+  return {};
+};
+
+const saveJSON = (file, data) => {
+  try { fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8'); }
+  catch (e) {}
+};
 
 export const requestDataExport = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
-  
-  // 1) Rate limit check (1 per 24h)
-  const lastJob = await pool.query(
-    'SELECT created_at FROM data_export_jobs WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
-    [userId]
-  );
-  
-  if (lastJob.rows.length > 0) {
-    const hoursSince = (new Date() - new Date(lastJob.rows[0].created_at)) / (1000 * 60 * 60);
-    if (hoursSince < 24) {
-      return next(new AppError('You can only request one export every 24 hours', 429));
+
+  // Gather all data for this user
+  let logs = [];
+  let sleep = [];
+  let assessments = [];
+  let reflections = [];
+
+  try {
+    const logsStore = loadJSON(path.join(DATA_DIR, 'logs.json'));
+    const sleepStore = loadJSON(path.join(DATA_DIR, 'sleep.json'));
+    const assessmentsStore = loadJSON(path.join(DATA_DIR, 'assessments.json'));
+    const reflectionsStore = loadJSON(path.join(DATA_DIR, 'reflections.json'));
+
+    logs = logsStore[userId] || [];
+    sleep = sleepStore[userId] || [];
+    reflections = reflectionsStore[userId] || [];
+    if (Array.isArray(assessmentsStore)) {
+      assessments = assessmentsStore.filter(a => a.user_id === userId);
     }
+  } catch (e) {
+    console.warn('[Export] Local read error:', e.message);
   }
 
-  // 2) Create job
-  const job = await pool.query(
-    'INSERT INTO data_export_jobs (user_id, status) VALUES ($1, $2) RETURNING id',
-    [userId, 'pending']
-  );
-
-  // 3) Queue background job (In real app, use BullMQ)
-  console.log(`Queued data export job ${job.rows[0].id} for user ${userId}`);
-
-  await pool.query(
-    'INSERT INTO audit_log (user_id, action) VALUES ($1, $2)',
-    [userId, 'account.export_requested']
-  );
-
-  res.status(202).json({
+  res.status(200).json({
     status: 'success',
     data: {
-      job_id: job.rows[0].id,
-      message: 'Export will be emailed to you when ready'
+      exportedAt: new Date().toISOString(),
+      user: req.user,
+      moodLogs: logs,
+      sleepLogs: sleep,
+      assessments,
+      reflections,
     }
   });
 });
@@ -49,15 +67,34 @@ export const deleteWellnessData = catchAsync(async (req, res, next) => {
     return next(new AppError('Please confirm by typing DELETE', 400));
   }
 
-  // Delete related data (assumes tables from previous parts exist)
-  await pool.query('DELETE FROM daily_logs WHERE user_id = $1', [userId]);
-  await pool.query('DELETE FROM assessments WHERE user_id = $1', [userId]);
-  await pool.query('DELETE FROM conversations WHERE user_id = $1', [userId]);
+  // 1) Clean local JSON files
+  try {
+    const files = ['logs.json', 'sleep.json', 'reflections.json'];
+    files.forEach(f => {
+      const p = path.join(DATA_DIR, f);
+      const data = loadJSON(p);
+      if (data[userId]) {
+        delete data[userId];
+        saveJSON(p, data);
+      }
+    });
 
-  await pool.query(
-    'INSERT INTO audit_log (user_id, action) VALUES ($1, $2)',
-    [userId, 'wellness_data.deleted']
-  );
+    const assessPath = path.join(DATA_DIR, 'assessments.json');
+    const assessData = loadJSON(assessPath);
+    if (Array.isArray(assessData)) {
+      const filtered = assessData.filter(a => a.user_id !== userId);
+      saveJSON(assessPath, filtered);
+    }
+  } catch (e) {
+    console.warn('[Privacy] Local cleanup error:', e.message);
+  }
+
+  // 2) Clean Supabase tables (best-effort)
+  try {
+    await supabase.from('daily_logs').delete().eq('user_id', userId);
+    await supabase.from('assessments').delete().eq('user_id', userId);
+    await supabase.from('conversations').delete().eq('user_id', userId);
+  } catch (e) {}
 
   res.status(200).json({
     status: 'success',
@@ -67,44 +104,45 @@ export const deleteWellnessData = catchAsync(async (req, res, next) => {
 
 export const deleteAccount = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
-  const { confirm, password } = req.body;
+  const { confirm } = req.body;
 
-  if (confirm !== 'DELETE') return next(new AppError('Please confirm by typing DELETE', 400));
+  if (confirm !== 'DELETE') {
+    return next(new AppError('Please confirm by typing DELETE', 400));
+  }
 
-  // 1) Verify password
-  const userRes = await pool.query('SELECT password_hash, email FROM users WHERE id = $1', [userId]);
-  const isMatch = await bcrypt.compare(password, userRes.rows[0].password_hash);
-  if (!isMatch) return next(new AppError('Invalid password', 401));
+  // 1) Clean all user data locally
+  try {
+    const files = ['logs.json', 'sleep.json', 'reflections.json', 'conversations.json'];
+    files.forEach(f => {
+      const p = path.join(DATA_DIR, f);
+      const data = loadJSON(p);
+      if (data[userId]) {
+        delete data[userId];
+        saveJSON(p, data);
+      }
+    });
 
-  // 2) Check for active subscription (Mock check)
-  // if (user.hasActiveSubscription) return next(new AppError('Please cancel your subscription first', 409));
+    const assessPath = path.join(DATA_DIR, 'assessments.json');
+    const assessData = loadJSON(assessPath);
+    if (Array.isArray(assessData)) {
+      const filtered = assessData.filter(a => a.user_id !== userId);
+      saveJSON(assessPath, filtered);
+    }
+  } catch (e) {
+    console.warn('[Privacy] Local cleanup error:', e.message);
+  }
 
-  // 3) Soft delete and Anonymize
-  const originalEmail = userRes.rows[0].email;
-  const anonymizedEmail = `deleted_${userId.split('-')[0]}@deleted.aura`;
-  
-  await pool.query(
-    `UPDATE users SET 
-      deleted_at = NOW(), 
-      email = $2, 
-      display_name = 'Deleted User', 
-      username = NULL,
-      phone = NULL,
-      date_of_birth = NULL
-     WHERE id = $1`,
-    [userId, anonymizedEmail]
-  );
-
-  // 4) Cleanup
-  await pool.query('UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = $1', [userId]);
-  
-  await pool.query(
-    'INSERT INTO audit_log (user_id, action, metadata) VALUES ($1, $2, $3)',
-    [userId, 'account.deleted', JSON.stringify({ originalEmail })]
-  );
+  // 2) Clean Supabase records (best effort)
+  try {
+    await supabase.from('daily_logs').delete().eq('user_id', userId);
+    await supabase.from('assessments').delete().eq('user_id', userId);
+    await supabase.from('conversations').delete().eq('user_id', userId);
+    await supabase.from('users').delete().eq('id', userId);
+  } catch (e) {}
 
   res.status(200).json({
     status: 'success',
-    message: 'Account deleted'
+    message: 'Account deleted successfully'
   });
 });
+

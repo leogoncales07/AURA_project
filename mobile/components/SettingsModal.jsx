@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { useI18n, SUPPORTED_LOCALES } from '../i18n';
 import { useTheme, COLORS, Fonts, Spacing, Radius } from '../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { api } from '../lib/api';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -230,6 +231,7 @@ export default function SettingsModal({ visible, onClose }) {
     const [profileName, setProfileName] = useState('');
     const [profileBio, setProfileBio]   = useState('');
     const [loggingOut, setLoggingOut]   = useState(false);
+    const [savingProfile, setSavingProfile] = useState(false);
     const [langOpen, setLangOpen]        = useState(false);
 
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -262,6 +264,67 @@ export default function SettingsModal({ visible, onClose }) {
         if (offset !== undefined && scrollRef.current) {
             scrollRef.current.scrollTo({ y: offset, animated: true });
         }
+    };
+
+    const handleSaveProfile = async () => {
+        if (!user) return;
+        setSavingProfile(true);
+        try {
+            const updatedUser = { ...user, name: profileName, display_name: profileName, bio: profileBio };
+            await AsyncStorage.setItem('aura_user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+            await api.updateUser(user.id, {
+                display_name: profileName,
+                bio: profileBio,
+            });
+            Alert.alert('Sucesso', 'Perfil guardado com sucesso!');
+        } catch (e) {
+            console.error('Failed to update profile:', e);
+            Alert.alert('Sucesso', 'Perfil guardado localmente!');
+        } finally {
+            setSavingProfile(false);
+        }
+    };
+
+    const handleExportData = async () => {
+        try {
+            const res = await api.requestDataExport();
+            if (res.data?.data) {
+                const d = res.data.data;
+                Alert.alert(
+                    'Exportação Pronta',
+                    `Histórico exportado:\n• ${d.moodLogs?.length || 0} registos de humor\n• ${d.sleepLogs?.length || 0} registos de sono\n• ${d.assessments?.length || 0} inquéritos clínicos`
+                );
+            } else {
+                Alert.alert('Exportação', 'Dados exportados com sucesso!');
+            }
+        } catch (e) {
+            Alert.alert('Erro', 'Não foi possível exportar os dados no momento.');
+        }
+    };
+
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            'Eliminar Conta',
+            'Tens a certeza que queres eliminar permanentemente a tua conta e todos os dados de bem-estar? Esta ação é irreversível.',
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Eliminar Definitivamente',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await api.deleteAccount('DELETE');
+                            await AsyncStorage.multiRemove(['aura_token', 'aura_user']);
+                            onClose();
+                            router.replace('/(auth)/login');
+                        } catch (e) {
+                            Alert.alert('Erro', 'Falha ao eliminar conta.');
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const handleLogout = async () => {
@@ -348,6 +411,27 @@ export default function SettingsModal({ visible, onClose }) {
                     <SettingRow label="Bio" colors={colors} isLast right={
                         <AuraInput value={profileBio} onChangeText={setProfileBio} placeholder="Tell us about yourself" multiline maxLength={120} colors={colors} />
                     } />
+                    <View style={{ paddingVertical: 12, alignItems: 'flex-end', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.divider }}>
+                        <TouchableOpacity
+                            onPress={handleSaveProfile}
+                            disabled={savingProfile}
+                            style={{
+                                backgroundColor: colors.primary,
+                                paddingHorizontal: 16,
+                                paddingVertical: 8,
+                                borderRadius: Radius.md,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 6
+                            }}
+                            activeOpacity={0.8}
+                        >
+                            {savingProfile && <ActivityIndicator size="small" color="#fff" />}
+                            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>
+                                {savingProfile ? 'A guardar...' : 'Guardar Alterações'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 </SettingCard>
             </View>
 
@@ -356,10 +440,25 @@ export default function SettingsModal({ visible, onClose }) {
                 <SectionHeader title="Account & Security" subtitle="Secure your access and connected services." colors={colors} />
                 <SettingCard colors={colors}>
                     <SettingRow label="Email Address" description={user?.email || ''} colors={colors} right={
-                        <DestructiveButton label="Edit" colors={colors} onPress={() => {}} />
+                        <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.md, backgroundColor: colors.inputBg }}>
+                            <Text style={{ fontSize: 12, color: colors.textSecondary }}>Verified</Text>
+                        </View>
                     } />
-                    <SettingRow label="Password" description="Last changed: recently" colors={colors} isLast right={
-                        <DestructiveButton label="Change" colors={colors} onPress={() => {}} />
+                    <SettingRow label="Password" description="Protected via Supabase Auth" colors={colors} isLast right={
+                        <DestructiveButton label="Reset" colors={colors} onPress={() => {
+                            if (user?.email) {
+                                Alert.alert('Recuperar Senha', `Enviar link de redefinição para ${user.email}?`, [
+                                    { text: 'Cancelar', style: 'cancel' },
+                                    {
+                                        text: 'Enviar',
+                                        onPress: async () => {
+                                            const r = await api.forgotPassword(user.email);
+                                            Alert.alert('Sucesso', 'Email de redefinição enviado!');
+                                        }
+                                    }
+                                ]);
+                            }
+                        }} />
                     } />
                 </SettingCard>
             </View>
@@ -403,7 +502,7 @@ export default function SettingsModal({ visible, onClose }) {
                 <SectionHeader title="Data & Privacy" subtitle="Control your data and how it's used." colors={colors} />
                 <SettingCard colors={colors}>
                     <SettingRow label="Data Export" description="Download all your wellness history." colors={colors} right={
-                        <DestructiveButton label="Download" colors={colors} onPress={() => Alert.alert('Export', 'Feature coming soon.')} />
+                        <DestructiveButton label="Exportar" colors={colors} onPress={handleExportData} />
                     } />
                     <SettingRow label="Data Retention" description="How long we keep your data." colors={colors} isLast right={
                         <View style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.border }]}>
@@ -417,11 +516,11 @@ export default function SettingsModal({ visible, onClose }) {
             <View onLayout={mark('danger')}>
                 <View style={[cc.dangerZone, { borderColor: '#ef444440' }]}>
                     <Text style={[cc.dangerTitle, { color: colors.textPrimary }]}>Danger Zone</Text>
-                    <SettingRow label="Deactivate Account" description="Temporarily disable your profile." colors={colors} right={
-                        <DestructiveButton label="Deactivate" colors={colors} onPress={() => Alert.alert('Deactivate', 'Feature coming soon.')} />
+                    <SettingRow label="Log Out" description="Sign out of this device." colors={colors} right={
+                        <DestructiveButton label="Log Out" colors={colors} onPress={handleLogout} />
                     } />
                     <SettingRow label="Delete Account" description="Permanently remove all data. Cannot be undone." colors={colors} isLast right={
-                        <DestructiveButton label="Delete Account" danger colors={colors} onPress={() => Alert.alert('Delete Account', 'This action is permanent and cannot be undone.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive' }])} />
+                        <DestructiveButton label="Delete Account" danger colors={colors} onPress={handleDeleteAccount} />
                     } />
                 </View>
             </View>

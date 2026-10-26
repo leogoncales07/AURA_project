@@ -80,3 +80,19 @@ export const logout = catchAsync(async (req, res, next) => {
 
   res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
+
+export const forgotPassword = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  if (!email) return next(new AppError('Please provide your email address', 400));
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  if (error) {
+    return next(new AppError(error.message, 400));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password reset instructions have been sent to your email.'
+  });
+});
+
