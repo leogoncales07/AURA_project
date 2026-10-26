@@ -1,4 +1,5 @@
 import { pino } from 'pino';
+import { AppError } from '../utils/appError.js';
 
 const logger = pino({
   transport: {
@@ -40,6 +41,9 @@ const sendErrorProd = (err, req, res) => {
 };
 
 export const globalErrorHandler = (err, req, res, next) => {
+  if (err.name === 'ZodError') {
+    err = new AppError(err.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('; '), 400);
+  }
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 

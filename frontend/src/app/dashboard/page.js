@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
 export default function DashboardPage() {
     const [user, setUser] = useState(null);
     const [stats, setStats] = useState({ streak: 0, sessions: 0, tasks: '0/3' });
-    const [latestLog, setLatestLog] = useState({ mood_score: 7, sleep_hours: 7.5 });
+    const [latestLog, setLatestLog] = useState({ mood_score: null, sleep_hours: null });
     const [loading, setLoading] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const [reflectionText, setReflectionText] = useState('');
@@ -20,7 +20,7 @@ export default function DashboardPage() {
     const { t } = useI18n();
 
     // Weekly mood data (powered by live API)
-    const [weeklyMood, setWeeklyMood] = useState([7, 7, 7, 7, 7, 7, 7]);
+    const [weeklyMood, setWeeklyMood] = useState(Array(7).fill(null));
 
     // Recent activity (powered by live API)
     const [recentActivities, setRecentActivities] = useState([]);
@@ -66,7 +66,7 @@ export default function DashboardPage() {
                 const { data } = await api.getStats(parsedUser.id);
                 if (data) {
                     setStats({
-                        streak: data.streak ?? 1,
+                        streak: data.streak ?? 0,
                         sessions: data.sessions ?? 0,
                         tasks: data.tasks ?? '0/3',
                     });
@@ -111,9 +111,11 @@ export default function DashboardPage() {
         };
 
         fetchDashboardData();
+        window.addEventListener('aura:data', fetchDashboardData);
 
         return () => {
           window.removeEventListener('resize', checkMobile);
+          window.removeEventListener('aura:data', fetchDashboardData);
         };
     }, [router]);
 
@@ -150,20 +152,19 @@ export default function DashboardPage() {
     const userName = user?.display_name || user?.name || user?.user_metadata?.name || t('dashboard.friend');
     const nameToShow = userName.split(' ')[0];
     const greeting = t('dashboard.greeting', { name: nameToShow });
-    const moodText = latestLog?.mood_score > 7 ? t('dashboard.moodHigh') : latestLog?.mood_score > 4 ? t('dashboard.moodMid') : t('dashboard.moodLow');
+    const moodText = latestLog?.mood_score == null ? '—' : latestLog?.mood_score > 7 ? t('dashboard.moodHigh') : latestLog?.mood_score > 4 ? t('dashboard.moodMid') : t('dashboard.moodLow');
     const moodPercent = (latestLog?.mood_score || 0) / 10;
 
     // SVG sparkline path from weekly mood
     const sparklineMax = 10;
     const sparklineWidth = 280;
     const sparklineHeight = 60;
-    const sparklinePoints = weeklyMood.map((v, i) => {
-        const x = (i / (weeklyMood.length - 1)) * sparklineWidth;
-        const y = sparklineHeight - (v / sparklineMax) * sparklineHeight;
-        return `${x},${y}`;
-    });
-    const sparklinePath = `M ${sparklinePoints.join(' L ')}`;
-    const sparklineAreaPath = `${sparklinePath} L ${sparklineWidth},${sparklineHeight} L 0,${sparklineHeight} Z`;
+    let previousValue = false;
+    const sparklinePath = weeklyMood.map((value, index) => {
+        if (value == null) { previousValue = false; return ''; }
+        const command = previousValue ? 'L' : 'M'; previousValue = true;
+        return command + ' ' + (index / 6 * sparklineWidth) + ',' + (sparklineHeight - value / 10 * sparklineHeight);
+    }).join(' ');
 
     return (
         <AppShell title="">
@@ -358,7 +359,7 @@ export default function DashboardPage() {
                                 </span>
                             </div>
                             <span style={{ fontSize: '12px', color: 'var(--fg-muted)', opacity: 0.5 }}>
-                                {t('dashboard.moodToday')}: {weeklyMood[weeklyMood.length - 1]}/10
+                                {t('dashboard.moodToday')}: {weeklyMood[weeklyMood.length - 1] ?? '—'}/10
                             </span>
                         </div>
 
@@ -375,14 +376,13 @@ export default function DashboardPage() {
                                         <stop offset="100%" stopColor="var(--brand-primary)" stopOpacity="0.02" />
                                     </linearGradient>
                                 </defs>
-                                <path d={sparklineAreaPath} fill="url(#sparkFill)" />
                                 <path d={sparklinePath} fill="none" stroke="var(--brand-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                                 {weeklyMood.map((v, i) => {
                                     const x = (i / (weeklyMood.length - 1)) * sparklineWidth;
                                     const y = sparklineHeight - (v / sparklineMax) * sparklineHeight;
                                     return (
                                         <g key={i}>
-                                            <circle cx={x} cy={y} r="4" fill="var(--bg-background)" stroke="var(--brand-primary)" strokeWidth="2" />
+                                            {v != null && <circle cx={x} cy={y} r="4" fill="var(--bg-background)" stroke="var(--brand-primary)" strokeWidth="2" />}
                                             <text x={x} y={sparklineHeight + 20} textAnchor="middle" fontSize="10" fill="var(--fg-muted)" fontFamily="var(--font-dm-sans), sans-serif" opacity="0.6">
                                                 {weekdays[i]}
                                             </text>
@@ -551,7 +551,7 @@ export default function DashboardPage() {
                         lineHeight: 1.5,
                         opacity: 0.85,
                     }}>
-                        "{t('dashboard.dailyReflectionPrompt')}"
+                        &quot;{t('dashboard.dailyReflectionPrompt')}&quot;
                     </p>
                     <textarea
                         value={reflectionText}

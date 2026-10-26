@@ -2,11 +2,9 @@ import { catchAsync } from '../utils/catchAsync.js';
 import { AppError } from '../utils/appError.js';
 import pool from '../db/db.js';
 import { cache } from '../services/cacheService.js';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import sharp from 'sharp';
-import supabase from '../services/supabaseService.js';
+import supabase, { createAuthClient, updateAuthUser } from '../services/supabaseService.js';
 
 const profileSchema = z.object({
   display_name: z.string().max(100).optional(),
@@ -32,79 +30,21 @@ export const getProfile = catchAsync(async (req, res, next) => {
 });
 
 export const updateProfile = catchAsync(async (req, res, next) => {
-  const userId = req.user.id;
-  
-  // 1) Validate body
   const validatedData = profileSchema.parse(req.body);
-  
-  if (Object.keys(validatedData).length === 0) {
-    return next(new AppError('No data provided to update', 400));
-  }
-
-  try {
-    // Check if username is taken
-    if (validatedData.username) {
-      const existing = await pool.query(
-        'SELECT id FROM users WHERE username = $1 AND id != $2',
-        [validatedData.username, userId]
-      );
-      if (existing.rows.length > 0) {
-        return next(new AppError('Username already in use', 422));
-      }
-    }
-
-    const fields = Object.keys(validatedData);
-    const values = Object.values(validatedData);
-    const setClause = fields.map((f, i) => `${f} = $${i + 2}`).join(', ');
-    const query = `UPDATE users SET ${setClause}, updated_at = NOW() WHERE id = $1 RETURNING *`;
-    
-    const result = await pool.query(query, [userId, ...values]);
-    const updatedUser = result.rows[0];
-    delete updatedUser.password_hash;
-    
-    await cache.del(`user_profile:${userId}`);
-    return res.status(200).json({ status: 'success', data: updatedUser });
-  } catch (dbErr) {
-    // Fallback: merge with req.user and return
-    const merged = {
-      ...req.user,
-      ...validatedData,
-      updated_at: new Date().toISOString()
-    };
-    delete merged.current_token_hash;
-    return res.status(200).json({ status: 'success', data: merged });
-  }
+  if (!Object.keys(validatedData).length) return next(new AppError('No data provided to update', 400));
+  if (validatedData.display_name !== undefined) validatedData.name = validatedData.display_name;
+  const { data, error } = await updateAuthUser(req.accessToken, { data: validatedData });
+  if (error) return next(new AppError(error.message, error.status || 400));
+  res.json({ status: 'success', data: { ...data.user.user_metadata, id: data.user.id, email: data.user.email } });
 });
 
 export const changeEmailRequest = catchAsync(async (req, res, next) => {
-  const { new_email, current_password } = req.body;
-  const userId = req.user.id;
-
-  // 1) Verify password
-  const userRes = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
-  const isMatch = await bcrypt.compare(current_password, userRes.rows[0].password_hash);
-  if (!isMatch) return next(new AppError('Invalid password', 401));
-
-  // 2) Check if email taken
-  const emailRes = await pool.query('SELECT id FROM users WHERE email = $1', [new_email]);
-  if (emailRes.rows.length > 0) return next(new AppError('Email already registered', 422));
-
-  // 3) Store in Redis and Send Verification (Mocked email)
-  const token = jwt.sign({ userId, new_email }, process.env.JWT_SECRET, { expiresIn: '24h' });
-  await cache.set(`email_change:${userId}`, new_email, 86400); // 24h
-
-  // Mock sending email
-  console.log(`Verification email sent to ${new_email} with token: ${token}`);
-
-  await pool.query(
-    'INSERT INTO audit_log (user_id, action, metadata) VALUES ($1, $2, $3)',
-    [userId, 'email.change_requested', JSON.stringify({ new_email })]
-  );
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Verification sent to new email'
-  });
+  const { new_email, current_password } = z.object({ new_email: z.string().email(), current_password: z.string().min(1) }).parse(req.body);
+  const { error: authError } = await createAuthClient().auth.signInWithPassword({ email: req.user.email, password: current_password });
+  if (authError) return next(new AppError('Invalid password', 403));
+  const { error } = await updateAuthUser(req.accessToken, { email: new_email });
+  if (error) return next(new AppError(error.message, error.status || 400));
+  res.json({ status: 'success', message: 'Confirm the email change using the verification email.' });
 });
 
 export const resizeUserPhoto = catchAsync(async (req, res, next) => {

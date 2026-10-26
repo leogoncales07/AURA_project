@@ -11,105 +11,33 @@ export default function SleepPage() {
   const [user, setUser] = useState(null);
   const [sleepLogs, setSleepLogs] = useState([]);
   const [timeframe, setTimeframe] = useState('Day');
-  const [sleepScore, setSleepScore] = useState(84);
+  const [sleepScore, setSleepScore] = useState(null);
 
   const [logModalVisible, setLogModalVisible] = useState(false);
   const [bedTimeInput, setBedTimeInput] = useState('23:30');
   const [wakeTimeInput, setWakeTimeInput] = useState('07:00');
 
   // Dynamic weekly chart data
-  const [weeklyData, setWeeklyData] = useState([
-    { day: 'M', duration: 7.2, quality: 80 },
-    { day: 'T', duration: 6.8, quality: 75 },
-    { day: 'W', duration: 8.1, quality: 90 },
-    { day: 'T', duration: 7.5, quality: 82 },
-    { day: 'F', duration: 7.0, quality: 78 },
-    { day: 'S', duration: 9.2, quality: 95 },
-    { day: 'S', duration: 8.5, quality: 88 },
-  ]);
-
+  const [sleepError, setSleepError] = useState('');
+  const [savingLog, setSavingLog] = useState(false);
+  const [weeklyData, setWeeklyData] = useState([]);
   const updateMetricsFromLogs = (logs) => {
-    if (!logs || !logs.length) return;
-    
-    // Average quality score
-    const totalQ = logs.reduce((acc, l) => acc + (l.quality || 80), 0);
-    const avgScore = Math.round(totalQ / logs.length);
-    setSleepScore(avgScore);
-
-    // Compute weekly data (last 7 days)
-    const daysShort = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    const newWeekly = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dStr = d.toISOString().split('T')[0];
-      const found = logs.find(l => (l.timestamp || '').startsWith(dStr));
-      const dayLabel = daysShort[d.getDay()];
-      if (found) {
-        newWeekly.push({
-          day: dayLabel,
-          duration: found.hours,
-          quality: found.quality || 80
-        });
-      } else {
-        newWeekly.push({
-          day: dayLabel,
-          duration: 7.5,
-          quality: 75
-        });
-      }
-    }
-    setWeeklyData(newWeekly);
+    const quality = logs.filter(log => log.quality != null);
+    setSleepScore(quality.length ? Math.round(quality.reduce((sum, log) => sum + log.quality, 0) / quality.length) : null);
+    setWeeklyData(Array.from({ length: 7 }, (_, index) => {
+      const day = new Date(); day.setDate(day.getDate() - 6 + index);
+      const entry = logs.find(log => log.timestamp?.startsWith(day.toISOString().slice(0,10)));
+      return { day: day.toLocaleDateString(undefined, { weekday: 'short' }), duration: entry?.hours ?? null, quality: entry?.quality ?? null };
+    }));
   };
-
-  // Load from local storage and backend API
   useEffect(() => {
-    const stored = window.localStorage.getItem('aura_user') || window.sessionStorage.getItem('aura_user');
-    let currentUser = null;
-    if (stored) {
-      try {
-        currentUser = JSON.parse(stored);
-        setUser(currentUser);
-      } catch (e) {}
-    }
-
-    const loadData = async () => {
-      // 1. Instant local storage cache
-      const saved = window.localStorage.getItem('aura_sleep_logs_array');
-      let localLogs = [];
-      if (saved) {
-        try {
-          localLogs = JSON.parse(saved);
-          setSleepLogs(localLogs);
-          updateMetricsFromLogs(localLogs);
-        } catch (e) {}
-      }
-
-      // 2. Fetch from backend API
-      if (currentUser?.id) {
-        try {
-          const { data } = await api.getSleepLogs(currentUser.id, 30);
-          if (data && data.logs && data.logs.length > 0) {
-            setSleepLogs(data.logs);
-            updateMetricsFromLogs(data.logs);
-            window.localStorage.setItem('aura_sleep_logs_array', JSON.stringify(data.logs));
-          } else if (localLogs.length > 0) {
-            // Push latest local log to server
-            api.logSleep(
-              currentUser.id,
-              localLogs[0].bedTime,
-              localLogs[0].wakeTime,
-              localLogs[0].hours,
-              localLogs[0].quality
-            );
-          }
-        } catch (err) {
-          console.warn('Failed to fetch sleep logs:', err);
-        }
-      }
-    };
-
-    loadData();
+    const saved = localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user');
+    if (!saved) return;
+    const u = JSON.parse(saved); setUser(u);
+    api.getSleepLogs(u.id, 365).then(result => {
+      if (result.error) setSleepError(result.error);
+      else { setSleepLogs(result.data.logs); updateMetricsFromLogs(result.data.logs); }
+    });
   }, []);
 
   const calculateHours = (bed, wake) => {
@@ -133,31 +61,15 @@ export default function SleepPage() {
   };
 
   const handleSaveLog = async () => {
-    const calculatedHours = calculateHours(bedTimeInput, wakeTimeInput) || 8;
-    setLogModalVisible(false);
-    
-    const quality = calculatedHours >= 7 && calculatedHours <= 9 ? 88 : calculatedHours < 7 ? 68 : 75;
-    const newLog = {
-      id: Date.now().toString(),
-      bedTime: bedTimeInput,
-      wakeTime: wakeTimeInput,
-      hours: calculatedHours,
-      quality,
-      timestamp: new Date().toISOString()
-    };
-
-    const updated = [newLog, ...sleepLogs];
-    setSleepLogs(updated);
-    updateMetricsFromLogs(updated);
-    window.localStorage.setItem('aura_sleep_logs_array', JSON.stringify(updated));
-
-    if (user?.id) {
-      try {
-        await api.logSleep(user.id, bedTimeInput, wakeTimeInput, calculatedHours, quality);
-      } catch (err) {
-        console.warn('Failed to sync sleep log to server:', err);
-      }
-    }
+    if (!user?.id || savingLog) return;
+    const hours = calculateHours(bedTimeInput, wakeTimeInput);
+    if (!hours || hours <= 0 || hours > 24) { setSleepError('Verifique os horários de sono. / Check sleep times.'); return; }
+    setSavingLog(true); setSleepError('');
+    const result = await api.logSleep(user.id, bedTimeInput, wakeTimeInput, hours);
+    setSavingLog(false);
+    if (result.error) { setSleepError(result.error); return; }
+    const updated = [result.data.log, ...sleepLogs];
+    setSleepLogs(updated); updateMetricsFromLogs(updated); setLogModalVisible(false);
   };
 
   const getAggregatedData = () => {
@@ -194,6 +106,7 @@ export default function SleepPage() {
 
   return (
     <AppShell title="sleep sanctuary">
+      {sleepError && <p role="alert">{sleepError}</p>}
       <div className={`${styles.container} fade-up-stagger`}>
         
         <div className={styles.timeframeTabs} style={{ alignSelf: 'center', margin: '0 auto', width: 'fit-content' }}>
@@ -292,18 +205,18 @@ export default function SleepPage() {
                   </linearGradient>
                 </defs>
               </svg>
-              <div className={styles.scoreValue}>{sleepScore}</div>
+              <div className={styles.scoreValue}>{sleepScore ?? '—'}</div>
             </div>
             <div className={styles.scoreInfo}>
               <h3>Restorative Sleep</h3>
-              <p>Your quality is 12% higher than last week.</p>
+              <p>Qualidade registada pelo utilizador / User recorded quality</p>
             </div>
           </div>
         </section>
 
         {/* Tonight's Protocol */}
         <section>
-          <h3 className={styles.sectionTitle}>tonight's protocol</h3>
+          <h3 className={styles.sectionTitle}>tonight&apos;s protocol</h3>
           <div className={styles.protocolGrid}>
             <div className={styles.phaseCard} style={{ borderLeft: '4px solid var(--aura-aurora-1)' }}>
               <div className={styles.phaseIcon} style={{ color: 'var(--aura-aurora-1)' }}>
@@ -367,7 +280,7 @@ export default function SleepPage() {
               {weeklyData.map((data, i) => (
                 <div key={i} className={styles.chartColumn}>
                   <div className={styles.chartTooltip}>
-                    {data.duration}h · {data.quality}%
+                    {data.duration == null ? '—' : data.duration + 'h'}
                   </div>
                   <div 
                     className={styles.chartBar} 
@@ -375,7 +288,7 @@ export default function SleepPage() {
                   />
                   <div 
                     className={styles.chartDot} 
-                    style={{ bottom: `${data.quality}%` }} 
+                    style={{ display: data.quality == null ? 'none' : undefined, bottom: `${data.quality}%` }}
                   />
                 </div>
               ))}
@@ -424,7 +337,7 @@ export default function SleepPage() {
             
             <div className={styles.modalActions}>
               <button className={styles.cancelBtn} onClick={() => setLogModalVisible(false)}>Cancel</button>
-              <button className={styles.saveBtn} onClick={handleSaveLog}>Save</button>
+              <button className={styles.saveBtn} onClick={handleSaveLog} disabled={savingLog}>Save</button>
             </div>
           </div>
         </div>

@@ -20,9 +20,21 @@ const logger = pino({
 });
 
 const port = process.env.PORT || 8000;
-const server = app.listen(port, () => {
+const server = app.listen(port, process.env.AURA_BIND_HOST || '0.0.0.0', () => {
   logger.info(`App running on port ${port}...`);
 });
+
+let shuttingDown = false;
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info({ signal }, 'Finishing active requests before shutdown');
+    server.close(() => process.exit(0));
+    server.closeIdleConnections();
+    setTimeout(() => { server.closeAllConnections(); process.exit(1); }, 10000).unref();
+  });
+}
 
 process.on('unhandledRejection', (err) => {
   logger.error('UNHANDLED REJECTION! 💥 Shutting down...');

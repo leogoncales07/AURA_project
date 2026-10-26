@@ -1,7 +1,8 @@
+import LegalNotice from '../../components/LegalNotice';
 import { useState } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
-    KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+    KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +27,12 @@ export default function SignupScreen() {
         if (apiError) {
             setError(apiError);
             setLoading(false);
+            return;
+        }
+        if (data?.confirmation_required) {
+            Alert.alert('Confirme o e-mail / Confirm email', 'Abra o e-mail de confirmação antes de iniciar sessão. / Open the confirmation email before signing in.');
+            setLoading(false);
+            router.replace('/(auth)/login');
             return;
         }
         if (data?.access_token) {
@@ -106,6 +113,7 @@ export default function SignupScreen() {
                         </TouchableOpacity>
                     </Link>
                 </View>
+            <LegalNotice />
             </ScrollView>
         </KeyboardAvoidingView>
     );

@@ -19,6 +19,9 @@ import assessmentsRouter from './routes/assessmentsRoutes.js';
 import companionRouter from './routes/companionRoutes.js';
 
 const app = express();
+const proxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
+if (!Number.isInteger(proxyHops) || proxyHops < 0 || proxyHops > 3) throw new Error('TRUST_PROXY_HOPS must be an integer between 0 and 3.');
+if (proxyHops) app.set('trust proxy', proxyHops);
 const logger = pino({
   transport: {
     target: 'pino-pretty',
@@ -29,7 +32,11 @@ const logger = pino({
 // 1) GLOBAL MIDDLEWARES
 // Allow all origins in development (Expo Go / mobile doesn't send a browser Origin header)
 app.use(cors({
-  origin: true, // reflects the request origin — works for mobile, Expo Go, and browser
+  origin: (origin, callback) => {
+    const origins = (process.env.CORS_ORIGINS || 'http://localhost:3000').split(',').map(value => value.trim());
+    if (!origin || process.env.NODE_ENV !== 'production' || origins.includes(origin)) return callback(null, true);
+    callback(new AppError('Origin not allowed', 403));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Owner-Secret', 'Bypass-Tunnel-Reminder'],
@@ -50,6 +57,9 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again in a minute!'
 });
 app.use('/api', limiter);
+app.use('/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 60 }));
+app.use('/companion', limiter);
+app.use('/assessments', limiter);
 
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
@@ -70,6 +80,10 @@ app.get('/', (req, res) => {
     status: 'success',
     message: 'AURA API is running'
   });
+});
+
+app.get('/health', (req, res) => {
+  res.set('Cache-Control', 'no-store').json({ status: 'ok', service: 'aura-api' });
 });
 
 // 3) ERROR HANDLING

@@ -6,20 +6,23 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/*.test.js",
+    "test:database": "node --test tests/database/migration.test.js",
+    "test:live": "node --use-system-ca scripts/verify-live-flow.js --run",
+    "check:production": "node --use-system-ca scripts/check-production.js",
+    "backup:legacy": "node scripts/backup-legacy-data.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
+  "overrides": { "qs": "6.16.1" },
   "dependencies": {
     "@langchain/core": "^1.2.12",
     "@langchain/google-genai": "^2.3.2",
     "@supabase/supabase-js": "^2.46.1",
     "@types/express": "^4.17.21",
     "@types/node": "^20.17.6",
-    "bcrypt": "^5.1.1",
-    "bullmq": "^5.31.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -41,7 +44,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
     "xss-clean": "^0.1.4",
-    "zod": "^3.23.8",
+    "zod": "4.6.7",
     "zxcvbn": "^4.4.2"
   }
 }

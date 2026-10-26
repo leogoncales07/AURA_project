@@ -30,6 +30,7 @@ const riskColors = {
 
 // ── PDF HTML builder ────────────────────────────────────────────
 function buildPdfHtml({ locale, userName, monthLabel, generatedDate, data }) {
+    userName = String(userName || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
     const isPt = locale === 'pt';
 
     const riskLabel = {
@@ -308,7 +309,9 @@ export default function ReportsScreen() {
     };
 
     const loadSavedReports = async () => {
-        const raw = await AsyncStorage.getItem(SAVED_REPORTS_KEY);
+        const stored = await AsyncStorage.getItem('aura_user');
+        if (!stored) return;
+        const raw = await AsyncStorage.getItem(`${SAVED_REPORTS_KEY}_${JSON.parse(stored).id}`);
         if (raw) setSavedReports(JSON.parse(raw));
     };
 
@@ -329,7 +332,7 @@ export default function ReportsScreen() {
             streak = logs.length;
             let totalMood = 0, moodCount = 0;
             logs.forEach((log) => {
-                const logDate = new Date(log.log_date || log.created_at);
+                const logDate = new Date(log.log_date || log.timestamp || log.created_at);
                 if (logDate >= monday) {
                     const lDay = logDate.getDay();
                     const lIndex = lDay === 0 ? 6 : lDay - 1;
@@ -359,18 +362,19 @@ export default function ReportsScreen() {
         setReportData(null);
 
         const [logsRes, historyRes] = await Promise.all([
-            api.getLogs(userId, 90),
+            api.getLogs(userId, 10000),
             api.getHistory(userId),
         ]);
 
+        if (logsRes.error || historyRes.error) { Alert.alert('Erro', logsRes.error || historyRes.error); setGenerating(false); return; }
         const allLogs = logsRes.data?.logs || [];
         const allAssessments = historyRes.data?.assessments || [];
 
         // Filter to selected month/year
         const monthLogs = allLogs.filter((log) => {
-            const d = new Date(log.log_date || log.created_at);
+            const d = new Date(log.log_date || log.timestamp || log.created_at);
             return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
-        });
+        }).sort((a, b) => new Date(a.log_date || a.timestamp || a.created_at) - new Date(b.log_date || b.timestamp || b.created_at));
 
         const monthAssessments = allAssessments.filter((a) => {
             if (!a.completed_at && !a.created_at) return true; // include all if no date
@@ -380,7 +384,7 @@ export default function ReportsScreen() {
 
         // Compute stats
         const daysActive = new Set(monthLogs.map((l) => {
-            const d = new Date(l.log_date || l.created_at);
+            const d = new Date(l.log_date || l.timestamp || l.created_at);
             return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
         })).size;
 
@@ -408,7 +412,7 @@ export default function ReportsScreen() {
             avgMood,
             avgSleep: Number(avgSleep),
             totalSessions: monthLogs.length,
-            meditationSessions: monthLogs.length, // proxy: each log = 1 session
+            meditationSessions: 0, // proxy: each log = 1 session
             assessments: monthAssessments,
             moodTrend,
         };
@@ -457,7 +461,7 @@ export default function ReportsScreen() {
             };
             const updated = [meta, ...savedReports].slice(0, 10);
             setSavedReports(updated);
-            await AsyncStorage.setItem(SAVED_REPORTS_KEY, JSON.stringify(updated));
+            await AsyncStorage.setItem(`${SAVED_REPORTS_KEY}_${userId}`, JSON.stringify(updated));
 
             const isAvailable = await Sharing.isAvailableAsync();
             if (isAvailable) {
@@ -493,7 +497,7 @@ export default function ReportsScreen() {
     const deleteSaved = async (id) => {
         const updated = savedReports.filter((r) => r.id !== id);
         setSavedReports(updated);
-        await AsyncStorage.setItem(SAVED_REPORTS_KEY, JSON.stringify(updated));
+        await AsyncStorage.setItem(`${SAVED_REPORTS_KEY}_${userId}`, JSON.stringify(updated));
     };
 
     // ── Loading state ──

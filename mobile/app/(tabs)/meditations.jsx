@@ -1,3 +1,4 @@
+import { api } from '../../lib/api';
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
 } from 'react-native';
@@ -23,11 +24,19 @@ export default function MeditationsScreen() {
     const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
     const isDark = theme === 'dark';
+    const [sessions, setSessions] = useState(SESSIONS);
     const [activeSession, setActiveSession] = useState(null);
     const [user, setUser] = useState(null);
     const [settingsVisible, setSettingsVisible] = useState(false);
 
     useEffect(() => {
+        api.getLibraryContent().then(result => {
+            const library = result.data?.content || result.data;
+            if (!library) return;
+            const assets = { '/audio/balance.mp3': require('../../assets/audio/balance.mp3'), '/audio/focus.mp3': require('../../assets/audio/focus.mp3'), '/audio/sleep.mp3': require('../../assets/audio/sleep.mp3') };
+            const rows = Object.entries({ ...library.meditations, ...library.sleep_methods }).filter(([, entry]) => assets[entry.audioUrl]);
+            if (rows.length) setSessions(rows.map(([id, entry]) => ({ title: id, titleText: entry.name, metaText: entry.description, color: SESSION_COLORS.accentMint, emoji: '♫', durationMin: 5, audioUrl: assets[entry.audioUrl] })));
+        });
         AsyncStorage.getItem('aura_user').then((stored) => {
             if (stored) setUser(JSON.parse(stored));
         });
@@ -82,15 +91,15 @@ export default function MeditationsScreen() {
             {/* Sessions */}
             <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>{t('meditations.explore')}</Text>
 
-            {SESSIONS.map((s) => (
+            {sessions.map((s) => (
                 <TouchableOpacity
                     key={s.title}
                     style={[styles.sessionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                     activeOpacity={0.8}
                     onPress={() => setActiveSession({
-                        title: t(`meditations.${s.title}`),
-                        meta: t(`meditations.${s.meta}`),
-                        durationMin: s.title === 'sleepPrep' ? 12 : 15,
+                        title: (s.titleText || t(`meditations.${s.title}`)),
+                        meta: (s.metaText || t(`meditations.${s.meta}`)),
+                        durationMin: s.durationMin || (s.title === 'sleepPrep' ? 12 : 15),
                         color: s.color,
                         emoji: s.emoji,
                         audioUrl: s.audioUrl
@@ -100,8 +109,8 @@ export default function MeditationsScreen() {
                         <Text style={styles.sessionEmoji}>{s.emoji}</Text>
                     </View>
                     <View style={styles.sessionText}>
-                        <Text style={[styles.sessionTitle, { color: colors.textPrimary }]}>{t(`meditations.${s.title}`)}</Text>
-                        <Text style={[styles.sessionMeta, { color: colors.textSecondary }]}>{t(`meditations.${s.meta}`)}</Text>
+                        <Text style={[styles.sessionTitle, { color: colors.textPrimary }]}>{(s.titleText || t(`meditations.${s.title}`))}</Text>
+                        <Text style={[styles.sessionMeta, { color: colors.textSecondary }]}>{(s.metaText || t(`meditations.${s.meta}`))}</Text>
                     </View>
                     <View style={[styles.playBtn, { backgroundColor: colors.primaryDim }]}>
                         <Text style={[styles.playBtnText, { color: colors.primary }]}>▶</Text>

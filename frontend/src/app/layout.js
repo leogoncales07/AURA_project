@@ -23,6 +23,7 @@ import { I18nProvider } from "@/i18n";
 import AuroraBackground from "@/components/AuroraBackground";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
+import LegalLinks from '@/components/LegalLinks';
 
 export const metadata = {
   title: "AURA | Awareness Understanding & Recovery Assistant",
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
             <I18nProvider>
               <AuthProvider>
                 {children}
+                <LegalLinks />
               </AuthProvider>
             </I18nProvider>
           </div>

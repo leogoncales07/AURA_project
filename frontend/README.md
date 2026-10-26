@@ -1,36 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AURA — web
 
-## Getting Started
+Aplicação Next.js. As páginas ficam em `src/app/`, os componentes em `src/components/`, a sessão e o tema em `src/context/`, o cliente da API em `src/lib/api.js` e as traduções em `src/i18n/`. Os ficheiros públicos, incluindo áudios, ficam em `public/`.
 
-First, run the development server:
+Para desenvolver, iniciar a API noutro terminal com `npm.cmd --prefix backend run dev`, a partir da raiz. Depois, nesta pasta:
 
-```bash
+```sh
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+A web abre em `http://localhost:3000`. Não executar em simultâneo com o lançador que já ocupa essa porta.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Para atualizar a build utilizada por `START_APP.bat` e `START_MOBILE.bat`, executar `npm run build` nesta pasta. O script prepara também os ficheiros estáticos da versão standalone. `.next/` é gerada e não deve ser editada.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+As definições privadas locais ficam em `.env.local`; há exemplos sem chaves para novas instalações. Consultar [instalação e testes](../docs/SETUP.md). A publicação está adiada.

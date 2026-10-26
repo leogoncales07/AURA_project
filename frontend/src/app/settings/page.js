@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 import styles from './page.module.css';
+import { api } from '@/lib/api';
+import { useTheme } from '@/context/ThemeContext';
 import AppShell from '@/components/AppShell';
 import { useI18n } from '@/i18n';
 import { 
@@ -25,16 +27,16 @@ import {
 } from './components/Controls';
 
 
-let INITIAL_STATE = {
+const INITIAL_STATE = {
   profile: {
-    name: 'Matheus Silva',
-    bio: 'Finding peace in the code and clarity in the mind.',
-    dob: '1995-08-24',
+    name: '',
+    bio: '',
+    dob: '',
     timezone: 'Europe/Lisbon',
     avatar: null
   },
   account: {
-    email: 'matheus@example.com',
+    email: '',
     twoFactor: false
   },
   notifications: {
@@ -53,7 +55,7 @@ let INITIAL_STATE = {
     wakeTime: '07:30',
     sleepTarget: '8h',
     stressTriggers: ['Deadlines', 'Screen time'],
-    checkInDay: 'Sunday'
+    checkInDay: 0
   },
   sleep: {
     bedtime: [22.5, 23.5], // 10:30 PM - 11:30 PM
@@ -91,7 +93,6 @@ export default function SettingsPage() {
     { id: 'sleep', label: t('settings.navSleep'), icon: Moon, group: 'Wellness' },
     { id: 'appearance', label: t('settings.navAppearance'), icon: Eye, group: 'System' },
     { id: 'data', label: t('settings.navDataPrivacy'), icon: Database, group: 'System' },
-    { id: 'integrations', label: t('settings.navIntegrations'), icon: Puzzle, group: 'System' },
     { id: 'danger', label: t('settings.navDangerZone'), icon: AlertTriangle, group: 'Danger' }
   ];
 
@@ -102,34 +103,59 @@ export default function SettingsPage() {
     System: t('settings.navGroupSystem'),
     Danger: t('settings.navGroupDanger')
   };
+  const { setTheme } = useTheme();
   const [settings, setSettings] = useState(INITIAL_STATE);
+  const [baseline, setBaseline] = useState(INITIAL_STATE);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [expandedRow, setExpandedRow] = useState(null); // 'email' or 'password'
   const [highlightEmail, setHighlightEmail] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      const profileUpdate = {};
-      if (user.display_name || user.name) profileUpdate.name = user.display_name || user.name;
-      if (user.bio) profileUpdate.bio = user.bio;
-      if (user.date_of_birth) profileUpdate.dob = user.date_of_birth;
-      if (user.timezone) profileUpdate.timezone = user.timezone;
-
-      const accountUpdate = {};
-      if (user.email) accountUpdate.email = user.email;
-
-      const newProfile = { ...INITIAL_STATE.profile, ...profileUpdate };
-      const newAccount = { ...INITIAL_STATE.account, ...accountUpdate };
-      INITIAL_STATE = { ...INITIAL_STATE, profile: newProfile, account: newAccount };
-
-      setSettings(prev => ({
-        ...prev,
-        profile: newProfile,
-        account: newAccount
-      }));
-    }
-  }, [user]);
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      const [profile, preferences] = await Promise.all([api.getUser(user.id), api.getUserSettings()]);
+      if (cancelled) return;
+      if (profile.error || preferences.error) { setSaveError(profile.error || preferences.error); return; }
+      const u = profile.data.data;
+      const p = preferences.data.data;
+      const loaded = structuredClone(INITIAL_STATE);
+      loaded.profile = { ...loaded.profile, name: u.display_name || u.name || '', bio: u.bio || '', dob: u.date_of_birth || '', timezone: u.timezone || 'Europe/Lisbon' };
+      loaded.account.email = u.email || '';
+      if (p.push_enabled !== undefined) loaded.notifications.pushMaster = p.push_enabled;
+      if (p.daily_reminder_time !== undefined) loaded.notifications.reminderTime = p.daily_reminder_time;
+      if (p.weekly_report_day !== undefined) loaded.notifications.weeklyReportDay = p.weekly_report_day;
+      if (p.streak_alerts !== undefined) loaded.notifications.streakAlerts = p.streak_alerts;
+      if (p.milestone_alerts !== undefined) loaded.notifications.milestones = p.milestone_alerts;
+      if (p.email_weekly_summary !== undefined) loaded.notifications.emailSummary = p.email_weekly_summary;
+      if (p.email_tips !== undefined) loaded.notifications.emailTips = p.email_tips;
+      if (p.email_product !== undefined) loaded.notifications.emailProduct = p.email_product;
+      if (p.notif_intensity !== undefined) loaded.notifications.intensity = p.notif_intensity;
+      if (p.wellness_goals !== undefined) loaded.wellness.goals = p.wellness_goals;
+      if (p.target_wake_time !== undefined) loaded.wellness.wakeTime = p.target_wake_time;
+      if (p.stress_triggers !== undefined) loaded.wellness.stressTriggers = p.stress_triggers;
+      if (p.weekly_checkin_day !== undefined) loaded.wellness.checkInDay = p.weekly_checkin_day;
+      if (p.sleep_sound_pref !== undefined) loaded.sleep.sound = p.sleep_sound_pref;
+      if (p.sleep_debt_tracking !== undefined) loaded.sleep.debtTracking = p.sleep_debt_tracking;
+      if (p.theme !== undefined) loaded.appearance.theme = p.theme;
+      if (p.accent_color !== undefined) loaded.appearance.accent = p.accent_color;
+      if (p.reduce_motion !== undefined) loaded.appearance.reduceMotion = p.reduce_motion;
+      if (p.text_size !== undefined) loaded.appearance.fontSize = p.text_size;
+      if (p.dense_mode !== undefined) loaded.appearance.denseMode = p.dense_mode;
+      if (p.personalization !== undefined) loaded.privacy.personalization = p.personalization;
+      if (p.sleep_target_hours !== undefined) loaded.wellness.sleepTarget = p.sleep_target_hours + 'h';
+      if (p.wind_down_minutes !== undefined) loaded.sleep.windDown = String(p.wind_down_minutes);
+      if (p.target_bedtime_start !== undefined) loaded.sleep.bedtime = [p.target_bedtime_start, p.target_bedtime_end];
+      setSettingsLoaded(true);
+      setSettings(loaded); setBaseline(structuredClone(loaded)); setTheme(loaded.appearance.theme);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, setTheme]);
 
   const handleLogout = () => {
     logout();
@@ -148,84 +174,48 @@ export default function SettingsPage() {
     danger: useRef(null)
   };
 
-  const hasChanges = JSON.stringify(settings) !== JSON.stringify(INITIAL_STATE);
+  const hasChanges = settingsLoaded && JSON.stringify(settings) !== JSON.stringify(baseline);
 
   const handleSave = async () => {
-    setIsSaving(true);
-
-    // 1) Always persist profile data to localStorage/sessionStorage first
-    const storage = localStorage.getItem('aura_user') ? localStorage : sessionStorage;
-    const storedUser = JSON.parse(storage.getItem('aura_user') || '{}');
-    storedUser.name = settings.profile.name;
-    storedUser.display_name = settings.profile.name;
-    storedUser.bio = settings.profile.bio;
-    storedUser.date_of_birth = settings.profile.dob;
-    storedUser.timezone = settings.profile.timezone;
-    storage.setItem('aura_user', JSON.stringify(storedUser));
-    updateUser({
-      name: settings.profile.name,
-      display_name: settings.profile.name,
-      bio: settings.profile.bio,
-      date_of_birth: settings.profile.dob,
-      timezone: settings.profile.timezone
-    });
-
-    // 2) Update INITIAL_STATE so hasChanges resets after save
-    INITIAL_STATE = {
-      ...INITIAL_STATE,
-      profile: { ...settings.profile },
-      notifications: { ...settings.notifications },
-      wellness: { ...settings.wellness },
-      sleep: { ...settings.sleep },
-      appearance: { ...settings.appearance },
-      privacy: { ...settings.privacy },
-    };
-
-    // 3) Attempt to persist to backend API (best-effort)
+    setIsSaving(true); setSaveError('');
     try {
-      const token = localStorage.getItem('aura_token') || sessionStorage.getItem('aura_token');
-      const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      };
-
-      // Profile fields → PATCH /api/v1/account/profile
-      const profilePayload = {
-        display_name: settings.profile.name,
-        bio: settings.profile.bio,
-        date_of_birth: settings.profile.dob,
-        timezone: settings.profile.timezone,
-      };
-
-      await fetch(`${API}/api/v1/account/profile`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify(profilePayload)
-      }).catch(() => {}); // silently ignore network failures
-
-      // Settings fields → PATCH /api/v1/settings
-      const settingsPayload = {};
-      if (settings.appearance.theme !== 'dark') settingsPayload.theme = settings.appearance.theme;
-      if (settings.notifications.reminderTime !== '08:00') settingsPayload.daily_reminder_time = settings.notifications.reminderTime;
-      if (settings.notifications.intensity !== 2) settingsPayload.notif_intensity = settings.notifications.intensity;
-      if (settings.sleep.windDown !== '30') settingsPayload.wind_down_minutes = Number(settings.sleep.windDown);
-      if (settings.sleep.sound !== 'Rain') settingsPayload.sleep_sound_pref = settings.sleep.sound;
-
-      if (Object.keys(settingsPayload).length > 0) {
-        await fetch(`${API}/api/v1/settings`, {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify(settingsPayload)
-        }).catch(() => {});
-      }
-    } catch (err) {
-      console.warn('API save failed (changes saved locally):', err.message);
-    }
-
-    setIsSaving(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2000);
+      const profile = await api.updateUser(user.id, { display_name: settings.profile.name, bio: settings.profile.bio,
+        date_of_birth: settings.profile.dob, timezone: settings.profile.timezone });
+      if (profile.error) throw new Error(profile.error);
+      const saved = await api.updateUserSettings({
+      push_enabled: settings.notifications.pushMaster,
+      daily_reminder_time: settings.notifications.reminderTime,
+      weekly_report_day: settings.notifications.weeklyReportDay,
+      streak_alerts: settings.notifications.streakAlerts,
+      milestone_alerts: settings.notifications.milestones,
+      email_weekly_summary: settings.notifications.emailSummary,
+      email_tips: settings.notifications.emailTips,
+      email_product: settings.notifications.emailProduct,
+      notif_intensity: settings.notifications.intensity,
+      wellness_goals: settings.wellness.goals,
+      target_wake_time: settings.wellness.wakeTime,
+      stress_triggers: settings.wellness.stressTriggers,
+      weekly_checkin_day: settings.wellness.checkInDay,
+      sleep_sound_pref: settings.sleep.sound,
+      sleep_debt_tracking: settings.sleep.debtTracking,
+      theme: settings.appearance.theme,
+      accent_color: settings.appearance.accent,
+      reduce_motion: settings.appearance.reduceMotion,
+      text_size: settings.appearance.fontSize,
+      dense_mode: settings.appearance.denseMode,
+      personalization: settings.privacy.personalization,
+        sleep_target_hours: parseFloat(settings.wellness.sleepTarget), wind_down_minutes: Number(settings.sleep.windDown),
+        target_bedtime_start: settings.sleep.bedtime[0], target_bedtime_end: settings.sleep.bedtime[1],
+      });
+      if (saved.error) throw new Error(saved.error);
+      updateUser(profile.data.data);
+      setTheme(settings.appearance.theme);
+      localStorage.setItem('aura_accent', settings.appearance.accent);
+      if (settings.appearance.accent.startsWith('#')) document.documentElement.style.setProperty('--brand-primary', settings.appearance.accent);
+      setBaseline(structuredClone(settings)); setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (error) { setSaveError(error.message); }
+    finally { setIsSaving(false); }
   };
 
   const updateSetting = (section, key, value) => {
@@ -294,6 +284,7 @@ export default function SettingsPage() {
 
   return (
     <AppShell title={t('settings.title')}>
+      <div role="alert" style={{ color: '#ef4444' }}>{saveError}</div>
       <div className={styles.settingsContainer}>
         {renderNav()}
 
@@ -379,16 +370,20 @@ export default function SettingsPage() {
                   <Input 
                     placeholder={t('settings.newEmailPlaceholder')} 
                     width="100%"
-                    onChange={(val) => {/* temp logic */}} 
+                    value={newEmail} onChange={setNewEmail}
                   />
+                  <input type="password" autoComplete="current-password" placeholder="Palavra-passe atual / Current password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
                   <div className={styles.inlineEditActions}>
                     <button className={styles.destructiveButton} onClick={() => setExpandedRow(null)}>{t('settings.cancel')}</button>
                     <button 
                       className={styles.saveButton} 
-                      onClick={() => {
-                        setHighlightEmail(true);
-                        setExpandedRow(null);
-                        setTimeout(() => setHighlightEmail(false), 1500);
+                      onClick={async () => {
+                        const result = await api.changeEmail(newEmail, currentPassword);
+                        if (result.error) setSaveError(result.error);
+                        else {
+                          setExpandedRow(null); setCurrentPassword('');
+                          window.alert('Confirme a alteração no seu e-mail. / Confirm the change in your email.');
+                        }
                       }}
                     >
                       {t('settings.confirm')}
@@ -399,22 +394,13 @@ export default function SettingsPage() {
             </div>
 
             <AuraSettingRow label={t('settings.password')}>
-              <button className={styles.destructiveButton}>{t('settings.change')}</button>
+              <button className={styles.destructiveButton} onClick={async () => {
+                const result = await api.forgotPassword(user.email);
+                if (result.error) setSaveError(result.error);
+                else window.alert('Instruções enviadas por e-mail. / Instructions sent by email.');
+              }}>{t('settings.change')}</button>
             </AuraSettingRow>
             
-            <AuraToggleRow 
-              label={t('settings.twoFactor')} 
-              description={t('settings.twoFactorDesc')}
-              checked={settings.account.twoFactor} 
-              onChange={(val) => updateSetting('account', 'twoFactor', val)} 
-            />
-
-            <AuraSettingRow label={t('settings.connectedAccounts')}>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <div className={styles.chip}><Smartphone size={14} /> Google</div>
-                <div className={styles.chip}><Smartphone size={14} /> Apple</div>
-              </div>
-            </AuraSettingRow>
           </section>
 
           {/* NOTIFICATIONS */}
@@ -667,6 +653,7 @@ export default function SettingsPage() {
                 onClick={async () => {
                   try {
                     const res = await api.requestDataExport();
+                    if (res.error) throw new Error(res.error);
                     if (res.data?.data) {
                       const blob = new Blob([JSON.stringify(res.data.data, null, 2)], { type: 'application/json' });
                       const url = URL.createObjectURL(blob);
@@ -677,7 +664,7 @@ export default function SettingsPage() {
                       URL.revokeObjectURL(url);
                     }
                   } catch (e) {
-                    console.error('Export failed:', e);
+                    setSaveError(e.message);
                   }
                 }}
               >
@@ -692,51 +679,7 @@ export default function SettingsPage() {
               onChange={(val) => updateSetting('privacy', 'personalization', val)} 
             />
 
-            <AuraSettingRow label={t('settings.dataRetention')}>
-                <AuraSelect 
-                  value={settings.privacy.retention}
-                  onChange={(val) => updateSetting('privacy', 'retention', val)}
-                  options={[
-                    {value:'1 year', label:t('settings.retention1Year')},
-                    {value:'Forever', label:t('settings.retentionForever')}
-                  ]}
-                  width="140px"
-                />
-            </AuraSettingRow>
-          </section>
 
-          {/* INTEGRATIONS */}
-          <section id="integrations" ref={sectionRefs.integrations} className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>{t('settings.integrationsTitle')}</h2>
-              <p className={styles.sectionSubtitle}>{t('settings.integrationsSubtitle')}</p>
-            </div>
-
-            <SettingCard>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 40, height: 40, background: 'var(--aura-surface)', borderRadius: 10, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Smartphone color="var(--aura-aurora-1)" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <span className={styles.label}>{t('settings.healthApps')}</span>
-                  <p className={styles.description}>{t('settings.healthAppsDesc')}</p>
-                </div>
-                <AuraToggle checked={true} onChange={()=>{}} />
-              </div>
-            </SettingCard>
-
-            <SettingCard>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 40, height: 40, background: 'var(--aura-surface)', borderRadius: 10, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Database color="var(--aura-aurora-3)" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <span className={styles.label}>{t('settings.spotify')}</span>
-                  <p className={styles.description}>{t('settings.spotifyDesc')}</p>
-                </div>
-                <button className={styles.destructiveButton}>{t('settings.connect')}</button>
-              </div>
-            </SettingCard>
           </section>
 
           {/* DANGER ZONE */}
@@ -744,13 +687,7 @@ export default function SettingsPage() {
             <div className={styles.dangerZone}>
               <h2 className={styles.dangerTitle}>{t('settings.dangerTitle')}</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span className={styles.label}>{t('settings.deactivateAccount')}</span>
-                    <p className={styles.description}>{t('settings.deactivateDesc')}</p>
-                  </div>
-                  <button className={styles.destructiveButton}>{t('settings.deactivate')}</button>
-                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <span className={styles.label} style={{ color: '#ef4444' }}>{t('settings.deleteAccount')}</span>
@@ -779,10 +716,11 @@ export default function SettingsPage() {
                           disabled={settings.deleteConfirm !== 'DELETE'}
                           onClick={async () => {
                             try {
-                              await api.deleteAccount('DELETE');
+                              const result = await api.deleteAccount('DELETE');
+                              if (result.error) throw new Error(result.error);
                               logout();
                             } catch (e) {
-                              console.error('Delete failed:', e);
+                              setSaveError(e.message);
                             }
                           }}
                         >

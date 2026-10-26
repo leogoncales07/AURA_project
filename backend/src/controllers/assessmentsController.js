@@ -1,32 +1,8 @@
 import { getQuestionnaire } from '../data/questionnaires.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
-const ASSESSMENTS_FILE = path.join(DATA_DIR, 'assessments.json');
-
-const loadAssessments = () => {
-  try {
-    if (fs.existsSync(ASSESSMENTS_FILE)) {
-      return JSON.parse(fs.readFileSync(ASSESSMENTS_FILE, 'utf-8'));
-    }
-  } catch (e) {
-    console.warn('[data] Could not load assessments:', e.message);
-  }
-  return [];
-};
-
-const saveAssessments = (data) => {
-  try {
-    fs.writeFileSync(ASSESSMENTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (e) {
-    console.warn('[data] Could not save assessments:', e.message);
-  }
-};
-
-const assessmentStore = loadAssessments();
+import { catchAsync } from '../utils/catchAsync.js';
+import { randomUUID } from 'node:crypto';
+import { checked, wellness } from '../services/wellnessService.js';
+import { generateText } from '../services/geminiService.js';
 
 const scorePHQ9 = (answers) => {
   const total = answers.reduce((sum, value) => sum + value, 0);
@@ -86,32 +62,18 @@ ${answersText}
 
 Write a short, compassionate, and professional analysis (max 3-4 sentences) responding directly to the user addressing them as "você" (in Portuguese) or "you" (if English). Don't give a medical diagnosis, but validate their feelings based on their answers and recommend taking care of their mental health or seeking professional help if the risk is High or Severe. Respond in the same language as the questionnaire phrases above.]`;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.G_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
-                safetySettings: [
-                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' }
-                ],
-                generationConfig: { temperature: 0.6, maxOutputTokens: 1000 }
-            })
+        const result = await generateText({
+            contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+            maxOutputTokens: 512,
         });
-
-        if (response.ok) {
-            const data = await response.json();
-            return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-        }
+        return result.text;
     } catch (e) {
         console.error('Failed to generate AI summary:', e);
     }
     return null;
 };
 
-export const submitAssessment = async (req, res) => {
+export const submitAssessment = catchAsync(async (req, res) => {
   const { user_id, questionnaire_id, answers } = req.body;
   if (!user_id || !questionnaire_id || !Array.isArray(answers)) {
     return res.status(400).json({ status: 'fail', message: 'Missing required fields' });
@@ -126,6 +88,9 @@ export const submitAssessment = async (req, res) => {
     return res.status(400).json({ status: 'fail', message: `Expected ${questionnaire.questions.length} answers, got ${answers.length}` });
   }
 
+  if (answers.some(value => !Number.isInteger(value) || !questionnaire.options.some(option => option.value === value))) {
+    return res.status(400).json({ status: 'fail', message: 'Invalid answer value' });
+  }
   const score_data = scoreAssessment(questionnaire.id, answers);
   
   // Format answers for AI
@@ -140,8 +105,8 @@ export const submitAssessment = async (req, res) => {
   }
 
   const assessment = {
-    id: `assess_${Date.now()}`,
-    user_id,
+    id: randomUUID(),
+    user_id: req.user.id,
     questionnaire: questionnaire.id,
     answers,
     total_score: score_data.total_score,
@@ -149,16 +114,12 @@ export const submitAssessment = async (req, res) => {
     ai_summary,
     created_at: new Date().toISOString()
   };
-  assessmentStore.push(assessment);
-  saveAssessments(assessmentStore);
+  await checked(req.supabase.from('assessments').insert(assessment));
 
   return res.status(201).json({ assessment, score_data, ai_summary: assessment.ai_summary });
-};
+});
 
-export const getAssessmentHistory = (req, res) => {
-  const { userId } = req.params;
-  const history = assessmentStore
-    .filter((item) => item.user_id === userId)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  return res.status(200).json({ assessments: history });
-};
+export const getAssessmentHistory = catchAsync(async (req, res) => {
+  const assessments = await wellness(req.supabase, req.user.id).assessments();
+  res.status(200).json({ assessments });
+});

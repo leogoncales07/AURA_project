@@ -1,7 +1,11 @@
 import express from 'express';
 import * as companionController from '../controllers/companionController.js';
+import { protect, requireOwnData } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+router.use(protect);
+router.param('userId', requireOwnData);
+router.use(requireOwnData);
 
 router.post('/chat', companionController.chat);
 router.post('/log', companionController.logMood);

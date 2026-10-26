@@ -17,6 +17,7 @@ export default function SignUpPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const { t } = useI18n();
@@ -30,6 +31,7 @@ export default function SignUpPage() {
         try {
             const res = await signup(name, email, password);
 
+            if (res.confirmationRequired) { setMessage('Confirme o seu e-mail antes de iniciar sessão. / Confirm your email before signing in.'); setLoading(false); }
             if (res.error) {
                 setError(res.error);
                 setLoading(false);
@@ -57,6 +59,7 @@ export default function SignUpPage() {
                 </div>
 
                 <div className={styles.loginForm}>
+                    <p role="status">{message}</p>
                     <form className={styles.form} onSubmit={handleSignUp}>
                         <div className={styles.inputGroup}>
                             <input

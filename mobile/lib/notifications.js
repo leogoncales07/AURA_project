@@ -1,56 +1,36 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-// Set up the global handler
+const REMINDER_ID = 'aura-daily-mood';
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
 
-export async function registerForPushNotificationsAsync() {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#10b981',
-    });
-  }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-  
-  if (finalStatus !== 'granted') {
-    console.log('Failed to get push token for push notification!');
-    return false;
-  }
-  
-  return true;
+export async function cancelDailyMoodReminder() {
+  if (Platform.OS === 'web') return;
+  await Notifications.cancelScheduledNotificationAsync(REMINDER_ID);
 }
-
-export async function scheduleDailyMoodReminder() {
-    // Avoid double scheduling by clearing existing ones
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    
-    // Schedule new 8:00 PM local notification
-    await Notifications.scheduleNotificationAsync({
-        content: {
-            title: "Como você está se sentindo? 🌙",
-            body: "Não quebre sua sequência. Tire um minuto para registrar seu humor de hoje.",
-            sound: true,
-        },
-        trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: 20, // 8:00 PM
-            minute: 0,
-        },
-    });
+export async function registerForPushNotificationsAsync() {
+  if (Platform.OS === 'web') return false;
+  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('aura-reminders', {
+    name: 'Lembretes AURA', importance: Notifications.AndroidImportance.DEFAULT,
+  });
+  let { status } = await Notifications.getPermissionsAsync();
+  if (status !== 'granted') ({ status } = await Notifications.requestPermissionsAsync());
+  return status === 'granted';
+}
+export async function scheduleDailyMoodReminder(time = '21:00') {
+  if (Platform.OS === 'web') return;
+  const [hour, minute] = time.split(':').map(Number);
+  await cancelDailyMoodReminder();
+  await Notifications.scheduleNotificationAsync({
+    identifier: REMINDER_ID,
+    content: { title: 'AURA', body: 'Como se sente hoje? Reserve um minuto para registar o seu bem-estar.', sound: true },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: 'aura-reminders' },
+  });
+}
+export async function configureDailyReminder(time) {
+  if (!await registerForPushNotificationsAsync()) return false;
+  await scheduleDailyMoodReminder(time);
+  return true;
 }

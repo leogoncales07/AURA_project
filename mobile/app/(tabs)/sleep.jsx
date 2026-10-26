@@ -1,5 +1,6 @@
+import { api } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
+import { Alert, View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -102,29 +103,28 @@ export default function SleepTab() {
         return parseFloat(diff.toFixed(1));
     };
 
-    const handleSaveLog = () => {
-        const calculatedHours = calculateHours(bedTimeInput, wakeTimeInput) || 8;
+    const [savingLog, setSavingLog] = useState(false);
+    const handleSaveLog = async () => {
+        if (!user?.id || savingLog) return;
+        const hours = calculateHours(bedTimeInput, wakeTimeInput);
+        if (!hours || hours <= 0 || hours > 24) { Alert.alert('Erro', 'Verifique os horários de sono.'); return; }
+        setSavingLog(true);
+        const result = await api.logSleep(user.id, bedTimeInput, wakeTimeInput, hours);
+        setSavingLog(false);
+        if (result.error) { Alert.alert('Erro', result.error); return; }
+        setSleepLogs(previous => [result.data.log, ...previous]);
         setLogModalVisible(false);
-        const newLog = {
-            id: Date.now().toString(),
-            bedTime: bedTimeInput,
-            wakeTime: wakeTimeInput,
-            hours: calculatedHours,
-            timestamp: new Date().toISOString()
-        };
-        const updatedLogs = [newLog, ...sleepLogs];
-        setSleepLogs(updatedLogs);
-        AsyncStorage.setItem('aura_sleep_logs_array', JSON.stringify(updatedLogs));
     };
 
-    // Load data from storage
     useEffect(() => {
-        AsyncStorage.getItem('aura_user').then(u => { if (u) setUser(JSON.parse(u)); });
-        AsyncStorage.getItem('aura_sleep_logs_array').then(res => {
-            if (res) {
-                try { setSleepLogs(JSON.parse(res)); } catch(e){}
-            }
-        });
+        (async () => {
+            const stored = await AsyncStorage.getItem('aura_user');
+            if (!stored) return;
+            const u = JSON.parse(stored); setUser(u);
+            const result = await api.getSleepLogs(u.id, 365);
+            if (result.error) Alert.alert('Erro', result.error);
+            else setSleepLogs(result.data.logs);
+        })();
     }, []);
 
     const getAggregatedData = () => {
@@ -145,7 +145,7 @@ export default function SleepTab() {
              filtered = sleepLogs.filter(l => new Date(l.timestamp) >= limit);
         }
 
-        if(!filtered.length) return sleepLogs[0]; // fallback to oldest/latest
+        if(!filtered.length) return null; // fallback to oldest/latest
 
         const avgHours = filtered.reduce((acc, obj) => acc + obj.hours, 0) / filtered.length;
         return {
@@ -157,17 +157,13 @@ export default function SleepTab() {
 
     const displayData = getAggregatedData();
 
-    const weeklyData = [
-        { day: 'M', duration: 7.2, quality: 80 },
-        { day: 'T', duration: 6.8, quality: 75 },
-        { day: 'W', duration: 8.1, quality: 90 },
-        { day: 'T', duration: 7.5, quality: 82 },
-        { day: 'F', duration: 7.0, quality: 78 },
-        { day: 'S', duration: 9.2, quality: 95 },
-        { day: 'S', duration: 8.5, quality: 88 },
-    ];
-
-    const sleepScore = 84;
+    const weeklyData = Array.from({ length: 7 }, (_, index) => {
+        const day = new Date(); day.setDate(day.getDate() - 6 + index);
+        const entry = sleepLogs.find(log => log.timestamp?.startsWith(day.toISOString().slice(0,10)));
+        return { day: day.toLocaleDateString(undefined, { weekday: 'short' }), duration: entry?.hours ?? null, quality: entry?.quality ?? null };
+    });
+    const qualityLogs = sleepLogs.filter(log => log.quality != null);
+    const sleepScore = qualityLogs.length ? Math.round(qualityLogs.reduce((sum, log) => sum + log.quality, 0) / qualityLogs.length) : '—';
 
     return (
         <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -236,7 +232,7 @@ export default function SleepTab() {
                     </View>
                     <View style={styles.scoreTextCont}>
                         <Text style={[styles.scoreTitle, { color: colors.textPrimary }]}>Restorative Sleep</Text>
-                        <Text style={[styles.scoreSubtitle, { color: colors.textTertiary }]}>Your quality is 12% higher than last week.</Text>
+                        <Text style={[styles.scoreSubtitle, { color: colors.textTertiary }]}>Qualidade registada / Recorded quality</Text>
                     </View>
                 </View>
 
@@ -244,7 +240,7 @@ export default function SleepTab() {
 
                 {/* Tonight's Protocol */}
                 <Text style={[styles.sectionHeading, { color: colors.textSecondary, marginTop: Spacing.xl }]}>
-                    TONIGHT'S PROTOCOL
+                    TONIGHT&apos;S PROTOCOL
                 </Text>
 
                 <View style={[styles.protocolCard, { backgroundColor: colors.surface, borderLeftColor: '#4FC3F7' }]}>
@@ -310,7 +306,7 @@ export default function SleepTab() {
                             <View key={i} style={styles.chartColumn}>
                                 {/* Invisible max height container (approx 100px) */}
                                 <View style={styles.chartBarArea}>
-                                    <View style={[styles.chartDot, { bottom: `${data.quality}%` }]} />
+                                    {data.quality != null && <View style={[styles.chartDot, { bottom: `${data.quality}%` }]} />}
                                     <View style={[styles.chartBar, { height: `${(data.duration / 10) * 100}%` }]} />
                                 </View>
                                 <Text style={[styles.chartLabelText, { color: colors.textTertiary }]}>{data.day}</Text>
@@ -401,7 +397,7 @@ export default function SleepTab() {
                                     {t('common.cancel') || 'Cancel'}
                                 </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.modalSave, { backgroundColor: colors.primary }]} onPress={handleSaveLog}>
+                            <TouchableOpacity style={[styles.modalSave, { backgroundColor: colors.primary }]} onPress={handleSaveLog} disabled={savingLog}>
                                 <Text style={styles.modalSaveText}>
                                     {t('common.save') || 'Save'}
                                 </Text>

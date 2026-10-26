@@ -1,50 +1,12 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import { AppError } from '../utils/appError.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
+import { checked, wellness } from '../services/wellnessService.js';
+import { generateText } from '../services/geminiService.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
-
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-
-const CONVERSATIONS_FILE = path.join(DATA_DIR, 'conversations.json');
-const LOGS_FILE = path.join(DATA_DIR, 'logs.json');
-const SLEEP_FILE = path.join(DATA_DIR, 'sleep.json');
-const REFLECTIONS_FILE = path.join(DATA_DIR, 'reflections.json');
-const ASSESSMENTS_FILE = path.join(DATA_DIR, 'assessments.json');
-
-// Load from disk on startup
-const loadJSON = (file) => {
-  try {
-    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
-  } catch (e) { console.warn(`[data] Could not load ${file}:`, e.message); }
-  return {};
-};
-
-const saveJSON = (file, data) => {
-  try { fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8'); }
-  catch (e) { console.warn(`[data] Could not save ${file}:`, e.message); }
-};
-
-// In-memory maps backed by disk
-const conversationsStore = loadJSON(CONVERSATIONS_FILE); // { [userId]: thread[] }
-const logsStore = loadJSON(LOGS_FILE);                    // { [userId]: log[] }
-const sleepStore = loadJSON(SLEEP_FILE);                  // { [userId]: sleepLog[] }
-const reflectionsStore = loadJSON(REFLECTIONS_FILE);      // { [userId]: reflection[] }
-
-const getUserThreads = (userId) => {
-  if (!conversationsStore[userId]) conversationsStore[userId] = [];
-  return conversationsStore[userId];
-};
-
-const saveThreads = () => saveJSON(CONVERSATIONS_FILE, conversationsStore);
-
-const getLogsHistory = (userId) => logsStore[userId] || [];
-const getSleepHistory = (userId) => sleepStore[userId] || [];
-const getReflectionsHistory = (userId) => reflectionsStore[userId] || [];
+const store = (req) => wellness(req.supabase, req.user.id);
+const limitFor = (req, fallback) => Math.max(1, Math.min(10000, Number.parseInt(req.query.limit, 10) || fallback));
 
 // Language detection
 const detectLanguage = (text) => {
@@ -55,16 +17,15 @@ const detectLanguage = (text) => {
   return ptMatches >= enMatches ? 'pt' : 'en';
 };
 
-const createAssistantReply = async (message, userId, history, languageOverride = null) => {
+const createAssistantReply = async (message, recentLogs, history, languageOverride = null) => {
   try {
     const language = languageOverride || detectLanguage(message);
-    const recentLogs = getLogsHistory(userId).slice(0, 5);
     
     // Format the user's personal context
     let logsContext = "The user has not logged any mood or sleep data yet. Encourage them to use the daily tracker in the dashboard.";
     if (recentLogs.length > 0) {
       const formattedLogs = recentLogs.map((log, index) => 
-        `- [Log ${index + 1} from today/past] Mood Score: ${log.mood_score}/5 | Sleep: ${log.sleep_hours}h | Notes: ${log.notes || 'None'}`
+        `- [Log ${index + 1} from today/past] Mood Score: ${log.mood_score}/10 | Sleep: ${log.sleep_hours}h | Notes: ${log.notes || 'None'}`
       ).join('\\n');
       logsContext = `Here are the user's most recent mood and sleep logs:\\n${formattedLogs}`;
     }
@@ -96,23 +57,12 @@ ${logsContext}]
 
 User message: ${message}`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.G_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [...formattedHistory, {
-            role: 'user',
-            parts: [{ text: systemPrompt }]
-          }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
-        })
+      const result = await generateText({
+        contents: [...formattedHistory, { role: 'user', parts: [{ text: systemPrompt }] }],
+        maxOutputTokens: 512,
+        temperature: 0.7,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        const aiResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (aiResponse) return aiResponse;
-      }
+      if (result.text) return result.text;
     } catch (apiErr) {
       console.warn('Gemini API unavailable, using intelligent fallback');
     }
@@ -218,22 +168,28 @@ User message: ${message}`;
 };
 
 export const chat = catchAsync(async (req, res, next) => {
-  const { user_id, message, conversation_id, language } = req.body;
+  const { message, conversation_id, language } = z.object({
+    message: z.string().trim().min(1).max(6000),
+    conversation_id: z.string().uuid().nullish(),
+    language: z.enum(['pt', 'en', 'es', 'fr', 'de']).optional(),
+  }).parse(req.body);
+  const user_id = req.user.id;
 
   if (!user_id || !message) {
     return next(new AppError('Missing user_id or message', 400));
   }
 
-  const threads = getUserThreads(user_id);
+  const threads = await store(req).threads();
   let thread = null;
 
   if (conversation_id) {
     thread = threads.find(t => t.id === conversation_id);
   }
 
+  if (conversation_id && !thread) return next(new AppError('Conversation not found', 404));
   if (!thread) {
     thread = {
-      id: Date.now().toString(),
+      id: randomUUID(),
       title: message.substring(0, 30) + (message.length > 30 ? '...' : ''),
       updatedAt: new Date().toISOString(),
       messages: []
@@ -241,7 +197,8 @@ export const chat = catchAsync(async (req, res, next) => {
     threads.unshift(thread);
   }
 
-  const responseText = await createAssistantReply(message, user_id, thread.messages, language);
+  const recentLogs = await store(req).logs(5);
+  const responseText = await createAssistantReply(message, recentLogs, thread.messages.slice(-50), language);
   const timestamp = new Date().toISOString();
 
   thread.messages.push({ role: 'user', message, timestamp });
@@ -252,43 +209,25 @@ export const chat = catchAsync(async (req, res, next) => {
     thread.messages = thread.messages.slice(-50);
   }
 
-  saveThreads(); // persist to disk
+  await checked(req.supabase.from('conversations').insert([
+    { user_id: req.user.id, agent_type: 'CompanionBot', conversation_id: thread.id, title: thread.title, role: 'user', message, created_at: timestamp },
+    { user_id: req.user.id, agent_type: 'CompanionBot', conversation_id: thread.id, title: thread.title, role: 'assistant', message: responseText, created_at: new Date(Date.now() + 1).toISOString() },
+  ]));
   res.status(200).json({ response: responseText, conversation_id: thread.id, messages: thread.messages });
 });
 
-export const logMood = catchAsync(async (req, res, next) => {
-  const { user_id, mood_score, sleep_hours, notes } = req.body;
-
-  if (!user_id) {
-    return next(new AppError('Missing user_id in request body', 400));
-  }
-
-  const entry = {
-    mood_score: mood_score ?? null,
-    sleep_hours: sleep_hours ?? null,
-    notes: notes ?? null,
-    timestamp: new Date().toISOString()
-  };
-
-  const history = getLogsHistory(user_id);
-  const updatedLogs = [entry, ...history].slice(0, 100);
-
-  logsStore[user_id] = updatedLogs;
-  saveJSON(LOGS_FILE, logsStore);
-
-  res.status(200).json({ success: true, log: entry });
+export const logMood = catchAsync(async (req, res) => {
+  const input = z.object({
+    mood_score: z.number().int().min(1).max(10).nullish(),
+    sleep_hours: z.number().min(0).max(24).nullish(),
+    notes: z.string().max(4000).nullish(),
+  }).refine(value => value.mood_score != null || value.sleep_hours != null, 'Provide mood or sleep').parse(req.body);
+  const log = await store(req).logMood(input);
+  res.status(200).json({ success: true, log });
 });
 
-export const getLogs = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-  const limit = parseInt(req.query.limit, 10) || 14;
-
-  if (!userId) {
-    return next(new AppError('Missing userId parameter', 400));
-  }
-
-  const history = getLogsHistory(userId).slice(0, limit);
-  res.status(200).json({ logs: history });
+export const getLogs = catchAsync(async (req, res) => {
+  res.json({ logs: await store(req).logs(limitFor(req, 14)) });
 });
 
 export const getConversations = catchAsync(async (req, res, next) => {
@@ -298,7 +237,7 @@ export const getConversations = catchAsync(async (req, res, next) => {
     return next(new AppError('Missing userId parameter', 400));
   }
 
-  const threads = getUserThreads(userId);
+  const threads = await store(req).threads();
   const metadata = threads.map(t => ({ id: t.id, title: t.title, updatedAt: t.updatedAt }));
   res.status(200).json({ conversations: metadata });
 });
@@ -310,7 +249,7 @@ export const getConversationMessages = catchAsync(async (req, res, next) => {
     return next(new AppError('Missing parameters', 400));
   }
 
-  const threads = getUserThreads(userId);
+  const threads = await store(req).threads();
   const thread = threads.find(t => t.id === conversationId);
 
   if (!thread) {
@@ -327,26 +266,20 @@ export const deleteConversation = catchAsync(async (req, res, next) => {
     return next(new AppError('Missing parameters', 400));
   }
 
-  const threads = getUserThreads(userId);
-  const initialLength = threads.length;
-  const updatedThreads = threads.filter(t => t.id !== conversationId);
-
-  if (updatedThreads.length === initialLength) {
-    return next(new AppError('Conversation not found', 404));
-  }
-
-  conversationsStore[userId] = updatedThreads;
-  saveThreads();
+  const deleted = await checked(req.supabase.from('conversations').delete()
+    .eq('user_id', req.user.id).eq('conversation_id', conversationId).select('id'));
+  if (!deleted.length) return next(new AppError('Conversation not found', 404));
   res.status(200).json({ success: true, message: 'Conversation deleted' });
 });
 
 export const logSleep = catchAsync(async (req, res, next) => {
-  const { user_id, bedTime, wakeTime, hours, quality, notes, timestamp } = req.body;
-
-  if (!user_id) {
-    return next(new AppError('Missing user_id in request body', 400));
-  }
-
+  const { bedTime, wakeTime, hours, quality, notes } = z.object({
+    bedTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+    wakeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+    hours: z.number().gt(0).max(24).optional(),
+    quality: z.number().min(0).max(100).optional(),
+    notes: z.string().max(4000).nullish(),
+  }).refine(value => value.hours != null || (value.bedTime && value.wakeTime), 'Provide sleep duration or bed and wake times').parse(req.body);
   // Calculate hours if missing but bed & wake provided
   let calcHours = hours;
   if (!calcHours && bedTime && wakeTime) {
@@ -360,69 +293,35 @@ export const logSleep = catchAsync(async (req, res, next) => {
   }
   calcHours = calcHours || 7.5;
 
-  let calcQuality = quality;
-  if (!calcQuality) {
-    if (calcHours >= 7 && calcHours <= 9) {
-      calcQuality = Math.min(95, Math.round(80 + (calcHours - 7) * 7.5));
-    } else if (calcHours < 7) {
-      calcQuality = Math.max(45, Math.round((calcHours / 7) * 75));
-    } else {
-      calcQuality = Math.max(65, Math.round(90 - (calcHours - 9) * 10));
-    }
-  }
-
   const entry = {
-    id: `sleep_${Date.now()}`,
+    id: randomUUID(),
     bedTime: bedTime || '23:30',
     wakeTime: wakeTime || '07:00',
     hours: calcHours,
-    quality: Math.min(100, Math.max(10, Math.round(calcQuality))),
+    quality: quality == null ? null : Math.round(quality),
     notes: notes || null,
-    timestamp: timestamp || new Date().toISOString()
+    timestamp: new Date().toISOString()
   };
 
-  const history = getSleepHistory(user_id);
-  const updated = [entry, ...history].slice(0, 100);
-  sleepStore[user_id] = updated;
-  saveJSON(SLEEP_FILE, sleepStore);
-
-  // Sync with logsStore for companion context & daily tracking
-  const logHistory = getLogsHistory(user_id);
-  const todayDate = new Date().toISOString().split('T')[0];
-  const existingTodayLogIndex = logHistory.findIndex(l => (l.timestamp || '').startsWith(todayDate));
-
-  if (existingTodayLogIndex >= 0) {
-    logHistory[existingTodayLogIndex].sleep_hours = calcHours;
-  } else {
-    logHistory.unshift({
-      mood_score: null,
-      sleep_hours: calcHours,
-      notes: `Sleep logged: ${calcHours}h`,
-      timestamp: entry.timestamp
-    });
-  }
-  logsStore[user_id] = logHistory.slice(0, 100);
-  saveJSON(LOGS_FILE, logsStore);
-
-  res.status(200).json({ success: true, log: entry });
+  const log = await store(req).logSleep(entry);
+  res.status(200).json({ success: true, log });
 });
 
 export const getSleepLogs = catchAsync(async (req, res, next) => {
   const { userId } = req.params;
-  const limit = parseInt(req.query.limit, 10) || 30;
+  const limit = limitFor(req, 30);
 
   if (!userId) {
     return next(new AppError('Missing userId parameter', 400));
   }
 
-  const history = getSleepHistory(userId);
+  const history = await store(req).sleep();
   const logs = history.slice(0, limit);
 
   const totalHours = history.reduce((acc, cur) => acc + (cur.hours || 0), 0);
-  const avgHours = history.length > 0 ? parseFloat((totalHours / history.length).toFixed(1)) : 7.5;
-  const avgQuality = history.length > 0
-    ? Math.round(history.reduce((acc, cur) => acc + (cur.quality || 80), 0) / history.length)
-    : 84;
+  const avgHours = history.length > 0 ? parseFloat((totalHours / history.length).toFixed(1)) : null;
+  const rated = history.filter(log => log.quality != null);
+  const avgQuality = rated.length ? Math.round(rated.reduce((sum, log) => sum + log.quality, 0) / rated.length) : null;
 
   res.status(200).json({
     logs,
@@ -436,24 +335,9 @@ export const getSleepLogs = catchAsync(async (req, res, next) => {
 });
 
 export const saveReflection = catchAsync(async (req, res, next) => {
-  const { user_id, text, prompt } = req.body;
-
-  if (!user_id || !text) {
-    return next(new AppError('Missing user_id or text in request body', 400));
-  }
-
-  const entry = {
-    id: `refl_${Date.now()}`,
-    text,
-    prompt: prompt || null,
-    timestamp: new Date().toISOString()
-  };
-
-  const history = getReflectionsHistory(user_id);
-  reflectionsStore[user_id] = [entry, ...history].slice(0, 100);
-  saveJSON(REFLECTIONS_FILE, reflectionsStore);
-
-  res.status(200).json({ success: true, reflection: entry });
+  const input = z.object({ text: z.string().trim().min(1).max(6000), prompt: z.string().max(1000).nullish() }).parse(req.body);
+  const reflection = await store(req).saveReflection(input);
+  res.status(200).json({ success: true, reflection });
 });
 
 export const getStats = catchAsync(async (req, res, next) => {
@@ -463,19 +347,10 @@ export const getStats = catchAsync(async (req, res, next) => {
     return next(new AppError('Missing userId parameter', 400));
   }
 
-  const logs = getLogsHistory(userId);
-  const sleep = getSleepHistory(userId);
-  const threads = getUserThreads(userId);
-  const reflections = getReflectionsHistory(userId);
-
-  // Load assessments
-  let userAssessments = [];
-  try {
-    if (fs.existsSync(ASSESSMENTS_FILE)) {
-      const allAssessments = JSON.parse(fs.readFileSync(ASSESSMENTS_FILE, 'utf-8'));
-      userAssessments = allAssessments.filter(a => a.user_id === userId);
-    }
-  } catch (e) {}
+  const data = store(req);
+  const [logs, sleep, threads, reflections, userAssessments] = await Promise.all([
+    data.logs(), data.sleep(), data.threads(), data.reflections(), data.assessments(),
+  ]);
 
   // 1. Calculate Streak
   const activeDates = new Set();
@@ -506,7 +381,6 @@ export const getStats = catchAsync(async (req, res, next) => {
     checkDate.setDate(checkDate.getDate() - 1);
   }
 
-  if (streak === 0 && activeDates.size > 0) streak = 1;
 
   // 2. Total Sessions
   const totalSessions = logs.length + sleep.length + threads.length + userAssessments.length + reflections.length;
@@ -522,8 +396,8 @@ export const getStats = catchAsync(async (req, res, next) => {
   const latestMoodLog = logs.find(l => l.mood_score != null) || null;
   const latestSleepLog = sleep[0] || null;
   const latestLog = {
-    mood_score: latestMoodLog?.mood_score || (logs[0]?.mood_score) || 7,
-    sleep_hours: latestSleepLog?.hours || logs[0]?.sleep_hours || 7.5,
+    mood_score: latestMoodLog?.mood_score ?? null,
+    sleep_hours: latestSleepLog?.hours ?? logs.find(log => log.sleep_hours != null)?.sleep_hours ?? null,
     notes: latestMoodLog?.notes || logs[0]?.notes || null,
     timestamp: logs[0]?.timestamp || null
   };
@@ -538,7 +412,7 @@ export const getStats = catchAsync(async (req, res, next) => {
     if (logForDay) {
       weeklyMood.push(logForDay.mood_score);
     } else {
-      weeklyMood.push(latestLog.mood_score || 7);
+      weeklyMood.push(null);
     }
   }
 

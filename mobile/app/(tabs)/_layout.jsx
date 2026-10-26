@@ -1,8 +1,11 @@
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet, Platform } from 'react-native';
-import { useTheme, Fonts } from '../../constants/Theme';
+import { View, StyleSheet, Platform } from 'react-native';
+import { useTheme } from '../../constants/Theme';
 import { useI18n } from '../../i18n';
 import { Feather } from '@expo/vector-icons';
+import { useEffect } from 'react';
+import { api } from '../../lib/api';
+import { scheduleDailyMoodReminder, cancelDailyMoodReminder } from '../../lib/notifications';
 
 const TAB_ICONS = {
     dashboard:   'grid',
@@ -26,8 +29,18 @@ function TabIcon({ name, focused, colors }) {
 }
 
 export default function TabsLayout() {
-    const { colors, theme } = useTheme();
-    const { t } = useI18n();
+    const { colors, theme, setTheme } = useTheme();
+    const { t, setLocale } = useI18n();
+    useEffect(() => {
+        api.getUserSettings().then(async result => {
+            if (!result.data?.data) return;
+            const p = result.data.data;
+            if (p.theme && p.theme !== 'system') setTheme(p.theme);
+            if (p.language) setLocale(p.language);
+            if (p.push_enabled) await scheduleDailyMoodReminder(p.daily_reminder_time || '21:00');
+            else await cancelDailyMoodReminder();
+        }).catch(() => {});
+    }, [setLocale, setTheme]);
     const isDark = theme === 'dark';
 
     return (

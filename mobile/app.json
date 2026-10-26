@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.aura.mentalhealth"
+      "bundleIdentifier": "com.aura.mentalhealth",
+      "infoPlist": { "UIBackgroundModes": ["audio"] }
     },
     "android": {
       "adaptiveIcon": {
@@ -29,6 +30,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {

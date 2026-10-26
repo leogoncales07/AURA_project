@@ -7,7 +7,6 @@ import { I18nProvider } from '../i18n';
 import { ThemeProvider, useTheme } from '../constants/Theme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Audio } from 'expo-av';
-import { registerForPushNotificationsAsync, scheduleDailyMoodReminder } from '../lib/notifications';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -25,12 +24,6 @@ function AppShell() {
             shouldDuckAndroid: true,
         }).catch((e) => console.warn('Audio mode config error:', e));
 
-        // 2) Setup daily local mood notification reminder
-        registerForPushNotificationsAsync()
-            .then((hasPermission) => {
-                if (hasPermission) scheduleDailyMoodReminder();
-            })
-            .catch(() => {});
     }, []);
 
     return (

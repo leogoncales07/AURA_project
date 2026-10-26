@@ -2,15 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, TouchableOpacity, StyleSheet, ScrollView,
     Animated, Modal, Pressable, Dimensions, TextInput,
-    ActivityIndicator, Switch, Alert,
+    ActivityIndicator, Switch, Alert, Share,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useI18n, SUPPORTED_LOCALES } from '../i18n';
-import { useTheme, COLORS, Fonts, Spacing, Radius } from '../constants/Theme';
+import LegalNotice from './LegalNotice';
+import { useTheme, Spacing, Radius } from '../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { api } from '../lib/api';
+import { api, clearSession } from '../lib/api';
+import { cancelDailyMoodReminder, configureDailyReminder } from '../lib/notifications';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -220,7 +222,7 @@ const lpm = StyleSheet.create({
 // MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════════
 export default function SettingsModal({ visible, onClose }) {
-    const { t, locale, setLocale } = useI18n();
+    const { locale, setLocale } = useI18n();
     const { theme, setTheme, colors } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -230,8 +232,10 @@ export default function SettingsModal({ visible, onClose }) {
     const [user, setUser] = useState(null);
     const [profileName, setProfileName] = useState('');
     const [profileBio, setProfileBio]   = useState('');
-    const [loggingOut, setLoggingOut]   = useState(false);
+    const [, setLoggingOut]   = useState(false);
     const [savingProfile, setSavingProfile] = useState(false);
+    const [reminderEnabled, setReminderEnabled] = useState(false);
+    const [reminderTime, setReminderTime] = useState('21:00');
     const [langOpen, setLangOpen]        = useState(false);
 
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -243,20 +247,25 @@ export default function SettingsModal({ visible, onClose }) {
             toValue: visible ? 0 : SCREEN_HEIGHT,
             tension: 65, friction: 11, useNativeDriver: true,
         }).start();
-    }, [visible]);
+    }, [visible, slideAnim]);
 
     useEffect(() => {
         if (visible) {
-            AsyncStorage.getItem('aura_user').then(s => {
-                if (s) {
-                    const u = JSON.parse(s);
-                    setUser(u);
-                    setProfileName(u.name || '');
-                    setProfileBio(u.bio || '');
-                }
-            });
+            (async () => {
+                const cached = await AsyncStorage.getItem('aura_user');
+                if (cached) { const u = JSON.parse(cached); setUser(u); setProfileName(u.display_name || u.name || u.user_metadata?.name || ''); setProfileBio(u.bio || ''); }
+                const [profile, preferences] = await Promise.all([api.getUser(), api.getUserSettings()]);
+                if (profile.error || preferences.error) { Alert.alert('Erro', profile.error || preferences.error); return; }
+                const u = profile.data.data;
+                setUser(u); setProfileName(u.display_name || u.name || ''); setProfileBio(u.bio || '');
+                await AsyncStorage.setItem('aura_user', JSON.stringify(u));
+                const p = preferences.data.data;
+                if (p.theme && p.theme !== 'system') setTheme(p.theme);
+                if (p.language) setLocale(p.language);
+                setReminderEnabled(p.push_enabled || false); setReminderTime(p.daily_reminder_time || '21:00');
+            })().catch(() => Alert.alert('Erro', 'Não foi possível carregar as definições.'));
         }
-    }, [visible]);
+    }, [visible, setLocale, setTheme]);
 
     const scrollTo = (id) => {
         setActiveSection(id);
@@ -270,17 +279,15 @@ export default function SettingsModal({ visible, onClose }) {
         if (!user) return;
         setSavingProfile(true);
         try {
-            const updatedUser = { ...user, name: profileName, display_name: profileName, bio: profileBio };
+            const result = await api.updateUser(user.id, { display_name: profileName, bio: profileBio });
+            if (result.error) throw new Error(result.error);
+            const updatedUser = { ...user, ...result.data.data };
             await AsyncStorage.setItem('aura_user', JSON.stringify(updatedUser));
             setUser(updatedUser);
-            await api.updateUser(user.id, {
-                display_name: profileName,
-                bio: profileBio,
-            });
             Alert.alert('Sucesso', 'Perfil guardado com sucesso!');
         } catch (e) {
             console.error('Failed to update profile:', e);
-            Alert.alert('Sucesso', 'Perfil guardado localmente!');
+            Alert.alert('Erro', e.message || 'Não foi possível guardar o perfil. Tente novamente.');
         } finally {
             setSavingProfile(false);
         }
@@ -289,15 +296,8 @@ export default function SettingsModal({ visible, onClose }) {
     const handleExportData = async () => {
         try {
             const res = await api.requestDataExport();
-            if (res.data?.data) {
-                const d = res.data.data;
-                Alert.alert(
-                    'Exportação Pronta',
-                    `Histórico exportado:\n• ${d.moodLogs?.length || 0} registos de humor\n• ${d.sleepLogs?.length || 0} registos de sono\n• ${d.assessments?.length || 0} inquéritos clínicos`
-                );
-            } else {
-                Alert.alert('Exportação', 'Dados exportados com sucesso!');
-            }
+            if (res.error) throw new Error(res.error);
+            await Share.share({ title: 'AURA — dados pessoais', message: JSON.stringify(res.data.data, null, 2) });
         } catch (e) {
             Alert.alert('Erro', 'Não foi possível exportar os dados no momento.');
         }
@@ -314,12 +314,14 @@ export default function SettingsModal({ visible, onClose }) {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await api.deleteAccount('DELETE');
-                            await AsyncStorage.multiRemove(['aura_token', 'aura_user']);
+                            const result = await api.deleteAccount('DELETE');
+                            if (result.error) throw new Error(result.error);
+                            await clearSession();
+                            await cancelDailyMoodReminder();
                             onClose();
                             router.replace('/(auth)/login');
                         } catch (e) {
-                            Alert.alert('Erro', 'Falha ao eliminar conta.');
+                            Alert.alert('Erro', e.message || 'Falha ao eliminar conta.');
                         }
                     }
                 }
@@ -333,12 +335,29 @@ export default function SettingsModal({ visible, onClose }) {
             {
                 text: 'Log Out', style: 'destructive', onPress: async () => {
                     setLoggingOut(true);
-                    await AsyncStorage.multiRemove(['aura_token', 'aura_user']);
+                    await api.logout();
+                    await clearSession();
+                            await cancelDailyMoodReminder();
                     onClose();
                     router.replace('/(auth)/login');
                 }
             },
         ]);
+    };
+
+    const persistAppearance = async (changes) => {
+        const result = await api.updateUserSettings(changes);
+        if (result.error) { Alert.alert('Erro', result.error); return; }
+        if (changes.theme) setTheme(changes.theme);
+        if (changes.language) setLocale(changes.language);
+    };
+    const saveReminder = async (enabled) => {
+        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(reminderTime)) { Alert.alert('Erro', 'Use HH:MM, por exemplo 21:00.'); return; }
+        if (enabled && !await configureDailyReminder(reminderTime)) { Alert.alert('Notificações', 'Ative as notificações nas definições do dispositivo.'); return; }
+        if (!enabled) await cancelDailyMoodReminder();
+        const result = await api.updateUserSettings({ push_enabled: enabled, daily_reminder_time: reminderTime });
+        if (result.error) { await cancelDailyMoodReminder(); Alert.alert('Erro', result.error); return; }
+        setReminderEnabled(enabled);
     };
 
     const isDark = theme === 'dark';
@@ -441,7 +460,7 @@ export default function SettingsModal({ visible, onClose }) {
                 <SettingCard colors={colors}>
                     <SettingRow label="Email Address" description={user?.email || ''} colors={colors} right={
                         <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.md, backgroundColor: colors.inputBg }}>
-                            <Text style={{ fontSize: 12, color: colors.textSecondary }}>Verified</Text>
+                            <Text style={{ fontSize: 12, color: colors.textSecondary }}>Supabase Auth</Text>
                         </View>
                     } />
                     <SettingRow label="Password" description="Protected via Supabase Auth" colors={colors} isLast right={
@@ -453,7 +472,8 @@ export default function SettingsModal({ visible, onClose }) {
                                         text: 'Enviar',
                                         onPress: async () => {
                                             const r = await api.forgotPassword(user.email);
-                                            Alert.alert('Sucesso', 'Email de redefinição enviado!');
+                                            if (r.error) Alert.alert('Erro', r.error);
+                                            else Alert.alert('Sucesso', 'Email de redefinição enviado!');
                                         }
                                     }
                                 ]);
@@ -472,7 +492,7 @@ export default function SettingsModal({ visible, onClose }) {
                     <SettingRow label="Theme" colors={colors} right={
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             {/* Moon/Sun icon button — matches the web header ThemeToggle */}
-                            <ThemeIconButton theme={theme} onPress={() => setTheme(isDark ? 'light' : 'dark')} colors={colors} />
+                            <ThemeIconButton theme={theme} onPress={() => persistAppearance({ theme: isDark ? 'light' : 'dark' })} colors={colors} />
                         </View>
                     } />
                     {/* Full segmented control below, styled exactly as the web Appearance section */}
@@ -483,7 +503,7 @@ export default function SettingsModal({ visible, onClose }) {
                                 { value: 'dark',  label: '🌙  Dark'  },
                             ]}
                             value={theme}
-                            onChange={setTheme}
+                            onChange={value => persistAppearance({ theme: value })}
                             colors={colors}
                         />
                     </View>
@@ -497,6 +517,14 @@ export default function SettingsModal({ visible, onClose }) {
                 </SettingCard>
             </View>
 
+            <SettingCard colors={colors}>
+                <SettingRow label="Lembrete diário / Daily reminder" colors={colors} right={<Switch value={reminderEnabled} onValueChange={saveReminder} />} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <TextInput accessibilityLabel="Hora do lembrete / Reminder time" value={reminderTime} onChangeText={setReminderTime} maxLength={5} placeholder="21:00" style={{ color: colors.textPrimary, flex: 1, padding: 12 }} />
+                    <DestructiveButton label="Guardar / Save" colors={colors} onPress={() => saveReminder(reminderEnabled)} />
+                </View>
+            </SettingCard>
+
             {/* ── DATA & PRIVACY ──────────────────────────────── */}
             <View onLayout={mark('data')}>
                 <SectionHeader title="Data & Privacy" subtitle="Control your data and how it's used." colors={colors} />
@@ -504,11 +532,8 @@ export default function SettingsModal({ visible, onClose }) {
                     <SettingRow label="Data Export" description="Download all your wellness history." colors={colors} right={
                         <DestructiveButton label="Exportar" colors={colors} onPress={handleExportData} />
                     } />
-                    <SettingRow label="Data Retention" description="How long we keep your data." colors={colors} isLast right={
-                        <View style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full, backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.border }]}>
-                            <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>Forever</Text>
-                        </View>
-                    } />
+                    <LegalNotice color={colors.textSecondary} />
+
                 </SettingCard>
             </View>
 
@@ -563,7 +588,7 @@ export default function SettingsModal({ visible, onClose }) {
             <LangPicker
                 visible={langOpen}
                 locale={locale}
-                onSelect={setLocale}
+                onSelect={value => persistAppearance({ language: value })}
                 onClose={() => setLangOpen(false)}
                 colors={colors}
             />

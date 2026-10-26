@@ -1,7 +1,7 @@
 # ===== SECRETS =====
-.env
-.env.local
-.env.production
+.env*
+!.env.example
+!.env.production.example
 *.key
 *.pem
 
@@ -16,6 +16,14 @@ venv/
 
 # ===== Node =====
 node_modules/
+backend/data/
+/tmp/
+
+# ===== Generated output =====
+*.log
+*.tsbuildinfo
+coverage/
+*.bak
 
 
 # ===== IDE =====

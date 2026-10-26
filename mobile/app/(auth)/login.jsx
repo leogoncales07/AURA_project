@@ -1,3 +1,4 @@
+import LegalNotice from '../../components/LegalNotice';
 import { useState } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -257,7 +258,8 @@ export default function LoginScreen() {
                         </View>
                     </BlurView>
 
-                </ScrollView>
+                <LegalNotice />
+            </ScrollView>
             </KeyboardAvoidingView>
         </View>
     );

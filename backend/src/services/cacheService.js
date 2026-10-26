@@ -14,6 +14,7 @@ let isConnected = false;
 client.on('error', (err) => logger.warn('Redis Client Error - Caching will be disabled', err.message));
 
 (async () => {
+  if (!process.env.REDIS_URL) return;
   try {
     await client.connect();
     isConnected = true;

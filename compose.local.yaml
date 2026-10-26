@@ -1,0 +1,28 @@
+name: aura-local
+services:
+  api:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: "8000"
+      CORS_ORIGINS: http://localhost:3000
+      PASSWORD_RESET_URL: http://localhost:3000/reset-password
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+        AURA_LEGAL_ENTITY: Leonardo Pierre Gonçales e Matheus Esaka Silva
+        NEXT_PUBLIC_SUPPORT_EMAIL: leogoncales07@gmail.com
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

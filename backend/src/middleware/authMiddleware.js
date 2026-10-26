@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { pino } from 'pino';
 import { catchAsync } from '../utils/catchAsync.js';
 import { AppError } from '../utils/appError.js';
-import supabase from '../services/supabaseService.js';
+import supabase, { createUserClient } from '../services/supabaseService.js';
 
 const logger = pino({ transport: { target: 'pino-pretty' } });
 
@@ -27,11 +27,22 @@ export const protect = catchAsync(async (req, res, next) => {
 
   // GRANT ACCESS TO PROTECTED ROUTE
   req.user = {
+    ...user.user_metadata,
     id: user.id,
     email: user.email,
     name: user.user_metadata?.name || user.email,
-    ...user.user_metadata,
     current_token_hash: crypto.createHash('sha256').update(token).digest('hex'),
   };
+  req.accessToken = token;
+  req.supabase = createUserClient(token);
   next();
 });
+
+// Legacy URLs include the user ID; ownership still comes from the verified token.
+export const requireOwnData = (req, res, next) => {
+  const requested = req.params.userId || req.body?.user_id;
+  if (requested && requested !== req.user.id) {
+    return next(new AppError('Access denied', 403));
+  }
+  next();
+};

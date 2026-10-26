@@ -1,132 +1,34 @@
 import { catchAsync } from '../utils/catchAsync.js';
-import pool from '../db/db.js';
-import { cache } from '../services/cacheService.js';
+import { checked } from '../services/wellnessService.js';
 import { z } from 'zod';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
-const SETTINGS_FILE = path.join(DATA_DIR, 'user_settings.json');
-
-const loadSettingsStore = () => {
-  try {
-    if (fs.existsSync(SETTINGS_FILE)) return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
-  } catch (e) {
-    console.warn('[data] Could not load user_settings:', e.message);
-  }
-  return {};
-};
-
-const saveSettingsStore = (data) => {
-  try {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (e) {
-    console.warn('[data] Could not save user_settings:', e.message);
-  }
-};
-
+const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const settingsSchema = z.object({
-  primary_goal: z.string().optional(),
-  occupation_type: z.string().optional(),
-  activity_level: z.string().optional(),
-  sleep_target_hours: z.number().min(4).max(12).optional(),
-  wind_down_minutes: z.number().optional(),
-  sleep_sound_pref: z.string().optional(),
-  theme: z.enum(['system', 'light', 'dark']).optional(),
-  accent_color: z.enum(['violet', 'blue', 'sage', 'lavender', 'amber', 'rose']).optional(),
-  daily_reminder_time: z.string().regex(/^([01]\d|2[0-3]):?([0-5]\d)$/).optional(),
-  notif_intensity: z.number().min(1).max(3).optional()
-}).partial();
+  primary_goal: z.string().max(100), occupation_type: z.string().max(100), activity_level: z.string().max(100),
+  sleep_target_hours: z.number().min(4).max(12), wind_down_minutes: z.number().min(0).max(180),
+  sleep_sound_pref: z.string().max(50), theme: z.enum(['system', 'light', 'dark']),
+  accent_color: z.union([z.enum(['violet', 'blue', 'sage', 'lavender', 'amber', 'rose']), z.string().regex(/^#[0-9a-fA-F]{6}$/)]),
+  daily_reminder_time: time, notif_intensity: z.number().int().min(1).max(3),
+  push_enabled: z.boolean(), streak_alerts: z.boolean(), milestone_alerts: z.boolean(),
+  email_weekly_summary: z.boolean(), email_tips: z.boolean(), email_product: z.boolean(),
+  weekly_report_day: z.string().max(20), weekly_checkin_day: z.union([z.string().max(20), z.number().int().min(0).max(6)]),
+  wellness_goals: z.array(z.string().max(100)).max(30), stress_triggers: z.array(z.string().max(100)).max(30),
+  target_wake_time: time, target_bedtime_start: z.number().min(0).max(24), target_bedtime_end: z.number().min(0).max(24),
+  sleep_debt_tracking: z.boolean(), reduce_motion: z.boolean(), text_size: z.enum(['small', 'default', 'large']),
+  dense_mode: z.boolean(), analytics_opt_out: z.boolean(), personalization: z.boolean(),
+  data_retention: z.string().max(30), language: z.enum(['pt', 'en', 'es', 'fr', 'de']),
+}).partial().strict();
 
-export const getSettings = catchAsync(async (req, res, next) => {
-  const userId = req.user.id;
-  
-  try {
-    const cachedSettings = await cache.get(`user_settings:${userId}`);
-    if (cachedSettings) {
-      return res.status(200).json({ status: 'success', data: cachedSettings });
-    }
+const defaults = { theme: 'dark', accent_color: 'violet', sleep_target_hours: 8, wind_down_minutes: 30,
+  daily_reminder_time: '21:00', notif_intensity: 2, push_enabled: false };
 
-    const result = await pool.query(
-      'SELECT * FROM user_settings WHERE user_id = $1',
-      [userId]
-    );
-    
-    if (result.rows.length === 0) {
-      const newSettings = await pool.query(
-        'INSERT INTO user_settings (user_id) VALUES ($1) RETURNING *',
-        [userId]
-      );
-      return res.status(200).json({ status: 'success', data: newSettings.rows[0] });
-    }
-
-    await cache.set(`user_settings:${userId}`, result.rows[0], 600);
-
-    return res.status(200).json({
-      status: 'success',
-      data: result.rows[0]
-    });
-  } catch (dbErr) {
-    // Graceful fallback to file storage if PG is not running
-    const store = loadSettingsStore();
-    const userSettings = store[userId] || {
-      user_id: userId,
-      theme: 'dark',
-      accent_color: 'violet',
-      sleep_target_hours: 8,
-      wind_down_minutes: 30,
-      daily_reminder_time: '08:00',
-      notif_intensity: 2
-    };
-    return res.status(200).json({ status: 'success', data: userSettings });
-  }
+export const getSettings = catchAsync(async (req, res) => {
+  const row = await checked(req.supabase.from('app_settings').select('preferences').eq('user_id', req.user.id).maybeSingle());
+  res.json({ status: 'success', data: { ...defaults, ...row?.preferences } });
 });
 
-export const updateSettings = catchAsync(async (req, res, next) => {
-  const userId = req.user.id;
-  const validatedData = settingsSchema.parse(req.body);
-
-  const fields = Object.keys(validatedData);
-  const values = Object.values(validatedData);
-  
-  if (fields.length === 0) return res.status(200).json({ status: 'success', message: 'Nothing to update' });
-
-  try {
-    const setClause = fields.map((f, i) => `${f} = $${i + 2}`).join(', ');
-    const query = `UPDATE user_settings SET ${setClause}, updated_at = NOW() WHERE user_id = $1 RETURNING *`;
-    
-    const result = await pool.query(query, [userId, ...values]);
-    await cache.del(`user_settings:${userId}`);
-    
-    try {
-      await pool.query(
-        'INSERT INTO audit_log (user_id, action, metadata) VALUES ($1, $2, $3)',
-        [userId, 'settings.updated', JSON.stringify(validatedData)]
-      );
-    } catch (_) {}
-
-    return res.status(200).json({
-      status: 'success',
-      data: result.rows[0]
-    });
-  } catch (dbErr) {
-    // Graceful fallback to file storage
-    const store = loadSettingsStore();
-    const existing = store[userId] || {};
-    const updated = {
-      ...existing,
-      user_id: userId,
-      ...validatedData,
-      updated_at: new Date().toISOString()
-    };
-    store[userId] = updated;
-    saveSettingsStore(store);
-
-    return res.status(200).json({
-      status: 'success',
-      data: updated
-    });
-  }
+export const updateSettings = catchAsync(async (req, res) => {
+  const payload = settingsSchema.parse(req.body);
+  const preferences = await checked(req.supabase.rpc('save_app_settings', { payload }));
+  res.json({ status: 'success', data: { ...defaults, ...preferences } });
 });

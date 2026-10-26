@@ -1,0 +1,7 @@
+{
+  "name": "aura-database-validation",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test migration.test.js" },
+  "devDependencies": { "@electric-sql/pglite": "0.5.12" }
+}

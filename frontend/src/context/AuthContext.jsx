@@ -2,13 +2,15 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api, saveSession, clearSession } from '@/lib/api';
+import { useTheme } from '@/context/ThemeContext';
 
 const AuthContext = createContext(null);
 
-const PUBLIC_ROUTES = ['/login', '/signup', '/', '/demo'];
+const PUBLIC_ROUTES = ['/login', '/signup', '/', '/demo', '/reset-password', '/privacy', '/terms'];
 
 export function AuthProvider({ children }) {
+    const { setTheme } = useTheme();
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -38,7 +40,36 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         syncFromStorage();
+        window.addEventListener('aura:session', syncFromStorage);
+        return () => window.removeEventListener('aura:session', syncFromStorage);
     }, [syncFromStorage]);
+
+    useEffect(() => {
+        if (!user?.id) return;
+        let cancelled = false;
+        Promise.all([api.getUser(), api.getUserSettings()]).then(([profile, preferences]) => {
+            if (cancelled) return;
+            if (preferences.data?.data) {
+                const settings = preferences.data.data;
+                setTheme(settings.theme);
+                if (/^#[0-9a-fA-F]{6}$/.test(settings.accent_color || '')) {
+                    document.documentElement.style.setProperty('--brand-primary', settings.accent_color);
+                    localStorage.setItem('aura_accent', settings.accent_color);
+                }
+            }
+            if (profile.data?.data) {
+                const updated = profile.data.data;
+                setUser(previous => {
+                    if (!previous || previous.id !== updated.id) return previous;
+                    const merged = { ...previous, ...updated };
+                    const storage = localStorage.getItem('aura_token') ? localStorage : sessionStorage;
+                    storage.setItem('aura_user', JSON.stringify(merged));
+                    return merged;
+                });
+            }
+        });
+        return () => { cancelled = true; };
+    }, [user?.id, setTheme]);
 
     // Route guardian for protected pages
     useEffect(() => {
@@ -59,23 +90,10 @@ export function AuthProvider({ children }) {
             return { error };
         }
 
-        if (data && (data.access_token || data.user)) {
-            const accessToken = data.access_token || 'demo-token';
-            const userData = data.user || { email, name: email.split('@')[0] };
-
-            if (rememberMe) {
-                localStorage.setItem('aura_token', accessToken);
-                localStorage.setItem('aura_user', JSON.stringify(userData));
-                sessionStorage.removeItem('aura_token');
-                sessionStorage.removeItem('aura_user');
-            } else {
-                sessionStorage.setItem('aura_token', accessToken);
-                sessionStorage.setItem('aura_user', JSON.stringify(userData));
-                localStorage.removeItem('aura_token');
-                localStorage.removeItem('aura_user');
-            }
-
-            setToken(accessToken);
+        if (data?.access_token && data.user) {
+            const userData = { ...data.user, ...data.user.user_metadata, name: data.user.user_metadata?.display_name || data.user.user_metadata?.name || data.user.email };
+            saveSession({ ...data, user: userData }, rememberMe);
+            setToken(data.access_token);
             setUser(userData);
             router.push('/dashboard');
             return { data };
@@ -90,14 +108,11 @@ export function AuthProvider({ children }) {
             return { error };
         }
 
-        if (data && (data.access_token || data.user)) {
-            const accessToken = data.access_token || 'demo-token';
-            const userData = data.user || { email, name };
-
-            localStorage.setItem('aura_token', accessToken);
-            localStorage.setItem('aura_user', JSON.stringify(userData));
-
-            setToken(accessToken);
+        if (data?.confirmation_required) return { confirmationRequired: true };
+        if (data?.access_token && data.user) {
+            const userData = { ...data.user, ...data.user.user_metadata, name };
+            saveSession({ ...data, user: userData }, true);
+            setToken(data.access_token);
             setUser(userData);
             router.push('/dashboard');
             return { data };
@@ -108,10 +123,8 @@ export function AuthProvider({ children }) {
 
     const logout = () => {
         if (typeof window !== 'undefined') {
-            localStorage.removeItem('aura_token');
-            localStorage.removeItem('aura_user');
-            sessionStorage.removeItem('aura_token');
-            sessionStorage.removeItem('aura_user');
+            void api.logout();
+            clearSession();
         }
         setToken(null);
         setUser(null);

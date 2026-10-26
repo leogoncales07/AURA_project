@@ -47,6 +47,7 @@ const SAVED_KEY = 'aura_web_reports';
 
 // ── PDF builder ──────────────────────────────────────────────────
 function buildHtml({ locale, userName, monthLabel, generatedDate, data }) {
+    userName = String(userName || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
     const isPt = locale === 'pt';
     const riskLabel = { low: isPt?'Baixo':'Low', moderate: isPt?'Moderado':'Moderate', high: isPt?'Alto':'High', severe: isPt?'Severo':'Severe' };
     const trendIcon = data.moodTrend > 0 ? '↑' : data.moodTrend < 0 ? '↓' : '→';
@@ -163,6 +164,7 @@ export default function ReportsPage() {
 
     // ── Report generation ──
     const [generating, setGenerating] = useState(false);
+    const [reportError, setReportError] = useState('');
     const [reportData, setReportData] = useState(null);
 
     // ── Saved reports ──
@@ -177,7 +179,7 @@ export default function ReportsPage() {
         setUserName(u.name || u.display_name || 'User');
         fetchWeekly(u.id);
         // Load saved
-        const saved = localStorage.getItem(SAVED_KEY);
+        const saved = localStorage.getItem(`${SAVED_KEY}_${u.id}`);
         if (saved) setSavedReports(JSON.parse(saved));
     }, []);
 
@@ -197,7 +199,7 @@ export default function ReportsPage() {
         let totalMood = 0, moodCount = 0;
 
         logs.forEach(log => {
-            const d = new Date(log.log_date || log.created_at);
+            const d = new Date(log.log_date || log.timestamp || log.created_at);
             if (d >= monday) {
                 const lDow = d.getDay();
                 const lIdx = lDow === 0 ? 6 : lDow - 1;
@@ -222,16 +224,18 @@ export default function ReportsPage() {
         setReportData(null);
 
         const [logsRes, histRes] = await Promise.all([
-            api.getLogs(userId, 90),
+            api.getLogs(userId, 10000),
             api.getHistory(userId),
         ]);
+        if (logsRes.error || histRes.error) { setReportError(logsRes.error || histRes.error); setGenerating(false); return; }
+        setReportError('');
         const allLogs = logsRes.data?.logs || [];
         const allAssessments = histRes.data?.assessments || [];
 
         const monthLogs = allLogs.filter(l => {
-            const d = new Date(l.log_date || l.created_at);
+            const d = new Date(l.log_date || l.timestamp || l.created_at);
             return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
-        });
+        }).sort((a, b) => new Date(a.log_date || a.timestamp || a.created_at) - new Date(b.log_date || b.timestamp || b.created_at));
 
         const monthAssessments = allAssessments.filter(a => {
             if (!a.completed_at && !a.created_at) return true;
@@ -240,7 +244,7 @@ export default function ReportsPage() {
         });
 
         const daysActive = new Set(monthLogs.map(l => {
-            const d = new Date(l.log_date || l.created_at);
+            const d = new Date(l.log_date || l.timestamp || l.created_at);
             return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
         })).size;
 
@@ -262,7 +266,7 @@ export default function ReportsPage() {
             moodTrend = last - first;
         }
 
-        setReportData({ daysActive, avgMood, avgSleep, totalSessions: monthLogs.length, meditationSessions: monthLogs.length, assessments: monthAssessments, moodTrend });
+        setReportData({ daysActive, avgMood, avgSleep, totalSessions: monthLogs.length, meditationSessions: 0, assessments: monthAssessments, moodTrend });
         setGenerating(false);
     }, [userId, selectedMonth, selectedYear]);
 
@@ -283,7 +287,7 @@ export default function ReportsPage() {
         };
         const updated = [entry, ...savedReports].slice(0, 10);
         setSavedReports(updated);
-        localStorage.setItem(SAVED_KEY, JSON.stringify(updated));
+        localStorage.setItem(`${SAVED_KEY}_${userId}`, JSON.stringify(updated));
 
         printHtmlAsPdf(html, entry.filename);
     };
@@ -291,7 +295,7 @@ export default function ReportsPage() {
     const deleteSaved = (id) => {
         const updated = savedReports.filter(r => r.id !== id);
         setSavedReports(updated);
-        localStorage.setItem(SAVED_KEY, JSON.stringify(updated));
+        localStorage.setItem(`${SAVED_KEY}_${userId}`, JSON.stringify(updated));
     };
 
     // ── Trend helpers ──
@@ -308,6 +312,7 @@ export default function ReportsPage() {
 
     return (
         <AppShell title={isPt ? 'Progresso' : 'Progress'}>
+            {reportError && <p role="alert">{reportError}</p>}
             <StaggeredEntrance className={styles.pageGrid}>
 
                 {/* ══ LEFT COLUMN ══════════════════════════════ */}

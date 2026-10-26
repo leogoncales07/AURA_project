@@ -3,61 +3,72 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined
         ? `${window.location.protocol}//${window.location.hostname}:8000`
         : window.location.origin
 ) : 'http://localhost:8000');
-const OWNER_SECRET = process.env.NEXT_PUBLIC_DEV_KEY;
 
-/**
- * Enhanced Fetch Wrapper with Owner Auth & Token Support
- */
+const SESSION_KEYS = ['aura_token', 'aura_refresh_token', 'aura_user'];
+let refreshPromise;
+const activeStorage = () => localStorage.getItem('aura_token') ? localStorage : sessionStorage;
+export function saveSession(data, remember = false) {
+    const storage = remember ? localStorage : sessionStorage;
+    const other = remember ? sessionStorage : localStorage;
+    SESSION_KEYS.forEach(key => other.removeItem(key));
+    storage.setItem('aura_token', data.access_token);
+    if (data.refresh_token) storage.setItem('aura_refresh_token', data.refresh_token);
+    storage.setItem('aura_user', JSON.stringify(data.user));
+    window.dispatchEvent(new Event('aura:session'));
+}
+export function clearSession() {
+    localStorage.removeItem('aura_sleep_logs_array');
+    localStorage.removeItem('aura_web_reports');
+    SESSION_KEYS.forEach(key => { localStorage.removeItem(key); sessionStorage.removeItem(key); });
+    window.dispatchEvent(new Event('aura:session'));
+}
+async function renewSession() {
+    if (!refreshPromise) {
+        refreshPromise = (async () => {
+            const storage = activeStorage();
+            const refresh_token = storage.getItem('aura_refresh_token');
+            if (!refresh_token) { clearSession(); return false; }
+            const result = await fetchApi('/auth/refresh', { method: 'POST', body: { refresh_token }, skipRefresh: true });
+            if (result.data?.access_token) {
+                // Ignore a late refresh if the user signed out while it was in flight.
+                if (storage.getItem('aura_refresh_token') !== refresh_token) return false;
+                storage.setItem('aura_token', result.data.access_token);
+                storage.setItem('aura_refresh_token', result.data.refresh_token);
+                window.dispatchEvent(new Event('aura:session'));
+                return true;
+            }
+            if (result.status === 401) clearSession();
+            return false;
+        })().finally(() => { refreshPromise = null; });
+    }
+    return refreshPromise;
+}
+
 async function fetchApi(endpoint, options = {}) {
-    const { method = 'GET', body, headers = {}, ...rest } = options;
-
-    const defaultHeaders = {
-        'Content-Type': 'application/json',
-        'X-Owner-Secret': OWNER_SECRET,
-        'Bypass-Tunnel-Reminder': 'true',
-    };
-
-    // Add Auth Token if available
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('aura_token') || sessionStorage.getItem('aura_token');
-        if (token) {
-            defaultHeaders['Authorization'] = `Bearer ${token}`;
-        }
-    }
-
+    const { method = 'GET', body, headers = {}, skipRefresh = false, ...rest } = options;
+    const token = typeof window !== 'undefined' ? activeStorage().getItem('aura_token') : null;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for dev stability
-
-    const config = {
-        method,
-        headers: {
-            ...defaultHeaders,
-            ...headers,
-        },
-        signal: controller.signal,
-        ...rest,
-    };
-
-    if (body) {
-        config.body = JSON.stringify(body);
-    }
-
+    const timeout = setTimeout(() => controller.abort(), 45000);
     try {
-        const response = await fetch(`${API_URL}${endpoint}`, config);
-        clearTimeout(timeoutId);
-        
+        const response = await fetch(API_URL + endpoint, {
+            method, headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true',
+                ...(token ? { Authorization: 'Bearer ' + token } : {}), ...headers },
+            signal: controller.signal, ...rest, ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        });
         const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            return { error: data?.detail || data?.message || 'API Error', status: response.status };
+        const canRefresh = !skipRefresh && (!endpoint.startsWith('/auth/') || endpoint === '/auth/me' || endpoint === '/auth/logout');
+        if (response.status === 401 && token && canRefresh) {
+            if (activeStorage().getItem('aura_token') !== token || await renewSession()) {
+                return fetchApi(endpoint, { ...options, skipRefresh: true });
+            }
+            if (activeStorage().getItem('aura_token') === token) return { error: 'Unable to renew session. Please try again.', status: 503 };
         }
-
+        if (!response.ok) return { error: data?.error?.message || data?.message || data?.detail || 'API Error', status: response.status };
+        if (method !== 'GET' && !endpoint.startsWith('/auth/')) window.dispatchEvent(new Event('aura:data'));
         return { data, status: response.status };
-    } catch (err) {
-        clearTimeout(timeoutId);
-        console.warn(`[API] Fetch failed for ${endpoint}:`, err.message);
-        return { error: err.name === 'AbortError' ? 'Request timed out' : 'Network mismatch or server down', status: 500 };
-    }
+    } catch (error) {
+        return { error: error.name === 'AbortError' ? 'Request timed out' : 'Network error or server down', status: 503 };
+    } finally { clearTimeout(timeout); }
 }
 
 export const api = {
@@ -65,7 +76,10 @@ export const api = {
     signup: (email, password, name) => fetchApi('/auth/signup', { method: 'POST', body: { email, password, name } }),
     login: (email, password) => fetchApi('/auth/login', { method: 'POST', body: { email, password } }),
     forgotPassword: (email) => fetchApi('/auth/forgot-password', { method: 'POST', body: { email } }),
+    resetPassword: (password, token) => fetchApi('/auth/reset-password', { method: 'POST', body: { password }, headers: { Authorization: 'Bearer ' + token }, skipRefresh: true }),
+    changeEmail: (new_email, current_password) => fetchApi('/api/v1/account/email/change', { method: 'POST', body: { new_email, current_password } }),
     getMe: () => fetchApi('/auth/me'),
+    logout: () => fetchApi('/auth/logout', { method: 'POST' }),
 
     // User Profile
     getUser: (userId) => fetchApi(`/api/v1/account/profile`),
@@ -110,6 +124,4 @@ export const api = {
     getConversationMessages: (userId, conversationId) => fetchApi(`/companion/${userId}/conversations/${conversationId}`),
     deleteConversation: (userId, conversationId) => fetchApi(`/companion/${userId}/conversations/${conversationId}`, { method: 'DELETE' }),
 
-    // Reports
-    generateReport: (userId, context = "") => fetchApi('/reports/generate', { method: 'POST', body: { user_id: userId, context } }),
 };

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View, Text, ScrollView, TouchableOpacity,
     StyleSheet, RefreshControl, Dimensions, Appearance
@@ -37,9 +38,7 @@ export default function DashboardScreen() {
 
     const isDark = theme === 'dark';
 
-    useEffect(() => {
-        loadUser();
-    }, []);
+    useFocusEffect(useCallback(() => { loadUser(); }, []));
 
     const loadUser = async () => {
         const stored = await AsyncStorage.getItem('aura_user');
@@ -70,21 +69,19 @@ export default function DashboardScreen() {
             const [userRes, logsRes, historyRes] = await Promise.all([
                 api.getUser(userId),
                 api.getLogs(userId),
-                api.getHistory(userId),
+                api.getStats(userId),
             ]);
             
             if (userRes?.data) setUser(prev => ({ ...prev, ...(userRes.data.data || userRes.data.user || userRes.data) }));
             
             let streak = 0, sessions = 0;
-            if (logsRes?.data?.logs?.length > 0) {
-                setLatestLog(logsRes.data.logs[0]);
+            if (logsRes?.data?.logs) {
+                setLatestLog(logsRes.data.logs.find(log => log.mood_score != null) || null);
                 setRecentLogs(logsRes.data.logs);
-                streak = logsRes.data.logs.length;
+
                 AsyncStorage.setItem(`aura_cache_logs_${userId}`, JSON.stringify(logsRes.data.logs));
             }
-            if (historyRes?.data?.assessments) {
-                sessions = historyRes.data.assessments.length;
-            }
+            if (historyRes?.data) { streak = historyRes.data.streak; sessions = historyRes.data.sessions; }
             
             setStats({ streak, sessions });
             AsyncStorage.setItem(`aura_cache_stats_${userId}`, JSON.stringify({ streak, sessions }));
@@ -112,8 +109,8 @@ export default function DashboardScreen() {
     });
 
     // Chart Data mapping (last 7 logs, in chronological order)
-    const chartData = [...recentLogs].slice(0, 7).reverse().map(log => {
-        const d = new Date(log.created_at);
+    const chartData = [...recentLogs].filter(log => log.mood_score != null).slice(0, 7).reverse().map(log => {
+        const d = new Date(log.timestamp || log.created_at || log.log_date);
         const dayLabel = d.toLocaleDateString(dateLocaleMap[locale] || 'pt-PT', { weekday: 'short' });
         return {
             value: log.mood_score * 10,
