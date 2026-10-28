@@ -1,0 +1,42 @@
+.askAura {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  background: var(--brand-gradient);
+  color: #052e2b;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.22);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.askAura:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.32);
+}
+
+.askAura:focus-visible {
+  outline: 2px solid var(--fg-foreground);
+  outline-offset: 3px;
+}
+
+.askAura[aria-current='page'] {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45), 0 4px 18px rgba(16, 185, 129, 0.3);
+}
+
+.askAuraLabel {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .askAura { transition: none; }
+  .askAura:hover { transform: none; }
+}

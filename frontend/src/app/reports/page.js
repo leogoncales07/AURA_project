@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import {
     Flame, FileText, Download, BarChart3, Calendar, Share2,
     TrendingUp, TrendingDown, Minus, Trash2, RefreshCw, Loader2,
@@ -10,6 +9,8 @@ import {
 import styles from './page.module.css';
 import AppShell from '@/components/AppShell';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { weeklyReportStats } from '@/lib/wellness-metrics.mjs';
 import { useI18n } from '@/i18n';
 import StaggeredEntrance from '@/components/StaggeredEntrance';
 
@@ -129,13 +130,16 @@ td{padding:11px 14px;border-top:1px solid #f1f5f9;color:#334155}
 // ── Print util (browser) ─────────────────────────────────────────
 function printHtmlAsPdf(html, filename) {
     const win = window.open('', '_blank');
+    if (!win) return false;
     win.document.write(html);
     win.document.close();
+    win.document.title = filename;
     win.focus();
     setTimeout(() => {
         win.print();
         // win.close(); // keep open so user can save
     }, 500);
+    return true;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -143,19 +147,22 @@ function printHtmlAsPdf(html, filename) {
 // ════════════════════════════════════════════════════════════════
 export default function ReportsPage() {
     const { t, locale } = useI18n();
-    const router = useRouter();
+    const { user } = useAuth();
     const isPt = locale === 'pt';
 
     const monthNames = isPt ? MONTHS_PT : MONTHS_EN;
     const shortMonths = isPt ? SHORT_PT : SHORT_EN;
 
     const now = new Date();
-    const [userId, setUserId] = useState(null);
-    const [userName, setUserName] = useState('User');
+    const userId = user?.id;
+    const userName = user?.name || user?.display_name || 'User';
 
     // ── Weekly chart state ──
     const [weekLoading, setWeekLoading] = useState(true);
-    const [weekStats, setWeekStats] = useState({ chartData: [], streak: 0, avgMood: 0, days: [] });
+    const [weekStats, setWeekStats] = useState(() => weeklyReportStats([]));
+    const [weekError, setWeekError] = useState('');
+    const [weekRefresh, setWeekRefresh] = useState(0);
+    const dayLabels = isPt ? ['S','T','Q','Q','S','S','D'] : ['M','T','W','T','F','S','S'];
     const [hoveredBar, setHoveredBar] = useState(null);
 
     // ── Month selector ──
@@ -166,60 +173,46 @@ export default function ReportsPage() {
     const [generating, setGenerating] = useState(false);
     const [reportError, setReportError] = useState('');
     const [reportData, setReportData] = useState(null);
+    const generation = useRef({ version: 0 });
 
     // ── Saved reports ──
     const [savedReports, setSavedReports] = useState([]);
 
-    // ── Load user ──
+    // ── Load local report history for the current account ──
     useEffect(() => {
-        const stored = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
-        if (!stored) { router.push('/login'); return; }
-        const u = JSON.parse(stored);
-        setUserId(u.id);
-        setUserName(u.name || u.display_name || 'User');
-        fetchWeekly(u.id);
-        // Load saved
-        const saved = localStorage.getItem(`${SAVED_KEY}_${u.id}`);
-        if (saved) setSavedReports(JSON.parse(saved));
-    }, []);
+        setSavedReports([]);
+        if (!userId) return;
+        try {
+            const saved = JSON.parse(localStorage.getItem(`${SAVED_KEY}_${userId}`) || '[]');
+            if (Array.isArray(saved)) setSavedReports(saved);
+        } catch { /* A corrupt local history must not block loading server data. */ }
+    }, [userId]);
 
     // ── Weekly data ──
-    const fetchWeekly = async (uid) => {
-        setWeekLoading(true);
-        const res = await api.getLogs(uid, 14);
-        const logs = res.data?.logs || [];
-        const today = new Date();
-        const dow = today.getDay();
-        const todayIdx = dow === 0 ? 6 : dow - 1;
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - todayIdx);
-        monday.setHours(0, 0, 0, 0);
-
-        let chartData = [0,0,0,0,0,0,0];
-        let totalMood = 0, moodCount = 0;
-
-        logs.forEach(log => {
-            const d = new Date(log.log_date || log.timestamp || log.created_at);
-            if (d >= monday) {
-                const lDow = d.getDay();
-                const lIdx = lDow === 0 ? 6 : lDow - 1;
-                if (log.mood_score && lIdx <= todayIdx) chartData[lIdx] = log.mood_score * 10;
-            }
-            if (log.mood_score) { totalMood += log.mood_score; moodCount++; }
+    useEffect(() => {
+        let active = true;
+        setWeekLoading(true); setWeekError(''); setWeekStats(weeklyReportStats([]));
+        if (!userId) return;
+        api.getLogs(userId, 10000).then(res => {
+            if (!active) return;
+            if (res.error) setWeekError(res.error);
+            else setWeekStats(weeklyReportStats(res.data?.logs || []));
+            setWeekLoading(false);
         });
+        return () => { active = false; };
+    }, [userId, weekRefresh]);
 
-        const avgMood = moodCount > 0 ? Math.round((totalMood / moodCount) * 10) : 0;
-        const dayLabels = isPt
-            ? ['S','T','Q','Q','S','S','D']
-            : ['M','T','W','T','F','S','S'];
-
-        setWeekStats({ chartData, streak: logs.length, avgMood, todayIdx, days: dayLabels });
-        setWeekLoading(false);
-    };
+    useEffect(() => {
+        const requests = generation.current;
+        requests.version++;
+        setReportData(null); setReportError(''); setGenerating(false);
+        return () => { requests.version++; };
+    }, [userId, selectedMonth, selectedYear]);
 
     // ── Generate report ──
     const generateReport = useCallback(async () => {
         if (!userId) return;
+        const request = ++generation.current.version;
         setGenerating(true);
         setReportData(null);
 
@@ -227,6 +220,7 @@ export default function ReportsPage() {
             api.getLogs(userId, 10000),
             api.getHistory(userId),
         ]);
+        if (request !== generation.current.version) return;
         if (logsRes.error || histRes.error) { setReportError(logsRes.error || histRes.error); setGenerating(false); return; }
         setReportError('');
         const allLogs = logsRes.data?.logs || [];
@@ -277,7 +271,12 @@ export default function ReportsPage() {
         const generatedDate = new Date().toLocaleDateString(isPt ? 'pt-PT' : 'en-GB', { day:'numeric', month:'long', year:'numeric' });
         const html = buildHtml({ locale, userName, monthLabel, generatedDate, data: reportData });
 
-        // Save metadata
+        if (!printHtmlAsPdf(html, `AURA_${shortMonths[selectedMonth]}${selectedYear}.pdf`)) {
+            setReportError(isPt ? 'Permita abrir a janela do relatório e tente novamente.' : 'Allow the report window to open and try again.');
+            return;
+        }
+
+        // Local history records the opened report, not a confirmed PDF download.
         const entry = {
             id: Date.now().toString(),
             filename: `AURA_${shortMonths[selectedMonth]}${selectedYear}.pdf`,
@@ -287,9 +286,8 @@ export default function ReportsPage() {
         };
         const updated = [entry, ...savedReports].slice(0, 10);
         setSavedReports(updated);
-        localStorage.setItem(`${SAVED_KEY}_${userId}`, JSON.stringify(updated));
-
-        printHtmlAsPdf(html, entry.filename);
+        try { localStorage.setItem(`${SAVED_KEY}_${userId}`, JSON.stringify(updated)); }
+        catch { setReportError(isPt ? 'O relatório abriu, mas não foi possível guardar o histórico neste navegador.' : 'The report opened, but its history could not be saved in this browser.'); }
     };
 
     const deleteSaved = (id) => {
@@ -325,7 +323,7 @@ export default function ReportsPage() {
                                 <span className={styles.heroLabel}>
                                     {isPt ? 'ÍNDICE DE BEM-ESTAR' : 'WELLNESS INDEX'}
                                 </span>
-                                {weekLoading ? (
+                                {weekLoading || weekError || weekStats.avgMood == null ? (
                                     <div className={styles.heroValue}>—</div>
                                 ) : (
                                     <div className={styles.heroValue}>
@@ -336,7 +334,7 @@ export default function ReportsPage() {
                             </div>
                             <div className={styles.streakPill}>
                                 <Flame size={14} color="#f59e0b" fill="#f59e0b" />
-                                <span>{weekStats.streak} {isPt ? 'dias' : 'days'}</span>
+                                <span>{weekLoading || weekError ? '—' : weekStats.streak} {isPt ? 'dias' : 'days'}</span>
                             </div>
                         </div>
 
@@ -349,7 +347,7 @@ export default function ReportsPage() {
                                     onMouseEnter={() => setHoveredBar(i)}
                                     onMouseLeave={() => setHoveredBar(null)}
                                 >
-                                    {hoveredBar === i && val > 0 && (
+                                    {hoveredBar === i && val != null && (
                                         <div className={styles.barTooltip}>{val}%</div>
                                     )}
                                     <div className={styles.barTrack}>
@@ -368,13 +366,14 @@ export default function ReportsPage() {
                                     </div>
                                     <span className={styles.barLabel}
                                         style={{ color: i === weekStats.todayIdx ? 'var(--brand-primary)' : undefined }}>
-                                        {weekStats.days[i]}
+                                        {dayLabels[i]}
                                     </span>
                                 </div>
                             ))}
                         </div>
 
-                        {weekStats.streak === 0 && (
+                        {weekError && <p role="alert">{weekError} <button type="button" onClick={() => setWeekRefresh(value => value + 1)}>{isPt ? 'Tentar novamente' : 'Try again'}</button></p>}
+                        {!weekLoading && !weekError && weekStats.avgMood == null && (
                             <p className={styles.noDataHint}>
                                 {isPt ? 'Registe o seu humor diariamente para ver o gráfico.' : 'Log your mood daily to populate the chart.'}
                             </p>
@@ -527,7 +526,7 @@ export default function ReportsPage() {
                             <Flame size={48} fill="currentColor" />
                         </div>
                         <div className={styles.streakValue}>
-                            {weekLoading ? '—' : <AnimatedNumber value={weekStats.streak} />}
+                            {weekLoading || weekError ? '—' : <AnimatedNumber value={weekStats.streak} />}
                         </div>
                         <span className={styles.heroLabel}>{isPt ? 'dias seguidos' : 'day streak'}</span>
                     </div>
@@ -536,12 +535,12 @@ export default function ReportsPage() {
                     <div className={styles.quickStatsGrid}>
                         <div className={styles.quickStat}>
                             <div className={styles.quickStatVal}>
-                                {weekLoading ? '—' : (weekStats.avgMood > 0 ? `${weekStats.avgMood}%` : '—')}
+                                {weekLoading || weekError || weekStats.avgMood == null ? '—' : `${weekStats.avgMood}%`}
                             </div>
                             <div className={styles.quickStatLbl}>{isPt ? 'Humor Semanal' : 'Weekly Mood'}</div>
                         </div>
                         <div className={styles.quickStat}>
-                            <div className={styles.quickStatVal}>{weekStats.streak}</div>
+                            <div className={styles.quickStatVal}>{weekLoading || weekError ? '—' : weekStats.totalLogs}</div>
                             <div className={styles.quickStatLbl}>{isPt ? 'Registos Totais' : 'Total Logs'}</div>
                         </div>
                     </div>

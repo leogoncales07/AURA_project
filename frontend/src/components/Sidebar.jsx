@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import { useI18n } from '@/i18n';
 import { 
@@ -10,16 +10,16 @@ import {
   Moon, 
   Leaf, 
   ClipboardCheck, 
-  MessageSquare, 
+  ArrowUpRight,
   Settings
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from '@/context/AuthContext';
+import styles from './Sidebar.module.css';
 
 export default function AuraSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { t } = useI18n();
   const { user, initials } = useAuth();
 
@@ -31,7 +31,6 @@ export default function AuraSidebar() {
   const mainLinks = [
     { label: t('nav.home'),       href: "/dashboard",   icon: <LayoutDashboard size={18} strokeWidth={1.75} /> },
     { label: t('nav.progress'),   href: "/reports",     icon: <BarChart3 size={18} strokeWidth={1.75} /> },
-    { label: t('nav.chat'),       href: "/chat",        icon: <MessageSquare size={18} strokeWidth={1.75} /> },
   ];
 
   const wellnessLinks = [
@@ -131,35 +130,27 @@ export default function AuraSidebar() {
           flexDirection: 'column',
           gap: '12px'
         }}>
-          {/* Quick Action Button (Apple Style) */}
-          <div style={{ padding: '0 8px', display: 'flex', justifyContent: open ? 'flex-start' : 'center' }}>
-            <button 
-              onClick={() => router.push('/chat')}
+          {/* Primary entry to the Aura conversation */}
+          <div style={{ padding: open ? '0 8px' : '0', display: 'flex', justifyContent: 'center' }}>
+            <Link
+              href="/chat"
+              className={styles.askAura}
+              aria-label="Ask Aura"
+              title="Ask Aura"
+              aria-current={isActive('/chat') ? 'page' : undefined}
               style={{
-                width: open ? '100%' : '32px',
-                height: '32px',
-                borderRadius: open ? '10px' : '50%',
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                cursor: 'pointer',
-                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                width: open ? '100%' : '40px',
                 padding: open ? '0 12px' : '0',
-                color: '#10b981',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.transform = 'scale(1.02)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}
             >
               <img 
                 src="/aura-ai-logo.png" 
-                alt="AURA AI" 
-                style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} 
+                alt=""
+                aria-hidden="true"
+                style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
               />
-              {open && <span style={{ fontSize: '13px', fontWeight: 600 }}>ask AURA AI</span>}
-            </button>
+              {open && <><span className={styles.askAuraLabel}>Ask Aura</span><ArrowUpRight size={16} aria-hidden="true" /></>}
+            </Link>
           </div>
 
           <SidebarLink

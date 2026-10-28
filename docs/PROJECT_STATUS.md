@@ -32,6 +32,10 @@
 
 ## Verificações e limites
 
+### Revisão web em 28/10/2026
+
+Corrigidos os cálculos semanais e a sequência de registos nos relatórios, a validação/períodos de sono e o comportamento da exportação quando a janela é bloqueada. Retirada a chave fixa do utilitário antigo de encriptação, com recusa de operações sem configuração adequada. Foram aprovados 43 testes locais e as nove verificações no Supabase real; os ficheiros frontend alterados passaram no lint sem avisos. O teste visual completo está pendente devido ao bloqueio técnico do controlo do navegador. Ver [WEB_REVIEW.md](WEB_REVIEW.md) para evidência, limites e distinção entre encriptação do fornecedor e proteção adicional dos campos. Os números de 26/10 abaixo descrevem a validação dessa data.
+
 ### Avanço em 26/10/2026: contacto, Gemini e verificação da migração
 
 - Contacto autorizado pelo utilizador: **leogoncales07@gmail.com**. Foi configurado em `frontend/.env.local` e no exemplo de configuração; a build web confirmou a sua presença em `/privacy` e `/terms`. Responsáveis confirmados: **Leonardo Pierre Gonçales e Matheus Esaka Silva**, configurados em `AURA_LEGAL_ENTITY`. Os textos continuam como rascunho até à revisão dos restantes pontos legais.

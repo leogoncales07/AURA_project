@@ -1,17 +1,26 @@
 'use client';
-import { Activity, CheckCircle2, Coffee, Moon, Sun, Wind, Zap } from 'lucide-react';
+import { Activity, Moon, Sun, Wind } from 'lucide-react';
 
 import React, { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
-import Card from '@/components/Card';
 import styles from './page.module.css';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/i18n';
+import { calculateSleepHours, sleepSummary } from '@/lib/wellness-metrics.mjs';
 
 export default function SleepPage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
+  const { locale } = useI18n();
   const [sleepLogs, setSleepLogs] = useState([]);
   const [timeframe, setTimeframe] = useState('Day');
-  const [sleepScore, setSleepScore] = useState(null);
+  const [referenceDate, setReferenceDate] = useState(null);
+
+  useEffect(() => {
+    // Server and first client render share an empty chart. Local dates are only
+    // calculated after mounting, when the browser's time zone is available.
+    setReferenceDate(new Date());
+  }, []);
 
   const [logModalVisible, setLogModalVisible] = useState(false);
   const [bedTimeInput, setBedTimeInput] = useState('23:30');
@@ -20,93 +29,41 @@ export default function SleepPage() {
   // Dynamic weekly chart data
   const [sleepError, setSleepError] = useState('');
   const [savingLog, setSavingLog] = useState(false);
-  const [weeklyData, setWeeklyData] = useState([]);
-  const updateMetricsFromLogs = (logs) => {
-    const quality = logs.filter(log => log.quality != null);
-    setSleepScore(quality.length ? Math.round(quality.reduce((sum, log) => sum + log.quality, 0) / quality.length) : null);
-    setWeeklyData(Array.from({ length: 7 }, (_, index) => {
-      const day = new Date(); day.setDate(day.getDate() - 6 + index);
-      const entry = logs.find(log => log.timestamp?.startsWith(day.toISOString().slice(0,10)));
-      return { day: day.toLocaleDateString(undefined, { weekday: 'short' }), duration: entry?.hours ?? null, quality: entry?.quality ?? null };
-    }));
-  };
   useEffect(() => {
-    const saved = localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user');
-    if (!saved) return;
-    const u = JSON.parse(saved); setUser(u);
-    api.getSleepLogs(u.id, 365).then(result => {
+    let active = true;
+    setSleepLogs([]); setSleepError('');
+    if (!user?.id) return;
+    api.getSleepLogs(user.id, 365).then(result => {
+      if (!active) return;
       if (result.error) setSleepError(result.error);
-      else { setSleepLogs(result.data.logs); updateMetricsFromLogs(result.data.logs); }
+      else setSleepLogs(result.data.logs);
     });
-  }, []);
-
-  const calculateHours = (bed, wake) => {
-    const bedParts = bed.split(':');
-    const wakeParts = wake.split(':');
-    if (bedParts.length !== 2 || wakeParts.length !== 2) return null;
-    
-    const bedH = parseInt(bedParts[0], 10);
-    const bedM = parseInt(bedParts[1], 10);
-    const wakeH = parseInt(wakeParts[0], 10);
-    const wakeM = parseInt(wakeParts[1], 10);
-    
-    if (isNaN(bedH) || isNaN(bedM) || isNaN(wakeH) || isNaN(wakeM)) return null;
-
-    const bedDecimal = bedH + (bedM / 60);
-    const wakeDecimal = wakeH + (wakeM / 60);
-
-    let diff = wakeDecimal - bedDecimal;
-    if (diff <= 0) diff += 24;
-    return parseFloat(diff.toFixed(1));
-  };
+    return () => { active = false; };
+  }, [user?.id]);
 
   const handleSaveLog = async () => {
     if (!user?.id || savingLog) return;
-    const hours = calculateHours(bedTimeInput, wakeTimeInput);
+    const hours = calculateSleepHours(bedTimeInput, wakeTimeInput);
     if (!hours || hours <= 0 || hours > 24) { setSleepError('Verifique os horários de sono. / Check sleep times.'); return; }
     setSavingLog(true); setSleepError('');
     const result = await api.logSleep(user.id, bedTimeInput, wakeTimeInput, hours);
     setSavingLog(false);
     if (result.error) { setSleepError(result.error); return; }
-    const updated = [result.data.log, ...sleepLogs];
-    setSleepLogs(updated); updateMetricsFromLogs(updated); setLogModalVisible(false);
+    const log = result.data.log;
+    setSleepLogs(previous => [log, ...previous.filter(entry => entry.id !== log.id)]);
+    setLogModalVisible(false);
   };
 
-  const getAggregatedData = () => {
-    if (!sleepLogs || !sleepLogs.length) return null;
-    const now = new Date();
-    let filtered = [];
-    
-    if (timeframe === 'Day') {
-         return sleepLogs[0]; 
-    } else if (timeframe === 'Week') {
-         const limit = new Date(now.setDate(now.getDate() - 7));
-         filtered = sleepLogs.filter(l => new Date(l.timestamp) >= limit);
-    } else if (timeframe === 'Month') {
-         const limit = new Date(now.setDate(now.getDate() - 30));
-         filtered = sleepLogs.filter(l => new Date(l.timestamp) >= limit);
-    } else if (timeframe === 'Year') {
-         const limit = new Date(now.setFullYear(now.getFullYear() - 1));
-         filtered = sleepLogs.filter(l => new Date(l.timestamp) >= limit);
-    }
-
-    if (!filtered.length) return sleepLogs[0];
-
-    const avgHours = filtered.reduce((acc, obj) => acc + obj.hours, 0) / filtered.length;
-    return {
-         hours: parseFloat(avgHours.toFixed(1)),
-         bedTime: "--:--", 
-         isAvg: true
-    };
-  };
-
-  const displayData = getAggregatedData();
-  const displayTime = displayData ? (displayData.isAvg ? `${displayData.hours}h` : displayData.bedTime) : "22:45";
-  const subText = displayData ? (displayData.isAvg ? "AVERAGE SLEEP" : "LOGGED BED TIME") : "WIND DOWN";
+  const dateLocale = locale === 'pt' ? 'pt-PT' : locale === 'en' ? 'en-GB' : locale;
+  const { displayData, weeklyData, sleepScore } = referenceDate
+    ? sleepSummary(sleepLogs, timeframe, referenceDate, dateLocale)
+    : { displayData: null, weeklyData: [], sleepScore: null };
+  const displayTime = displayData ? (displayData.isAvg ? `${displayData.hours}h` : displayData.bedTime) : '—';
+  const subText = displayData ? (displayData.isAvg ? 'AVERAGE SLEEP' : 'LOGGED BED TIME') : 'SEM DADOS / NO DATA';
 
   return (
     <AppShell title="sleep sanctuary">
-      {sleepError && <p role="alert">{sleepError}</p>}
+      {sleepError && !logModalVisible && <p role="alert">{sleepError}</p>}
       <div className={`${styles.container} fade-up-stagger`}>
         
         <div className={styles.timeframeTabs} style={{ alignSelf: 'center', margin: '0 auto', width: 'fit-content' }}>
@@ -284,7 +241,7 @@ export default function SleepPage() {
                   </div>
                   <div 
                     className={styles.chartBar} 
-                    style={{ height: `${(data.duration / 10) * 100}%` }} 
+                    style={{ height: `${Math.min((data.duration ?? 0) / 10, 1) * 100}%` }}
                   />
                   <div 
                     className={styles.chartDot} 
@@ -305,14 +262,15 @@ export default function SleepPage() {
 
       {logModalVisible && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h3>Log Sleep Data</h3>
+          <div className={styles.modalContent} role="dialog" aria-modal="true" aria-labelledby="sleep-log-title">
+            <h3 id="sleep-log-title">Log Sleep Data</h3>
             <p>Input your times in HH:MM format. We will calculate the total hours automatically.</p>
+            {sleepError && <p role="alert">{sleepError}</p>}
             
             <div className={styles.inputGroup}>
-              <label>Bed Time (e.g. 23:30)</label>
+              <label htmlFor="sleep-bed-time">Bed Time (e.g. 23:30)</label>
               <input 
-                type="text" 
+                id="sleep-bed-time" type="time" required disabled={savingLog}
                 value={bedTimeInput} 
                 onChange={(e) => setBedTimeInput(e.target.value)} 
                 placeholder="23:30" 
@@ -320,24 +278,24 @@ export default function SleepPage() {
             </div>
             
             <div className={styles.inputGroup}>
-              <label>Wake Time (e.g. 07:15)</label>
+              <label htmlFor="sleep-wake-time">Wake Time (e.g. 07:15)</label>
               <input 
-                type="text" 
+                id="sleep-wake-time" type="time" required disabled={savingLog}
                 value={wakeTimeInput} 
                 onChange={(e) => setWakeTimeInput(e.target.value)} 
                 placeholder="07:15" 
               />
             </div>
 
-            {calculateHours(bedTimeInput, wakeTimeInput) !== null && (
+            {calculateSleepHours(bedTimeInput, wakeTimeInput) !== null && (
               <div className={styles.previewText}>
-                {calculateHours(bedTimeInput, wakeTimeInput)} hours total
+                {calculateSleepHours(bedTimeInput, wakeTimeInput)} hours total
               </div>
             )}
             
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => setLogModalVisible(false)}>Cancel</button>
-              <button className={styles.saveBtn} onClick={handleSaveLog} disabled={savingLog}>Save</button>
+              <button className={styles.cancelBtn} onClick={() => setLogModalVisible(false)} disabled={savingLog}>Cancel</button>
+              <button className={styles.saveBtn} onClick={handleSaveLog} disabled={savingLog}>{savingLog ? 'Saving…' : 'Save'}</button>
             </div>
           </div>
         </div>
