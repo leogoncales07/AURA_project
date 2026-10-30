@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
+import { serviceUrl } from '../../mobile/lib/dev-server.mjs';
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 function storage() {
@@ -19,7 +20,7 @@ async function client(platform, fetch) {
   local.setItem('aura_token', 'expired'); local.setItem('aura_refresh_token', 'refresh'); local.setItem('aura_user', '{"id":"alice"}');
   const context = vm.createContext({ fetch, localStorage: local, sessionStorage: session, AsyncStorage: local,
     window: { location: { port: '3000', protocol: 'http:', hostname: 'localhost' }, dispatchEvent() {} },
-    Constants: {}, __DEV__: true, process: { env: {} }, console, AbortController, setTimeout, clearTimeout, Event,
+    Constants: {}, serviceUrl, __DEV__: true, process: { env: {} }, console, AbortController, setTimeout, clearTimeout, Event,
   });
   vm.runInContext(source + '\nglobalThis.client = { api, clearSession };', context);
   return { ...context.client, local, session };

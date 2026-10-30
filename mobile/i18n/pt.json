@@ -10,7 +10,9 @@
     "common": {
         "error": "Ocorreu um erro. Tente novamente.",
         "cancel": "Cancelar",
-        "save": "Guardar"
+        "save": "Guardar",
+        "retry": "Tentar novamente",
+        "loadFailed": "Não foi possível carregar os dados. Verifique a ligação ao servidor."
     },
     "app": {
         "name": "AURA",
@@ -42,6 +44,7 @@
         "demoFailed": "Acesso de demonstração falhou. Verifique o backend.",
         "demoButton": "Entrar no Modo de Apresentação",
         "forgotPassword": "Esqueceu-se da Palavra-passe?",
+        "rememberMe": "Manter sessão iniciada",
         "noAccount": "Não tem uma conta AURA?",
         "createAccount": "Crie a sua agora."
     },
@@ -103,7 +106,7 @@
         "score": "Pontuação",
         "aiAnalysis": "Análise IA",
         "done": "Concluído",
-        "riskDetailsLow": "Risco baixo – Não é necessário acompanhamento profissional.",
+        "riskDetailsLow": "Pontuação na faixa baixa deste questionário. Este resultado não substitui uma avaliação profissional.",
         "riskDetailsModerate": "Risco médio – Monitorização e apoio online.",
         "riskDetailsHigh": "Risco alto – Encaminhamento imediato para o profissional mais próximo.",
         "riskDetailsSevere": "Risco alto – Encaminhamento imediato para o profissional mais próximo."

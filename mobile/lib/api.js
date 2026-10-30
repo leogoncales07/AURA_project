@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Constants from 'expo-constants';
+import { serviceUrl } from './dev-server.mjs';
 
 // ── API URL — always derived from Expo's Metro host (same machine, port 8000) ──
 // This avoids hardcoded IPs that break whenever the router reassigns a new address.
@@ -10,16 +11,7 @@ const _hostUri =
     Constants?.manifest?.debuggerHost ||    // Legacy
     '';
 
-let API_URL;
-if (process.env.EXPO_PUBLIC_API_URL) {
-    API_URL = process.env.EXPO_PUBLIC_API_URL;
-} else if (__DEV__ && _hostUri && !_hostUri.includes('exp.direct') && !_hostUri.includes('tunnel')) {
-    // Extract just the IP (strip the Metro port e.g. "192.168.68.51:8081" → "192.168.68.51")
-    API_URL = `http://${_hostUri.split(':')[0]}:8000`;
-} else {
-    // Fallback: read from .env or last-known IP
-    API_URL = 'http://localhost:8000';
-}
+const API_URL = serviceUrl(process.env.EXPO_PUBLIC_API_URL, _hostUri, 8000, __DEV__);
 
 
 let refreshPromise;
@@ -134,10 +126,10 @@ export const api = {
         const locale = await AsyncStorage.getItem('aura_locale') || 'pt';
         return fetchApi(`/questionnaires/${qId}?lang=${locale}`);
     },
-    submitAssessment: (userId, questionnaireId, answers) =>
+    submitAssessment: (userId, questionnaireId, answers, language = 'pt') =>
         fetchApi('/assessments/submit', {
             method: 'POST',
-            body: { user_id: userId, questionnaire_id: questionnaireId, answers },
+            body: { user_id: userId, questionnaire_id: questionnaireId, answers, language },
         }),
     getHistory: (userId) => fetchApi(`/assessments/${userId}/history`),
 

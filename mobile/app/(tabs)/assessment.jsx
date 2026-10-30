@@ -13,7 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import SettingsModal from '../../components/SettingsModal';
 
 export default function AssessmentScreen() {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
     const isDark = theme === 'dark';
@@ -25,6 +25,7 @@ export default function AssessmentScreen() {
     const [result, setResult] = useState(null);
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [userId, setUserId] = useState(null);
     const [user, setUser] = useState(null);
     const [settingsVisible, setSettingsVisible] = useState(false);
@@ -42,9 +43,11 @@ export default function AssessmentScreen() {
 
     const loadData = async (uid) => {
         setLoading(true);
+        setLoadError('');
         const [qRes, hRes] = await Promise.all([api.listQuestionnaires(), api.getHistory(uid)]);
         if (qRes.data) setQuestionnaires(qRes.data.questionnaires || []);
         if (hRes.data) setHistory(hRes.data.assessments || []);
+        if (qRes.error || hRes.error) setLoadError(qRes.error || hRes.error);
         setLoading(false);
     };
 
@@ -67,7 +70,7 @@ export default function AssessmentScreen() {
     const handleSubmit = async () => {
         if (!userId || answers.includes(null)) return;
         setSubmitting(true);
-        const { data, error } = await api.submitAssessment(userId, activeForm.id, answers);
+        const { data, error } = await api.submitAssessment(userId, activeForm.id, answers, locale);
         setResult(data || { error: error || 'Submission failed' });
         setSubmitting(false);
     };
@@ -231,6 +234,12 @@ export default function AssessmentScreen() {
                 <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 40 }} />
             ) : (
                 <>
+                    {!!loadError && <View style={[styles.loadError, { borderColor: colors.accentPink }]}>
+                        <Text style={{ color: colors.accentPink, textAlign: 'center' }}>{t('common.loadFailed')}</Text>
+                        <TouchableOpacity onPress={() => loadData(userId)}>
+                            <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('common.retry')}</Text>
+                        </TouchableOpacity>
+                    </View>}
                     <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>{t('assessment.available')}</Text>
                     {questionnaires.map((q) => (
                         <TouchableOpacity key={q.id} style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => startForm(q.id)} activeOpacity={0.8}>
@@ -277,6 +286,7 @@ const styles = StyleSheet.create({
     avatarBtn: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
     avatarText: { fontWeight: '700', color: '#fff', fontSize: 16 },
     sectionLabel: { ...Fonts.semibold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.sm },
+    loadError: { borderWidth: 1, borderRadius: Radius.md, padding: Spacing.md, alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.md },
 
     backBtn: { marginBottom: Spacing.md },
     backBtnText: { ...Fonts.semibold, fontSize: 15 },

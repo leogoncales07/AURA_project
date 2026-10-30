@@ -1,5 +1,5 @@
 'use client';
-import { Activity, Moon, Sun, Wind } from 'lucide-react';
+            import { Activity, Moon, Sun, Wind } from 'lucide-react';
 
 import React, { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';

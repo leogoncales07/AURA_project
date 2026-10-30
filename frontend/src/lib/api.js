@@ -112,7 +112,7 @@ export const api = {
         const lang = typeof window !== 'undefined' ? localStorage.getItem('aura_locale') || 'pt' : 'pt';
         return fetchApi(`/questionnaires/${qId}?lang=${lang}`);
     },
-    submitAssessment: (userId, questionnaireId, answers) => fetchApi('/assessments/submit', { method: 'POST', body: { user_id: userId, questionnaire_id: questionnaireId, answers } }),
+    submitAssessment: (userId, questionnaireId, answers, language = 'pt') => fetchApi('/assessments/submit', { method: 'POST', body: { user_id: userId, questionnaire_id: questionnaireId, answers, language } }),
     getHistory: (userId) => fetchApi(`/assessments/${userId}/history`),
 
     // Library

@@ -10,7 +10,9 @@
     "common": {
         "error": "Something went wrong. Try again.",
         "cancel": "Cancel",
-        "save": "Save"
+        "save": "Save",
+        "retry": "Try again",
+        "loadFailed": "Could not load data. Check the server connection."
     },
     "app": {
         "name": "AURA",
@@ -42,6 +44,7 @@
         "demoFailed": "Demo access failed. Check the backend.",
         "demoButton": "Enter Presentation Mode",
         "forgotPassword": "Forgot your password?",
+        "rememberMe": "Keep me signed in",
         "noAccount": "Don't have an AURA account?",
         "createAccount": "Create yours now."
     },
@@ -103,7 +106,7 @@
         "score": "Score",
         "aiAnalysis": "AI Analysis",
         "done": "Done",
-        "riskDetailsLow": "Low risk – No professional follow-up is needed.",
+        "riskDetailsLow": "Score in the low range for this questionnaire. This result does not replace a professional assessment.",
         "riskDetailsModerate": "Medium risk – Monitoring and online support.",
         "riskDetailsHigh": "High risk – Immediate referral to the nearest professional.",
         "riskDetailsSevere": "High risk – Immediate referral to the nearest professional."

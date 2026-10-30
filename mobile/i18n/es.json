@@ -9,7 +9,9 @@
     "common": {
         "error": "Algo salió mal. Inténtelo de nuevo.",
         "cancel": "Cancelar",
-        "save": "Guardar"
+        "save": "Guardar",
+        "retry": "Reintentar",
+        "loadFailed": "No se pudieron cargar los datos. Compruebe la conexión con el servidor."
     },
     "app": {
         "name": "AURA",
@@ -40,6 +42,7 @@
         "demoFailed": "Acceso de demostración falló. Verifique el backend.",
         "demoButton": "Entrar en Modo de Presentación",
         "forgotPassword": "¿Olvidó su contraseña?",
+        "rememberMe": "Mantener sesión iniciada",
         "noAccount": "¿No tienes una cuenta AURA?",
         "createAccount": "Crea la tuya ahora."
     },

@@ -49,7 +49,7 @@ node scripts/start-local.mjs --expo-go
 
 Este modo inicia a API e a web acessíveis na rede local e o Metro direcionado explicitamente para **Expo Go**. Deteta a interface Wi-Fi e fornece os URLs do backend e da web ao bundle, evitando o IP antigo de `.env`. O QR code aparece no terminal. Se houver várias interfaces sem uma Wi-Fi identificável, indicar o endereço local com `--host=IP`.
 
-Se já existir um Metro aberto, pode mantê-lo e iniciar apenas API/web em modo LAN com `node scripts/start-local.mjs --lan`. Ao alterar `mobile/.env`, recarregar o projeto no Expo Go; se continuar a usar os endereços antigos, reiniciar o Metro com `npm run start:go` em `mobile`.
+Se já existir um Metro aberto, pode mantê-lo e iniciar apenas API/web em modo LAN com `node scripts/start-local.mjs --lan`. Em desenvolvimento, o Expo Go usa automaticamente o endereço LAN atual do Metro para a API e os links legais locais, mesmo que `mobile/.env` contenha um IP local antigo. Depois de alterar a configuração, reiniciar o Metro com `npm run start:go` em `mobile` e reabrir o QR code. Para um servidor remoto ou túnel, configurar URLs acessíveis ao telemóvel em `mobile/.env`.
 
 Um bundle Android validado verifica a compilação JavaScript e dos assets. A reprodução em segundo plano, permissões e alterações de configuração nativa devem também ser testadas posteriormente numa build própria, respeitando as limitações do Expo Go. Esta etapa não exige publicação nas lojas.
 

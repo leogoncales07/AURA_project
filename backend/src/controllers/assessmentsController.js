@@ -50,20 +50,29 @@ const scoreAssessment = (questionnaireId, answers) => {
   return { total_score: answers.reduce((sum, value) => sum + value, 0), risk_level: 'unknown' };
 };
 
-const generateAISummary = async (questionnaireName, riskLevel, score, answers, questions) => {
+const summaryLanguages = {
+  pt: { name: 'Portuguese', fallback: 'Obrigado por completar a avaliação. Os seus resultados foram registados para acompanhar o seu bem-estar.' },
+  en: { name: 'English', fallback: 'Thank you for completing the assessment. Your results were saved to help you track your wellbeing.' },
+  es: { name: 'Spanish', fallback: 'Gracias por completar la evaluación. Sus resultados se han guardado para ayudarle a seguir su bienestar.' },
+  fr: { name: 'French', fallback: 'Merci d’avoir terminé l’évaluation. Vos résultats ont été enregistrés pour vous aider à suivre votre bien-être.' },
+  de: { name: 'German', fallback: 'Vielen Dank, dass Sie die Bewertung abgeschlossen haben. Ihre Ergebnisse wurden gespeichert, damit Sie Ihr Wohlbefinden verfolgen können.' },
+};
+
+const generateAISummary = async (questionnaireName, riskLevel, score, answers, questions, language) => {
     try {
         const answersText = answers.map((a, i) => `Q: ${questions[i]}\nA: ${a}`).join('\n');
-        const systemPrompt = `[System Instruction: You are the 'AURA Clinical AI', an empathetic and professional assistant analyzing a user's mental health assessment.
-The user just completed the ${questionnaireName} assessment.
-Their total score is ${score}, which indicates a "${riskLevel}" risk level.
+        const prompt = `The user just completed the ${questionnaireName} assessment.
+Their total score is ${score}, which corresponds to the application's "${riskLevel}" screening category.
 
-Here are their responses:
+Questions and selected answers:
 ${answersText}
 
-Write a short, compassionate, and professional analysis (max 3-4 sentences) responding directly to the user addressing them as "você" (in Portuguese) or "you" (if English). Don't give a medical diagnosis, but validate their feelings based on their answers and recommend taking care of their mental health or seeking professional help if the risk is High or Severe. Respond in the same language as the questionnaire phrases above.]`;
+Write a short, compassionate analysis (3-4 sentences) addressed directly to the user. Do not diagnose, claim that professional support is unnecessary, or make an emergency assessment. Encourage seeking qualified support if they are concerned or their answers indicate high risk.`;
+        const systemInstruction = `You are AURA, an empathetic wellbeing assistant. Write the entire response only in ${summaryLanguages[language].name}. The requested language takes precedence over the language of any quoted questionnaire text. Do not provide a medical diagnosis.`;
 
         const result = await generateText({
-            contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            systemInstruction,
             maxOutputTokens: 512,
         });
         return result.text;
@@ -74,12 +83,15 @@ Write a short, compassionate, and professional analysis (max 3-4 sentences) resp
 };
 
 export const submitAssessment = catchAsync(async (req, res) => {
-  const { user_id, questionnaire_id, answers } = req.body;
+  const { user_id, questionnaire_id, answers, language = 'pt' } = req.body;
   if (!user_id || !questionnaire_id || !Array.isArray(answers)) {
     return res.status(400).json({ status: 'fail', message: 'Missing required fields' });
   }
+  if (!Object.hasOwn(summaryLanguages, language)) {
+    return res.status(400).json({ status: 'fail', message: 'Unsupported assessment language' });
+  }
 
-  const questionnaire = getQuestionnaire(questionnaire_id);
+  const questionnaire = getQuestionnaire(questionnaire_id, language);
   if (!questionnaire) {
     return res.status(404).json({ status: 'fail', message: 'Questionnaire not found' });
   }
@@ -99,9 +111,9 @@ export const submitAssessment = catchAsync(async (req, res) => {
     return opt ? opt.text : val;
   });
 
-  let ai_summary = await generateAISummary(questionnaire.name, score_data.risk_level, score_data.total_score, formattedAnswers, questionnaire.questions);
+  let ai_summary = await generateAISummary(questionnaire.name, score_data.risk_level, score_data.total_score, formattedAnswers, questionnaire.questions, language);
   if (!ai_summary) {
-    ai_summary = "Obrigado por completar a avaliação. Os seus resultados foram registados para ajudar no acompanhamento do seu bem-estar. / Thank you for completing the assessment.";
+    ai_summary = summaryLanguages[language].fallback;
   }
 
   const assessment = {

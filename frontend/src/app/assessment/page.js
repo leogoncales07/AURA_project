@@ -13,7 +13,7 @@ import { useI18n } from '@/i18n';
 import { api } from '@/lib/api';
 
 export default function AssessmentPage() {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const router = useRouter();
 
     // States
@@ -81,7 +81,7 @@ export default function AssessmentPage() {
         if (!userId || answers.includes(null)) return;
         setSubmitting(true);
 
-        const { data, error } = await api.submitAssessment(userId, activeForm.id, answers);
+        const { data, error } = await api.submitAssessment(userId, activeForm.id, answers, locale);
 
         if (data) {
             setResult(data);

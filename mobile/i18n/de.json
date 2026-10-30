@@ -9,7 +9,9 @@
     "common": {
         "error": "Etwas ist schief gelaufen. Bitte erneut versuchen.",
         "cancel": "Abbrechen",
-        "save": "Speichern"
+        "save": "Speichern",
+        "retry": "Erneut versuchen",
+        "loadFailed": "Daten konnten nicht geladen werden. Prüfen Sie die Serververbindung."
     },
     "app": {
         "name": "AURA",
@@ -40,6 +42,7 @@
         "demoFailed": "Demo-Zugang fehlgeschlagen. Backend prüfen.",
         "demoButton": "Präsentationsmodus starten",
         "forgotPassword": "Passwort vergessen?",
+        "rememberMe": "Angemeldet bleiben",
         "noAccount": "Noch kein AURA-Konto?",
         "createAccount": "Jetzt erstellen."
     },

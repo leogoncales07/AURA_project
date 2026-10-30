@@ -30,6 +30,8 @@ export default function ChatScreen() {
     
     // Multi-thread state
     const [threads, setThreads] = useState([]);
+    const [historyError, setHistoryError] = useState('');
+    const [messagesError, setMessagesError] = useState('');
     const [currentThreadId, setCurrentThreadId] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     
@@ -62,7 +64,9 @@ export default function ChatScreen() {
     }, []);
 
     const loadThreads = async (uid) => {
-        const { data } = await api.getConversations(uid, 50);
+        setHistoryError('');
+        const { data, error } = await api.getConversations(uid, 50);
+        if (error) { setHistoryError(error); return; }
         if (data?.conversations) {
             setThreads(data.conversations);
             // Auto load first thread if multiple exist
@@ -75,8 +79,10 @@ export default function ChatScreen() {
     const loadThreadMessages = async (uid, threadId) => {
         setCurrentThreadId(threadId);
         setSidebarOpen(false);
+        setMessagesError('');
         setMessages([]); // Clear visually while loading
-        const { data } = await api.getConversationMessages(uid, threadId);
+        const { data, error } = await api.getConversationMessages(uid, threadId);
+        if (error) { setMessagesError(error); return; }
         if (data?.messages) {
             const mapped = data.messages.map((c, i) => ({
                 id: String(i),
@@ -90,6 +96,7 @@ export default function ChatScreen() {
     const handleNewChat = () => {
         setCurrentThreadId(null);
         setMessages([]);
+        setMessagesError('');
         setSidebarOpen(false);
     };
 
@@ -201,7 +208,10 @@ export default function ChatScreen() {
                         <View style={styles.emptyState}>
                             <Text style={styles.emptyEmoji}>✨</Text>
                             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('chat.botName')}</Text>
-                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('chat.emptyState')}</Text>
+                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{messagesError || historyError ? t('common.loadFailed') : t('chat.emptyState')}</Text>
+                            {!!messagesError && <TouchableOpacity onPress={() => loadThreadMessages(userId, currentThreadId)} style={styles.retryButton}>
+                                <Text style={{ color: colors.primary }}>{t('common.retry')}</Text>
+                            </TouchableOpacity>}
                         </View>
                     }
                     ListFooterComponent={
@@ -274,6 +284,12 @@ export default function ChatScreen() {
                     </TouchableOpacity>
 
                     {/* Thread List */}
+                    {!!historyError && <View style={styles.historyError}>
+                        <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>{t('common.loadFailed')}</Text>
+                        <TouchableOpacity onPress={() => loadThreads(userId)} style={styles.retryButton}>
+                            <Text style={{ color: colors.primary }}>{t('common.retry')}</Text>
+                        </TouchableOpacity>
+                    </View>}
                     <FlatList
                         data={threads}
                         keyExtractor={(item) => String(item.id)}
@@ -349,6 +365,8 @@ const styles = StyleSheet.create({
     emptyEmoji: { fontSize: 64, marginBottom: Spacing.md },
     emptyTitle: { ...Fonts.serif, fontSize: 28, marginBottom: Spacing.xs },
     emptyText: { ...Fonts.regular, fontSize: 15, textAlign: 'center' },
+    historyError: { alignItems: 'center', padding: Spacing.md, gap: Spacing.sm },
+    retryButton: { padding: Spacing.sm },
 
     msgRow: { flexDirection: 'row', marginBottom: Spacing.md, alignItems: 'flex-end', gap: Spacing.sm },
     msgRowLeft: { justifyContent: 'flex-start' },

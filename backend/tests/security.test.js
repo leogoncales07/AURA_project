@@ -15,14 +15,18 @@ process.env.AURA_LEGACY_DATA_URL = pathToFileURL(legacyDirectory + path.sep).hre
 const originalFetch = globalThis.fetch;
 const alice = '11111111-1111-4111-8111-111111111111';
 const bob = '22222222-2222-4222-8222-222222222222';
-let requests = [], failTable = '', failDelete = false, recoveryFailure = null, server, base;
+let requests = [], failTable = '', failDelete = false, recoveryFailure = null, geminiRequest = null, server, base;
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 globalThis.fetch = async (input, options = {}) => {
   const url = new URL(typeof input === 'string' ? input : input.url);
-  if (url.hostname !== 'supabase.test') return originalFetch(input, options);
   const headers = new Headers(options.headers || input.headers);
   const method = options.method || 'GET';
   const body = options.body ? JSON.parse(options.body) : null;
+  if (url.hostname === 'generativelanguage.googleapis.com') {
+    geminiRequest = body;
+    return json({ candidates: [{ content: { parts: [{ text: 'English assessment summary.' }] } }] });
+  }
+  if (url.hostname !== 'supabase.test') return originalFetch(input, options);
   requests.push({ url, method, body, token: headers.get('authorization') });
   if (url.pathname === '/auth/v1/user' && method === 'GET') {
     const id = headers.get('authorization') === 'Bearer bob' ? bob : alice;
@@ -103,6 +107,36 @@ test('invalid answers and mood values cannot be persisted', async () => {
   assert.equal((await call('/companion/log', { user_id: alice, mood_score: 11 })).status, 400);
   assert.equal((await call('/companion/sleep', { user_id: alice, hours: -2 })).status, 400);
   assert.equal((await call('/assessments/submit', { user_id: alice, questionnaire_id: 'PHQ-9', answers: Array(9).fill('3') })).status, 400);
+});
+test('assessment summary follows the selected language on web and mobile requests', async () => {
+  const previousKey = process.env.G_KEY;
+  const previousEnabled = process.env.GEMINI_ENABLED;
+  try {
+    process.env.G_KEY = 'test-key';
+    process.env.GEMINI_ENABLED = 'true';
+    geminiRequest = null;
+    const english = await call('/assessments/submit', {
+      user_id: alice, questionnaire_id: 'WHO-5', answers: Array(5).fill(4), language: 'en',
+    });
+    assert.equal(english.status, 201);
+    assert.equal(english.body.ai_summary, 'English assessment summary.');
+    assert.match(geminiRequest.systemInstruction.parts[0].text, /only in English/);
+    assert.match(geminiRequest.contents[0].parts[0].text, /Have you been feeling cheerful/);
+    assert.doesNotMatch(geminiRequest.contents[0].parts[0].text, /Tem-se sentido alegre/);
+
+    process.env.GEMINI_ENABLED = 'false';
+    const german = await call('/assessments/submit', {
+      user_id: alice, questionnaire_id: 'WHO-5', answers: Array(5).fill(4), language: 'de',
+    });
+    assert.equal(german.status, 201);
+    assert.match(german.body.ai_summary, /^Vielen Dank/);
+    assert.equal((await call('/assessments/submit', {
+      user_id: alice, questionnaire_id: 'WHO-5', answers: Array(5).fill(4), language: 'xx',
+    })).status, 400);
+  } finally {
+    if (previousKey === undefined) delete process.env.G_KEY; else process.env.G_KEY = previousKey;
+    if (previousEnabled === undefined) delete process.env.GEMINI_ENABLED; else process.env.GEMINI_ENABLED = previousEnabled;
+  }
 });
 test('database outages produce an error instead of false success or local fallback', async () => {
   failTable = 'save_daily_log';
