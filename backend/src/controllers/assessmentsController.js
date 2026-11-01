@@ -123,6 +123,7 @@ export const submitAssessment = catchAsync(async (req, res) => {
     answers,
     total_score: score_data.total_score,
     risk_level: score_data.risk_level,
+    language,
     ai_summary,
     created_at: new Date().toISOString()
   };

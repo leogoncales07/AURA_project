@@ -2,13 +2,14 @@ export default function Card({
     children,
     glass = false,
     className = '',
+    as: Element = 'div',
     ...props
 }) {
     const classes = `${glass ? 'glass' : 'aura-card'} ${className}`;
 
     return (
-        <div className={classes} {...props}>
+        <Element className={classes} {...props}>
             {children}
-        </div>
+        </Element>
     );
 }

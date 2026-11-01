@@ -6,14 +6,15 @@ import { purgeLegacyData } from '../services/legacyDataService.js';
 
 export const requestDataExport = catchAsync(async (req, res) => {
   const data = wellness(req.supabase, req.user.id);
-  const [moodLogs, sleepLogs, assessments, reflections, conversations, settings] = await Promise.all([
+  const [moodLogs, sleepLogs, assessments, reflections, conversations, settings, meditations, reports] = await Promise.all([
     data.logs(), data.sleep(), data.assessments(), data.reflections(), data.threads(),
     checked(req.supabase.from('app_settings').select('preferences').eq('user_id', req.user.id).maybeSingle()),
+    data.meditations(), data.reports(),
   ]);
   const { current_token_hash, ...user } = req.user;
   res.json({ status: 'success', data: {
     exportedAt: new Date().toISOString(), user, moodLogs, sleepLogs, assessments, reflections,
-    conversations, settings: settings?.preferences || {},
+    conversations, meditations, reports, settings: settings?.preferences || {},
   } });
 });
 

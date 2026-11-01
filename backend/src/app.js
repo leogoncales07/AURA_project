@@ -17,6 +17,7 @@ import libraryRouter from './routes/libraryRoutes.js';
 import questionnairesRouter from './routes/questionnairesRoutes.js';
 import assessmentsRouter from './routes/assessmentsRoutes.js';
 import companionRouter from './routes/companionRoutes.js';
+import progressRouter from './routes/progressRoutes.js';
 
 const app = express();
 const proxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
@@ -60,6 +61,7 @@ app.use('/api', limiter);
 app.use('/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 60 }));
 app.use('/companion', limiter);
 app.use('/assessments', limiter);
+app.use('/progress', limiter);
 
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
@@ -71,6 +73,7 @@ app.use('/library', libraryRouter);
 app.use('/questionnaires', questionnairesRouter);
 app.use('/assessments', assessmentsRouter);
 app.use('/companion', companionRouter);
+app.use('/progress', progressRouter);
 app.use('/api/v1/account', accountRouter);
 app.use('/api/v1/settings', settingsRouter);
 app.use('/api/v1/integrations', integrationRouter);

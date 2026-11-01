@@ -1,0 +1,51 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { journeyEntries, monthlySnapshot, calendarDay } from '../src/services/progressService.js';
+import { practiceElapsed, practicePhase, audioPracticeDelta } from '../../frontend/src/lib/practice.mjs';
+import { reportHtml } from '../../frontend/src/lib/progress-report.mjs';
+const empty = () => ({ logs: [], sleep: [], reflections: [], assessments: [], meditations: [] });
+test('journey preserves calendar dates, avoids duplicate sleep summaries and keeps complete entry details', () => {
+  const data = empty();
+  data.logs = [{ id: 'a', log_date: '2026-11-01', mood_score: 7, sleep_hours: 8 }, { id: 'b', log_date: '2026-10-31', sleep_hours: 6 }];
+  data.sleep = [{ id: 'c', created_at: '2026-11-01T10:00:00Z', hours: 8 }];
+  data.reflections = [{ id: 'd', created_at: '2026-11-01T12:00:00Z', text: 'Synthetic' }];
+  const entries = journeyEntries(data);
+  assert.equal(entries.length, 4);
+  assert.equal(entries.filter(entry => entry.kind === 'sleep').length, 2);
+  assert.equal(entries.find(entry => entry.kind === 'reflection').record.text, 'Synthetic');
+  assert.equal(entries[0].day, '2026-11-01');
+  assert.equal(calendarDay({ log_date: '2026-11-01' }, 'America/Los_Angeles'), '2026-11-01');
+  assert.equal(calendarDay({ created_at: '2026-11-01T00:30:00Z' }, 'America/Los_Angeles'), '2026-10-31');
+});
+test('monthly reports use recorded sleep, actual completed practices and one mood per calendar day', () => {
+  const data = empty();
+  data.logs = [{ id: 'a', log_date: '2026-11-01', mood_score: 8, sleep_hours: 0 }, { id: 'b', log_date: '2026-11-02', mood_score: 6 }, { id: 'c', log_date: '2026-10-31', mood_score: 1 }];
+  data.sleep = [{ id: 'd', created_at: '2026-11-02T08:00:00Z', hours: 8 }];
+  data.meditations = [{ id: 'e', created_at: '2026-11-03T12:00:00Z', practiced_seconds: 180 }];
+  const snapshot = monthlySnapshot(data, '2026-11');
+  assert.equal(snapshot.avgMood, 70); assert.equal(snapshot.avgSleep, 4);
+  assert.equal(snapshot.meditationSessions, 1); assert.equal(snapshot.meditationMinutes, 3);
+  assert.equal(snapshot.daysActive, 3); assert.equal(snapshot.moodTrend, null);
+  const noData = monthlySnapshot(empty(), '2026-11');
+  assert.equal(noData.avgMood, null); assert.equal(noData.avgSleep, null); assert.equal(noData.moodTrend, null);
+});
+test('practice timer respects pauses, caps completion and uses each exercise breathing pattern', () => {
+  assert.equal(practiceElapsed(10, 30, false, 60), 10);
+  assert.equal(practiceElapsed(10, 80, true, 60), 60);
+  assert.equal(practiceElapsed(10, -1, true, 60), 10);
+  assert.deepEqual(practicePhase('478_breathing', 4), { name: 'hold', remaining: 7 });
+  assert.deepEqual(practicePhase('478_breathing', 11), { name: 'exhale', remaining: 8 });
+  assert.deepEqual(practicePhase('box_breathing', 12), { name: 'rest', remaining: 4 });
+  assert.equal(practicePhase('body_scan', 12), null);
+  assert.equal(audioPracticeDelta(1000, { isLoaded: true, isPlaying: false, positionMillis: 9000 }), 0);
+  assert.equal(audioPracticeDelta(1000, { isLoaded: true, isPlaying: true, isBuffering: true, positionMillis: 9000 }), 0);
+  assert.equal(audioPracticeDelta(1000, { isLoaded: true, isPlaying: true, positionMillis: 9000 }), 8);
+  assert.equal(audioPracticeDelta(59000, { isLoaded: true, isPlaying: true, didJustFinish: true, durationMillis: 60000, positionMillis: 500 }), 1.5);
+});
+test('printable saved report escapes user-controlled content and distinguishes missing measurements', () => {
+  const snapshot = monthlySnapshot(empty(), '2026-11');
+  snapshot.assessments.push({ questionnaire: '<img src=x onerror=alert(1)>', total_score: 5 });
+  const html = reportHtml({ snapshot, created_at: '2026-11-01T12:00:00Z', userName: '<script>bad()</script>', locale: 'en' });
+  assert.doesNotMatch(html, /<script>|<img/); assert.match(html, /&lt;script&gt;/); assert.match(html, /—/);
+  assert.match(html, /November 2026/);
+});

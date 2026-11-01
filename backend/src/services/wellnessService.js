@@ -38,6 +38,14 @@ export const wellness = (client, userId) => ({
     return readAll(() => client.from('assessments').select('*').eq('user_id', userId)
       .order('created_at', { ascending: false }).order('id'));
   },
+  meditations() {
+    return readAll(() => client.from('meditation_sessions').select('*').eq('user_id', userId)
+      .order('created_at', { ascending: false }).order('id'));
+  },
+  reports() {
+    return readAll(() => client.from('wellness_reports').select('*').eq('user_id', userId)
+      .order('created_at', { ascending: false }).order('id'));
+  },
   async threads() {
     const rows = await readAll(() => client.from('conversations').select('*').eq('user_id', userId)
       .eq('agent_type', 'CompanionBot').order('created_at', { ascending: true }).order('id'));

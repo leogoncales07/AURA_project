@@ -7,6 +7,7 @@ const alice = '11111111-1111-4111-8111-111111111111';
 const bob = '22222222-2222-4222-8222-222222222222';
 let db;
 const migration = await fs.readFile(new URL('../../src/db/migrations/20261026_durable_wellness.sql', import.meta.url), 'utf8');
+const progressMigration = await fs.readFile(new URL('../../src/db/migrations/20261101_progress.sql', import.meta.url), 'utf8');
 async function asUser(id) {
   await db.exec('RESET ROLE; SET ROLE authenticated;');
   await db.query("SELECT set_config('request.jwt.claim.sub', $1, false)", [id]);
@@ -36,6 +37,7 @@ before(async () => {
   // Exercise backfill for an existing account, and the trigger for a new account.
   await db.query('INSERT INTO auth.users(id, raw_user_meta_data) VALUES ($1, $2)', [alice, { name: 'Alice' }]);
   await db.exec(migration);
+  await db.exec(progressMigration);
   await db.query('INSERT INTO auth.users(id, raw_user_meta_data) VALUES ($1, $2)', [bob, { name: 'Bob' }]);
 });
 after(async () => { await db?.close(); });
@@ -44,6 +46,7 @@ test('migration runs in PostgreSQL and can be reapplied without losing data', as
   const { rows } = await db.query('SELECT id, name FROM public.users ORDER BY name');
   assert.deepEqual(rows, [{ id: alice, name: 'Alice' }, { id: bob, name: 'Bob' }]);
   await db.exec(migration);
+  await db.exec(progressMigration);
   assert.equal((await db.query('SELECT count(*)::int AS total FROM public.users')).rows[0].total, 2);
 });
 test('atomic daily and sleep functions preserve other measurements', async () => {
@@ -73,10 +76,30 @@ test('settings merge patches and remain private between accounts', async () => {
   await asUser(bob);
   assert.deepEqual((await db.query('SELECT * FROM public.app_settings')).rows, []);
 });
+test('progress records are private, immutable and reject incomplete practices', async () => {
+  await asUser(alice);
+  await db.query("INSERT INTO public.meditation_sessions(user_id,practice_id,title,duration_seconds,practiced_seconds) VALUES ($1,'box_breathing','Synthetic',60,60)", [alice]);
+  await db.query("INSERT INTO public.wellness_reports(user_id,period,snapshot) VALUES ($1,'2026-11','{}')", [alice]);
+  try {
+    assert.equal((await db.query("UPDATE public.wellness_reports SET snapshot = '{\"changed\":true}' WHERE user_id = $1 RETURNING id", [alice])).rows.length, 0);
+  } catch (error) { assert.equal(error.code, '42501'); }
+  assert.deepEqual((await db.query('SELECT snapshot FROM public.wellness_reports WHERE user_id = $1', [alice])).rows[0].snapshot, {});
+  await assert.rejects(db.query("INSERT INTO public.meditation_sessions(user_id,practice_id,title,duration_seconds,practiced_seconds) VALUES ($1,'box_breathing','Synthetic',60,5)", [alice]), error => error.code === '23514');
+  await asUser(bob);
+  for (const table of ['meditation_sessions', 'wellness_reports']) {
+    assert.deepEqual((await db.query(`SELECT * FROM public.${table}`)).rows, []);
+    assert.equal((await db.query(`DELETE FROM public.${table} WHERE user_id = $1 RETURNING id`, [alice])).rows.length, 0);
+  }
+  await assert.rejects(db.query("INSERT INTO public.wellness_reports(user_id,period,snapshot) VALUES ($1,'2026-11','{}')", [alice]), error => error.code === '42501');
+});
 test('wellness deletion clears only the current account and keeps its profile', async () => {
   await asUser(bob);
+  await db.query("INSERT INTO public.meditation_sessions(user_id,practice_id,title,duration_seconds,practiced_seconds) VALUES ($1,'box_breathing','Synthetic',60,60)", [bob]);
+  await db.query("INSERT INTO public.wellness_reports(user_id,period,snapshot) VALUES ($1,'2026-11','{}')", [bob]);
   await db.query('SELECT public.delete_wellness_data()');
   assert.equal(await count('daily_logs', bob), 0);
+  assert.equal(await count('meditation_sessions', bob), 0);
+  assert.equal(await count('wellness_reports', bob), 0);
   assert.equal((await db.query('SELECT id FROM public.users')).rows[0].id, bob);
   await asUser(alice);
   assert.equal(await count('daily_logs', alice), 1);
@@ -87,9 +110,11 @@ test('Auth deletion removes all wellness records transactionally', async () => {
   await db.query("INSERT INTO public.conversations(user_id, agent_type, role, message) VALUES ($1, 'CompanionBot', 'user', 'Synthetic')", [alice]);
   await db.query("INSERT INTO public.assessments(user_id, questionnaire, answers) VALUES ($1, 'PSS-10', '[]')", [alice]);
   await db.query("INSERT INTO public.user_sessions(user_id, session_type) VALUES ($1, 'assessment')", [alice]);
+  await db.query("INSERT INTO public.meditation_sessions(user_id,practice_id,title,duration_seconds,practiced_seconds) VALUES ($1,'box_breathing','Synthetic',60,60)", [alice]);
+  await db.query("INSERT INTO public.wellness_reports(user_id,period,snapshot) VALUES ($1,'2026-11','{}')", [alice]);
   await db.exec('RESET ROLE');
   await db.query('DELETE FROM auth.users WHERE id = $1', [alice]);
-  for (const table of ['daily_logs', 'sleep_logs', 'reflections', 'conversations', 'assessments', 'user_sessions', 'app_settings']) {
+  for (const table of ['daily_logs', 'sleep_logs', 'reflections', 'conversations', 'assessments', 'user_sessions', 'app_settings', 'meditation_sessions', 'wellness_reports']) {
     assert.equal(await count(table, alice), 0, table);
   }
   assert.equal((await db.query('SELECT id FROM public.users')).rows[0].id, bob);

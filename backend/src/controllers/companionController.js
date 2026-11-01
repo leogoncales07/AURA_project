@@ -348,8 +348,8 @@ export const getStats = catchAsync(async (req, res, next) => {
   }
 
   const data = store(req);
-  const [logs, sleep, threads, reflections, userAssessments] = await Promise.all([
-    data.logs(), data.sleep(), data.threads(), data.reflections(), data.assessments(),
+  const [logs, sleep, threads, reflections, userAssessments, meditations] = await Promise.all([
+    data.logs(), data.sleep(), data.threads(), data.reflections(), data.assessments(), data.meditations(),
   ]);
 
   // 1. Calculate Streak
@@ -366,6 +366,7 @@ export const getStats = catchAsync(async (req, res, next) => {
   });
   reflections.forEach(r => addDate(r.timestamp));
   userAssessments.forEach(a => addDate(a.created_at));
+  meditations.forEach(a => addDate(a.created_at));
 
   let streak = 0;
   const today = new Date();
@@ -383,7 +384,7 @@ export const getStats = catchAsync(async (req, res, next) => {
 
 
   // 2. Total Sessions
-  const totalSessions = logs.length + sleep.length + threads.length + userAssessments.length + reflections.length;
+  const totalSessions = logs.length + sleep.length + threads.length + userAssessments.length + reflections.length + meditations.length;
 
   // 3. Tasks completed today
   const hasMoodToday = logs.some(l => (l.timestamp || '').startsWith(todayStr) && l.mood_score != null);
@@ -449,10 +450,14 @@ export const getStats = catchAsync(async (req, res, next) => {
   });
 
   activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+  meditations.slice(0, 2).forEach(session => activities.push({ type: 'meditation', title: session.title,
+    text: `${Math.round(session.practiced_seconds / 60)} min`, time: session.created_at, color: '#10b981' }));
+  activities.sort((a, b) => new Date(b.time) - new Date(a.time));
 
   res.status(200).json({
     streak,
     sessions: totalSessions,
+    meditationSessions: meditations.length,
     tasks: tasksString,
     dailyTasks: {
       mood: hasMoodToday,

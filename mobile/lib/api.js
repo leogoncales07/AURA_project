@@ -122,8 +122,8 @@ export const api = {
         const locale = await AsyncStorage.getItem('aura_locale') || 'pt';
         return fetchApi(`/questionnaires?lang=${locale}`);
     },
-    getQuestionnaire: async (qId) => {
-        const locale = await AsyncStorage.getItem('aura_locale') || 'pt';
+    getQuestionnaire: async (qId, language) => {
+        const locale = language || await AsyncStorage.getItem('aura_locale') || 'pt';
         return fetchApi(`/questionnaires/${qId}?lang=${locale}`);
     },
     submitAssessment: (userId, questionnaireId, answers, language = 'pt') =>
@@ -132,6 +132,14 @@ export const api = {
             body: { user_id: userId, questionnaire_id: questionnaireId, answers, language },
         }),
     getHistory: (userId) => fetchApi(`/assessments/${userId}/history`),
+    getProgress: (timeZone) => fetchApi(`/progress?time_zone=${encodeURIComponent(timeZone)}`),
+    newProgressId: () => fetchApi('/progress/record-id', { method: 'POST' }),
+    previewReport: (period, timeZone) => fetchApi(`/progress/report-preview?period=${period}&time_zone=${encodeURIComponent(timeZone)}`),
+    saveReport: (id, period, timeZone) => fetchApi('/progress/reports', { method: 'POST', body: { id, period, time_zone: timeZone } }),
+    deleteReport: (id) => fetchApi(`/progress/reports/${id}`, { method: 'DELETE' }),
+    completeMeditation: (session) => fetchApi('/progress/meditations', { method: 'POST', body: session }),
+    editReflection: (id, text) => fetchApi(`/progress/reflections/${id}`, { method: 'PATCH', body: { text } }),
+    deleteReflection: (id) => fetchApi(`/progress/reflections/${id}`, { method: 'DELETE' }),
 
     // Companion Chat
     chat: (userId, message, conversationId = null, language = 'pt') =>

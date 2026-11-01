@@ -1,0 +1,14 @@
+import express from 'express';
+import { protect, requireOwnData } from '../middleware/authMiddleware.js';
+import * as progress from '../controllers/progressController.js';
+const router = express.Router();
+router.use(protect, requireOwnData);
+router.get('/', progress.getProgress);
+router.post('/record-id', progress.newRecordId);
+router.get('/report-preview', progress.previewReport);
+router.post('/reports', progress.saveReport);
+router.delete('/reports/:id', progress.deleteReport);
+router.post('/meditations', progress.completeMeditation);
+router.patch('/reflections/:id', progress.editReflection);
+router.delete('/reflections/:id', progress.deleteReflection);
+export default router;

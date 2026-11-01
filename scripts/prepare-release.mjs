@@ -12,7 +12,7 @@ const groups = {
   '': ['docs', 'scripts', 'README.md', 'START_APP.bat', 'START_MOBILE.bat', 'compose.local.yaml', '.gitignore'],
   backend: ['src', 'scripts', 'tests', 'README.md', 'package.json', 'package-lock.json', 'schema.sql', 'Dockerfile', '.dockerignore', '.env.example', '.env.production.example'],
   frontend: ['src', 'public', 'scripts', 'README.md', 'package.json', 'package-lock.json', 'next.config.mjs', 'eslint.config.mjs', 'tsconfig.json', '.gitignore', 'Dockerfile', '.dockerignore', '.env.example', '.env.production.example'],
-  mobile: ['app', 'assets', 'components', 'constants', 'i18n', 'lib', 'README.md', 'package.json', 'package-lock.json', 'app.config.js', 'app.json', 'eas.json', 'babel.config.js', 'tsconfig.json', 'eslint.config.js', '.gitignore', '.env.example', '.env.production.example'],
+  mobile: ['app', 'assets', 'components', 'constants', 'i18n', 'lib', 'README.md', 'package.json', 'package-lock.json', 'app.config.js', 'app.json', 'eas.json', 'babel.config.js', 'metro.config.js', 'tsconfig.json', 'eslint.config.js', '.gitignore', '.env.example', '.env.production.example'],
 };
 // Include the PostCSS config selected by the frontend, without old backup configs.
 for (const file of ['postcss.config.mjs', 'postcss.config.js']) {

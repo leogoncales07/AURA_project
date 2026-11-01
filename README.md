@@ -34,6 +34,7 @@ As chaves ficam nos `.env` locais. Não é necessário substituir as configuraç
 - [Instalação e testes locais; publicação futura](docs/SETUP.md)
 - [Estado, validações e pendências](docs/PROJECT_STATUS.md)
 - [Revisão funcional da web e encriptação](docs/WEB_REVIEW.md)
+- [Progresso, percurso, meditações e relatórios na web/mobile](docs/PROGRESS.md)
 - [Contexto e prioridades da PAP](docs/PROJECT_CONTEXT.md)
 - [Limpeza e organização efetuadas](docs/CLEANUP.md)
 - [Backend](backend/README.md), [web](frontend/README.md) e [mobile](mobile/README.md)

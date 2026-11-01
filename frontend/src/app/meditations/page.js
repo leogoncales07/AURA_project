@@ -12,6 +12,9 @@ import { useI18n } from '@/i18n';
 import { api } from '@/lib/api';
 import MeditationPlayer from '@/components/MeditationPlayer';
 import StaggeredEntrance from '@/components/StaggeredEntrance';
+import AccessibleDialog from '@/components/AccessibleDialog';
+import { useAuth } from '@/context/AuthContext';
+import { progressCopy } from '@/lib/progress-copy.mjs';
 
 const DEFAULT_LIBRARY_CONTENT = {
     meditations: {
@@ -98,26 +101,31 @@ const DEFAULT_LIBRARY_CONTENT = {
     }
 };
 
+const identifiedContent = data => Object.fromEntries(Object.entries(data).map(([category, items]) => [category,
+    Object.fromEntries(Object.entries(items).map(([id, item]) => [id, { ...item, practice_id: id }]))]));
 export default function MeditationsPage() {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
+    const { user } = useAuth();
+    const copy = progressCopy(locale);
     const [content, setContent] = useState({ meditations: {}, sleep_methods: {} });
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState(null);
     const [activeSession, setActiveSession] = useState(null);
+    const [durationMinutes, setDurationMinutes] = useState(3);
 
     useEffect(() => {
         const fetchContent = async () => {
             try {
                 const { data, error } = await api.getLibraryContent();
                 if (data && Object.keys(data).length > 0) {
-                    setContent(data);
+                    setContent(identifiedContent(data));
                 } else {
                     if (error) console.warn('Library API returned error:', error);
-                    setContent(DEFAULT_LIBRARY_CONTENT);
+                    setContent(identifiedContent(DEFAULT_LIBRARY_CONTENT));
                 }
             } catch (err) {
                 console.error('Failed to fetch library content:', err);
-                setContent(DEFAULT_LIBRARY_CONTENT);
+                setContent(identifiedContent(DEFAULT_LIBRARY_CONTENT));
             } finally {
                 setLoading(false);
             }
@@ -127,18 +135,15 @@ export default function MeditationsPage() {
 
     const openModal = (item) => {
         setSelectedItem(item);
-        document.body.style.overflow = 'hidden';
     };
 
     const startSession = (item) => {
-        setActiveSession(item);
+        setActiveSession({ ...item, durationSeconds: durationMinutes * 60 });
         setSelectedItem(null);
-        document.body.style.overflow = 'hidden';
     };
 
     const closeModal = () => {
         setSelectedItem(null);
-        document.body.style.overflow = 'auto';
     };
 
     if (loading) {
@@ -198,7 +203,7 @@ export default function MeditationsPage() {
                 <h2 className={dashboardStyles.sectionTitle}>{t('meditations.sessions')}</h2>
                 <div className={styles.libraryGrid}>
                     {Object.values(content?.meditations || {}).map((item, idx) => (
-                        <Card key={idx} className={styles.libraryCard} onClick={() => openModal(item)}>
+                        <Card as="button" key={idx} className={styles.libraryCard} onClick={() => openModal(item)}>
                             <div className={styles.cardHeader}>
                                 <div className={styles.iconCircle}>
                                     <Wind size={20} />
@@ -216,7 +221,7 @@ export default function MeditationsPage() {
                 <h2 className={dashboardStyles.sectionTitle} style={{ marginTop: '48px' }}>{t('meditations.sleep')}</h2>
                 <div className={styles.libraryGrid}>
                     {Object.values(content?.sleep_methods || {}).map((item, idx) => (
-                        <Card key={idx} className={styles.libraryCard} onClick={() => openModal(item)}>
+                        <Card as="button" key={idx} className={styles.libraryCard} onClick={() => openModal(item)}>
                             <div className={styles.cardHeader}>
                                 <div className={styles.iconCircle} style={{ color: "var(--aura-aurora-2)" }}>
                                     <Moon size={20} />
@@ -234,15 +239,14 @@ export default function MeditationsPage() {
 
             {/* Modal Detail */}
             {selectedItem && (
-                <div className={styles.modalOverlay} onClick={closeModal}>
-                    <div className={`${styles.modalContent} fade-up-stagger`} onClick={e => e.stopPropagation()}>
-                        <button className={styles.closeButton} onClick={closeModal}>
+                <AccessibleDialog className={styles.modalContent} labelledBy="practice-detail-title" onClose={closeModal}>
+                        <button className={styles.closeButton} onClick={closeModal} aria-label={copy.close}>
                             <X size={20} />
                         </button>
                         
                         <div className={styles.modalHeader}>
                             <div className={styles.modalBadge}>{t('meditations.validated')}</div>
-                            <h2>{selectedItem?.name || ''}</h2>
+                            <h2 id="practice-detail-title">{selectedItem?.name || ''}</h2>
                             <p className={styles.sourceLabel}>
                                 <Info size={14} /> {t('meditations.source', { source: selectedItem?.source || '' })}
                             </p>
@@ -265,20 +269,24 @@ export default function MeditationsPage() {
                         </div>
 
                         <div className={styles.modalFooter}>
+                            <label className={styles.durationLabel}>{copy.duration}
+                                <select value={durationMinutes} onChange={event => setDurationMinutes(Number(event.target.value))}>
+                                    {[1, 3, 5, 10].map(minutes => <option key={minutes} value={minutes}>{minutes} min</option>)}
+                                </select>
+                            </label>
                             <Button variant="primary" style={{ width: '100%' }} onClick={() => startSession(selectedItem)}>
                                 {t('meditations.begin')}
                             </Button>
                         </div>
-                    </div>
-                </div>
+                </AccessibleDialog>
             )}
 
             {activeSession && (
                 <MeditationPlayer 
+                    userId={user?.id}
                     session={activeSession} 
                     onClose={() => {
                         setActiveSession(null);
-                        document.body.style.overflow = 'auto';
                     }} 
                 />
             )}

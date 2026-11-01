@@ -17,6 +17,7 @@ const alice = '11111111-1111-4111-8111-111111111111';
 const bob = '22222222-2222-4222-8222-222222222222';
 let requests = [], failTable = '', failDelete = false, recoveryFailure = null, geminiRequest = null, server, base;
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+const progressRecords = { meditation_sessions: new Map(), wellness_reports: new Map() };
 globalThis.fetch = async (input, options = {}) => {
   const url = new URL(typeof input === 'string' ? input : input.url);
   const headers = new Headers(options.headers || input.headers);
@@ -40,6 +41,13 @@ globalThis.fetch = async (input, options = {}) => {
   if (url.pathname.includes('/auth/v1/admin/users/')) return failDelete ? json({ msg: 'Delete failed' }, 500) : json({});
   if (url.pathname === '/auth/v1/recover') return recoveryFailure ? json({ error_code: recoveryFailure.code, msg: 'Email delivery failed' }, recoveryFailure.status) : json({});
   if (failTable && url.pathname.endsWith('/' + failTable)) return json({ code: '42P01', message: 'Unavailable' }, 503);
+  const progressTable = progressRecords[url.pathname.split('/').at(-1)];
+  if (progressTable) {
+    if (method === 'POST') { if (!progressTable.has(body.id)) progressTable.set(body.id, { ...body, created_at: '2026-01-01T12:00:00Z' }); return json(null, 201); }
+    const rows = [...progressTable.values()].filter(row => (!url.searchParams.has('user_id') || 'eq.' + row.user_id === url.searchParams.get('user_id')) && (!url.searchParams.has('id') || 'eq.' + row.id === url.searchParams.get('id')));
+    if (method === 'DELETE') rows.forEach(row => progressTable.delete(row.id));
+    return json(rows);
+  }
   if (url.pathname.endsWith('/app_settings')) return json({ preferences: { theme: 'light' } });
   if (url.pathname.endsWith('/rpc/save_daily_log')) return json([{ id: 'log-id', mood_score: body.payload.mood_score, created_at: new Date().toISOString() }]);
   if (url.pathname.endsWith('/rpc/save_app_settings')) return json(body.payload);
@@ -80,6 +88,31 @@ test('health checks work without authentication or database requests', async () 
   assert.equal(result.status, 200);
   assert.deepEqual(result.body, { status: 'ok', service: 'aura-api' });
   assert.equal(requests.length, 0);
+});
+test('progress is authenticated, owner scoped and saves immutable idempotent records', async () => {
+  assert.equal((await call('/progress', undefined, null)).status, 401);
+  assert.equal((await call('/progress/record-id', {}, null)).status, 401);
+  const allocated = await call('/progress/record-id', {});
+  assert.match(allocated.body.id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.equal((await call('/progress?time_zone=invalid')).status, 400);
+  const id = '33333333-3333-4333-8333-333333333333';
+  const session = { id, user_id: alice, practice_id: 'box_breathing', title: 'Synthetic', duration_seconds: 60, practiced_seconds: 60 };
+  assert.equal((await call('/progress/meditations', { ...session, user_id: bob })).status, 403);
+  assert.equal((await call('/progress/meditations', { ...session, practiced_seconds: 1 })).status, 400);
+  assert.equal((await call('/progress/meditations', session)).status, 201);
+  assert.equal((await call('/progress/meditations', session)).status, 201);
+  assert.equal(progressRecords.meditation_sessions.size, 1);
+  assert.equal((await call('/progress')).body.entries.length, 1);
+  assert.equal((await call('/progress', undefined, 'bob')).body.entries.length, 0);
+  const report = await call('/progress/reports', { id, period: '2001-01', time_zone: 'UTC' });
+  assert.equal(report.status, 201); assert.equal(report.body.report.snapshot.meditationSessions, 0);
+  const retry = await call('/progress/reports', { id, period: '2001-01', time_zone: 'UTC' });
+  assert.equal(retry.body.report.created_at, report.body.report.created_at);
+  assert.equal(progressRecords.wellness_reports.size, 1);
+  assert.equal((await call('/progress/reports', { id, period: '2001-01', snapshot: { avgMood: 999 } })).status, 400);
+  assert.equal((await call(`/progress/reports/${id}`, undefined, 'bob', 'DELETE')).status, 404);
+  assert.equal((await call(`/progress/reports/${id}`, undefined, 'alice', 'DELETE')).status, 200);
+  for (const table of Object.values(progressRecords)) table.clear();
 });
 test('recovery reports delivery configuration and quota failures accurately', async () => {
   recoveryFailure = { code: 'email_address_not_authorized', status: 403 };

@@ -101,7 +101,14 @@
   overflow-y: auto;
   box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px var(--bg-pill);
   animation: modalSlideUp 350ms var(--ease-spring) forwards;
+  color: var(--fg-foreground);
 }
+.modalContent::backdrop { background: #041e2bbd; backdrop-filter: blur(8px); }
+.libraryCard { text-align: left; width: 100%; font: inherit; }
+.libraryCard:focus-visible, .modalContent button:focus-visible, .durationLabel select:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 4px; }
+.durationLabel { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--fg-muted); margin-bottom: 18px; font-size: 14px; }
+.durationLabel select { background: var(--bg-card); color: var(--fg-foreground); border: 1px solid var(--border-primary); border-radius: 10px; padding: 12px; }
+@media (prefers-reduced-motion: reduce) { .modalContent { animation: none; } }
 
 @keyframes modalSlideUp {
   from { opacity: 0; transform: translateY(20px) scale(0.97); }

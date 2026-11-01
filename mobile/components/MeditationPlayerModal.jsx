@@ -1,227 +1,93 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { useTheme, Fonts, Spacing, Radius } from '../constants/Theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, AppState, ActivityIndicator } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../constants/Theme';
+import { useI18n } from '../i18n';
+import { api } from '../lib/api';
+import { progressCopy, practiceElapsed, practicePhase, audioPracticeDelta } from '../lib/progress-utils.mjs';
 
-export default function MeditationPlayerModal({ visible, session, onClose }) {
-    const { colors, theme } = useTheme();
-    const isDark = theme === 'dark';
-    const insets = useSafeAreaInsets();
-    // session object structure: { title, meta, durationMin, color, emoji, audioUrl }
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(0);
-    const [sound, setSound] = useState(null);
-    const audioConfigured = useRef(false);
-
-    // Configure audio session for mobile playback once
-    useEffect(() => {
-        const configureAudio = async () => {
-            if (audioConfigured.current) return;
-            try {
-                await Audio.setAudioModeAsync({
-                    allowsRecordingIOS: false,
-                    playsInSilentModeIOS: true,
-                    staysActiveInBackground: true,
-                    shouldDuckAndroid: true,
-                });
-                audioConfigured.current = true;
-                console.log('[Audio] Audio mode configured successfully');
-            } catch (e) {
-                console.warn('[Audio] Failed to configure audio mode:', e);
-            }
-        };
-        configureAudio();
-    }, []);
-
-    useEffect(() => {
-        if (visible && session) {
-            setTimeLeft(session.durationMin * 60);
-            setIsPlaying(false);
-        } else if (!visible) {
-            setIsPlaying(false);
-            if (sound) {
-                sound.unloadAsync();
-                setSound(null);
-            }
-        }
-    }, [visible, session]);
-
-    useEffect(() => {
-        const handleAudio = async () => {
-            if (isPlaying && session?.audioUrl) {
-                if (!sound) {
-                    try {
-                        // Ensure audio mode is set before every play attempt
-                        await Audio.setAudioModeAsync({
-                            allowsRecordingIOS: false,
-                            playsInSilentModeIOS: true,
-                            staysActiveInBackground: true,
-                            shouldDuckAndroid: true,
-                        });
-
-                        const audioSource = typeof session.audioUrl === 'string'
-                            ? { uri: session.audioUrl }
-                            : session.audioUrl;
-
-                        console.log('[Audio] Loading audio source:', typeof session.audioUrl === 'string' ? session.audioUrl : 'bundled asset');
-                        const { sound: newSound } = await Audio.Sound.createAsync(
-                            audioSource,
-                            { shouldPlay: true, isLooping: true, volume: 1.0 }
-                        );
-                        console.log('[Audio] Sound loaded and playing');
-                        setSound(newSound);
-                    } catch (e) {
-                        console.error('[Audio] Audio load error:', e);
-                        Alert.alert(
-                            'Audio Error',
-                            'Could not load the meditation audio. Please try again.',
-                            [{ text: 'OK' }]
-                        );
-                        setIsPlaying(false);
-                    }
-                } else {
-                    try {
-                        await sound.playAsync();
-                    } catch (e) {
-                        console.error('[Audio] Play error:', e);
-                    }
-                }
-            } else if (!isPlaying && sound) {
-                try { await sound.pauseAsync(); } catch (e) { /* already unloaded */ }
-            }
-        };
-        handleAudio();
-    }, [isPlaying]);
-
-    useEffect(() => {
-        return () => { if (sound) sound.unloadAsync(); };
-    }, [sound]);
-
-    useEffect(() => {
-        let interval;
-        if (isPlaying && timeLeft > 0) {
-            interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
-        } else if (timeLeft === 0) {
-            setIsPlaying(false); // Stop when it hits 0
-        }
-        return () => clearInterval(interval);
-    }, [isPlaying, timeLeft]);
-
-    const scale = useSharedValue(1);
-
-    useEffect(() => {
-        if (isPlaying) {
-            scale.value = withRepeat(
-                withSequence(
-                    withTiming(1.15, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-                    withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
-                ),
-                -1,
-                true
-            );
-        } else {
-            cancelAnimation(scale);
-            scale.value = withTiming(1, { duration: 500 });
-        }
-    }, [isPlaying]);
-
-    const animatedScaleStyle = useAnimatedStyle(() => ({ 
-        transform: [{ scale: scale.value }] 
-    }));
-
-    if (!session) return null;
-
-    const mins = Math.floor(timeLeft / 60);
-    const secs = timeLeft % 60;
-    const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-
-    return (
-        <Modal visible={visible} transparent animationType="slide">
-            <BlurView intensity={isDark ? 90 : 60} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill}>
-                <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
-                    
-                    {/* Close Area */}
-                    <TouchableOpacity style={styles.closeBtn} onPress={() => { setIsPlaying(false); onClose(); }}>
-                        <View style={[styles.closeCircle, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                            <Text style={[styles.closeText, { color: colors.textPrimary }]}>✕</Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    {/* Content Area */}
-                    <View style={styles.content}>
-                        <Animated.View style={[
-                            styles.artwork, 
-                            { backgroundColor: session.color + '15', borderColor: session.color + '30' },
-                            animatedScaleStyle
-                        ]}>
-                            <Text style={styles.artworkEmoji}>{session.emoji}</Text>
-                        </Animated.View>
-                        
-                        <Text style={[styles.title, { color: colors.textPrimary }]}>{session.title}</Text>
-                        <Text style={[styles.meta, { color: colors.textSecondary }]}>{session.meta}</Text>
-
-                        {/* Interactive Timer */}
-                        <Text style={[styles.timer, { color: colors.textPrimary }]}>{timeStr}</Text>
-
-                        {/* Player Controls */}
-                        <TouchableOpacity 
-                            style={[styles.playBtn, { backgroundColor: session.color }]} 
-                            onPress={() => setIsPlaying(!isPlaying)}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={styles.playBtnText}>{isPlaying ? 'Pausar' : 'Iniciar Áudio'}</Text>
-                        </TouchableOpacity>
-                        
-                        <Text style={[styles.note, { color: colors.textTertiary }]}>Encontre um local confortável e feche os olhos.</Text>
-                    </View>
-                </View>
-            </BlurView>
-        </Modal>
-    );
+export default function MeditationPlayerModal({ session, userId, onClose }) {
+  const { colors } = useTheme(); const { t, locale } = useI18n(); const copy = progressCopy(locale); const insets = useSafeAreaInsets();
+  const duration = session.durationMin * 60;
+  const id = useRef(null);
+  const [elapsed, setElapsed] = useState(0); const [playing, setPlaying] = useState(false);
+  const [complete, setComplete] = useState(false); const [saved, setSaved] = useState(false); const [saving, setSaving] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(Boolean(session.audioUrl)); const [audioError, setAudioError] = useState(false); const [audioRetry, setAudioRetry] = useState(0); const [saveError, setSaveError] = useState(false);
+  const sound = useRef(null); const clock = useRef(0); const lastPosition = useRef(null);
+  const mounted = useRef(true); const pending = useRef(false); const persisted = useRef(false); const ended = useRef(false);
+  const phase = practicePhase(session.practice_id, elapsed);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const advance = useCallback(delta => {
+    if (ended.current) return;
+    clock.current = practiceElapsed(clock.current, delta, true, duration);
+    setElapsed(clock.current);
+    if (clock.current >= duration) { ended.current = true; setComplete(true); setPlaying(false); sound.current?.pauseAsync().catch(() => {}); }
+  }, [duration]);
+  useEffect(() => {
+    if (!session.audioUrl) return;
+    let active = true; let loadedSound;
+    setAudioLoading(true); setAudioError(false);
+    const statusUpdate = status => {
+      if (!active || !mounted.current) return;
+      if (!status.isLoaded) { if (status.error) { setAudioError(true); setPlaying(false); } return; }
+      advance(audioPracticeDelta(lastPosition.current, status));
+      lastPosition.current = status.positionMillis;
+      if (!ended.current) setPlaying(status.isPlaying);
+    };
+    (async () => {
+      try {
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true, staysActiveInBackground: true, shouldDuckAndroid: true });
+        const source = typeof session.audioUrl === 'string' ? { uri: session.audioUrl } : session.audioUrl;
+        const result = await Audio.Sound.createAsync(source, { shouldPlay: false, isLooping: true, progressUpdateIntervalMillis: 250 }, statusUpdate);
+        loadedSound = result.sound;
+        if (!active) { await loadedSound.unloadAsync(); return; }
+        sound.current = loadedSound; setAudioLoading(false);
+      } catch { if (active) { setAudioLoading(false); setAudioError(true); setPlaying(false); } }
+    })();
+    return () => { active = false; sound.current = null; loadedSound?.unloadAsync().catch(() => {}); };
+  }, [session.audioUrl, advance, audioRetry]);
+  useEffect(() => {
+    if (session.audioUrl || !playing || complete) return;
+    let previous = performance.now();
+    const timer = setInterval(() => { const now = performance.now(); advance((now - previous) / 1000); previous = now; }, 250);
+    const listener = AppState.addEventListener('change', state => { if (state !== 'active') setPlaying(false); });
+    return () => { clearInterval(timer); listener.remove(); };
+  }, [session.audioUrl, playing, complete, advance]);
+  const save = useCallback(async () => {
+    if (pending.current || persisted.current) return;
+    pending.current = true; setSaving(true); setSaveError(false);
+    if (!id.current) {
+      const allocated = await api.newProgressId();
+      if (!mounted.current) { pending.current = false; return; }
+      if (allocated.error) { pending.current = false; setSaving(false); setSaveError(true); return; }
+      id.current = allocated.data.id;
+    }
+    const result = await api.completeMeditation({ id: id.current, user_id: userId, practice_id: session.practice_id, title: session.title,
+      duration_seconds: duration, practiced_seconds: Math.round(clock.current) });
+    pending.current = false; if (!mounted.current) return;
+    if (result.error) setSaveError(true); else { persisted.current = true; setSaved(true); }
+    setSaving(false);
+  }, [userId, session.practice_id, session.title, duration]);
+  useEffect(() => { if (complete) void save(); }, [complete, save]);
+  const toggle = async () => {
+    if (audioError) { lastPosition.current = null; setAudioRetry(value => value + 1); return; }
+    if (session.audioUrl) {
+      try { if (playing) await sound.current?.pauseAsync(); else await sound.current?.playAsync(); }
+      catch { setAudioError(true); setPlaying(false); }
+    } else setPlaying(value => !value);
+  };
+  const remaining = Math.max(0, Math.ceil(duration - elapsed));
+  const time = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
+  return <Modal visible animationType="slide" onRequestClose={saving ? () => {} : onClose}><View accessibilityViewIsModal style={[styles.page, { backgroundColor: colors.bg, paddingTop: insets.top + 15, paddingBottom: insets.bottom + 20 }]}>
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel={copy.close} disabled={saving} onPress={onClose} style={styles.close}><Feather name="x" size={24} color={colors.textPrimary} /></TouchableOpacity>
+    <View style={styles.core}><View style={[styles.art, { backgroundColor: colors.primaryDim, borderColor: colors.primary }]}>{complete ? <Feather name="check" size={56} color={colors.primary} /> : <Feather name="wind" size={56} color={colors.primary} />}</View><Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>{complete ? copy.complete : session.title}</Text><Text style={[styles.meta, { color: colors.textSecondary }]}>{complete ? (saving ? copy.saving : saved ? copy.practiceSaved : '') : phase ? `${t(`meditations.${phase.name}`)} · ${phase.remaining}s` : session.meta}</Text>
+      <Text style={[styles.timer, { color: colors.textPrimary }]}>{time}</Text>
+      {audioLoading && <ActivityIndicator color={colors.primary} />}
+      {audioError && <Text accessibilityRole="alert" style={[styles.message, { color: colors.accentPink }]}>{copy.audioFailed}</Text>}
+      {saveError && <><Text accessibilityRole="alert" style={[styles.message, { color: colors.accentPink }]}>{copy.actionFailed}</Text><TouchableOpacity accessibilityRole="button" onPress={save} style={styles.retry}><Text style={{ color: colors.primary }}>{copy.retry}</Text></TouchableOpacity></>}
+      <TouchableOpacity accessibilityRole="button" disabled={saving || audioLoading} style={[styles.button, { backgroundColor: colors.primary, opacity: saving || audioLoading ? .5 : 1 }]} onPress={complete ? onClose : toggle}><Text style={{ color: '#062f29', fontWeight: '600', fontSize: 16 }}>{complete ? copy.close : audioError ? copy.retry : playing ? copy.pause : copy.play}</Text></TouchableOpacity>
+    </View></View></Modal>;
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    closeBtn: {
-        alignSelf: 'flex-end',
-        marginRight: Spacing.xl,
-        marginTop: Spacing.sm,
-    },
-    closeCircle: {
-        width: 40, height: 40, borderRadius: 20,
-        alignItems: 'center', justifyContent: 'center',
-        borderWidth: StyleSheet.hairlineWidth,
-    },
-    closeText: { ...Fonts.bold, fontSize: 16 },
-    content: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: Spacing.xl,
-        paddingBottom: height => height * 0.1,
-    },
-    artwork: {
-        width: 200, height: 200, borderRadius: 100,
-        alignItems: 'center', justifyContent: 'center',
-        borderWidth: 2,
-        marginBottom: Spacing.xl,
-    },
-    artworkEmoji: { fontSize: 80 },
-    title: { ...Fonts.heavy, fontSize: 28, textAlign: 'center', marginBottom: 8 },
-    meta: { ...Fonts.medium, fontSize: 16, textAlign: 'center', marginBottom: Spacing.xxl },
-    timer: { ...Fonts.serif, fontWeight: '600', fontSize: 64, marginBottom: Spacing.xxl, letterSpacing: -2 },
-    playBtn: {
-        paddingHorizontal: 40,
-        paddingVertical: 18,
-        borderRadius: Radius.full,
-        width: '100%',
-        alignItems: 'center',
-    },
-    playBtnText: { ...Fonts.bold, color: '#fff', fontSize: 18 },
-    note: { ...Fonts.regular, fontSize: 14, marginTop: Spacing.xl, textAlign: 'center' },
-});
+const styles = StyleSheet.create({ page: { flex: 1, paddingHorizontal: 25 }, close: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end' }, core: { flex: 1, alignItems: 'center', justifyContent: 'center' }, art: { width: 170, height: 170, borderRadius: 85, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 30 }, title: { fontSize: 25, fontWeight: '600', textAlign: 'center', marginBottom: 16 }, meta: { fontSize: 14, lineHeight: 23, textAlign: 'center', minHeight: 48 }, timer: { fontSize: 60, fontWeight: '300', marginVertical: 28 }, button: { minHeight: 52, borderRadius: 26, paddingHorizontal: 40, alignItems: 'center', justifyContent: 'center', width: '100%' }, message: { fontSize: 13, lineHeight: 22, marginBottom: 15, textAlign: 'center' }, retry: { minHeight: 44, justifyContent: 'center', marginBottom: 10 } });

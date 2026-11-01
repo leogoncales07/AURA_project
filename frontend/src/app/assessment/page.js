@@ -1,5 +1,5 @@
 'use client';
-import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, ClipboardList, FileText, Loader2, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, ClipboardList, Loader2, Sparkles } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,10 +11,15 @@ import Button from '@/components/Button';
 
 import { useI18n } from '@/i18n';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { progressCopy } from '@/lib/progress-copy.mjs';
 
 export default function AssessmentPage() {
     const { t, locale } = useI18n();
     const router = useRouter();
+    const { user } = useAuth();
+    const userId = user?.id;
+    const copy = progressCopy(locale);
 
     // States
     const [questionnaires, setQuestionnaires] = useState([]);
@@ -25,44 +30,25 @@ export default function AssessmentPage() {
     const [result, setResult] = useState(null); 
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [userId, setUserId] = useState(null);
+    const [loadError, setLoadError] = useState(false);
+    const [refresh, setRefresh] = useState(0);
 
     useEffect(() => {
-        const stored = (localStorage.getItem('aura_user') || sessionStorage.getItem('aura_user'));
-        const user = stored ? JSON.parse(stored) : null;
-        if (user) {
-            setUserId(user.id);
-            loadData(user.id);
-        } else {
-            loadData();
-        }
-    }, []);
-
-    const loadData = async (uid) => {
-        setLoading(true);
-        try {
-            const qRes = await api.listQuestionnaires();
-            console.log('Questionnaires response:', qRes);
-            if (qRes.data) {
-                const qList = qRes.data.questionnaires || [];
-                console.log('Setting questionnaires:', qList);
-                setQuestionnaires(qList);
-            } else if (qRes.error) {
-                console.error('Error loading questionnaires:', qRes.error);
-            }
-            if (uid) {
-                const hRes = await api.getHistory(uid);
-                if (hRes.data) setHistory(hRes.data.assessments || []);
-            }
-        } catch (err) {
-            console.error('Exception in loadData:', err);
-        } finally {
+        if (!userId) return;
+        let active = true;
+        setLoading(true); setLoadError(false);
+        Promise.all([api.listQuestionnaires(), api.getHistory(userId)]).then(([qRes, hRes]) => {
+            if (!active) return;
+            if (qRes.error || hRes.error) setLoadError(true);
+            else { setQuestionnaires(qRes.data.questionnaires || []); setHistory(hRes.data.assessments || []); }
             setLoading(false);
-        }
-    };
+        });
+        return () => { active = false; };
+    }, [userId, locale, refresh]);
 
     const startForm = async (qId) => {
-        const { data } = await api.getQuestionnaire(qId);
+        const { data, error } = await api.getQuestionnaire(qId, locale);
+        if (error) setLoadError(true);
         if (data) {
             setActiveForm(data);
             setAnswers(new Array(data.questions.length).fill(null));
@@ -96,7 +82,7 @@ export default function AssessmentPage() {
         setAnswers([]);
         setResult(null);
         setCurrentQ(0);
-        if (userId) loadData(userId);
+        setRefresh(value => value + 1);
     };
 
     // ── RESULT VIEW ──
@@ -121,10 +107,10 @@ export default function AssessmentPage() {
                                     <span className={formStyles.scoreLabel}>{t('assessment.score')}</span>
                                 </div>
                                 <div className={styles.pill} style={{ background: 'rgba(123, 110, 246, 0.12)', color: 'var(--aura-aurora-1)' }}>
-                                    {t(`assessment.riskLabel${result.score_data?.risk_level?.charAt(0).toUpperCase() + result.score_data?.risk_level?.slice(1)}`) || result.score_data?.risk_level?.toUpperCase()}
+                                    {copy[`risk_${result.score_data?.risk_level}`] || result.score_data?.risk_level}
                                 </div>
                                 <p style={{ color: 'var(--aura-muted)', fontSize: 'var(--text-sm)', textAlign: 'center', marginTop: '16px', lineHeight: '1.5' }}>
-                                    {t(`assessment.riskDetails${result.score_data?.risk_level?.charAt(0).toUpperCase() + result.score_data?.risk_level?.slice(1)}`)}
+                                    {copy.screeningNote}
                                 </p>
                             </Card>
 
@@ -232,6 +218,8 @@ export default function AssessmentPage() {
     return (
         <AppShell title={t('assessment.title')}>
             <div className="fade-up-stagger">
+                {loading && <p role="status"><Loader2 size={18} /> {copy.loading}</p>}
+                {loadError && <p role="alert">{copy.failed} <Button onClick={() => setRefresh(value => value + 1)}>{copy.retry}</Button></p>}
                 <section className={styles.summarySection} style={{ marginBottom: '48px' }}>
                     <Card style={{ background: 'var(--aura-gradient-calm)', border: 'none' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -249,7 +237,7 @@ export default function AssessmentPage() {
                 <h2 className={styles.sectionTitle}>{t('assessment.available')}</h2>
                 <div className={styles.dashboardGrid}>
                     {questionnaires.map((q) => (
-                        <Card key={q.id} className={styles.actionCard} onClick={() => startForm(q.id)}>
+                        <Card as="button" key={q.id} className={styles.actionCard} onClick={() => startForm(q.id)} style={{ textAlign: 'left', font: 'inherit' }}>
                             <div className={styles.actionIcon}>
                                 <ClipboardList size={20} />
                             </div>
@@ -267,7 +255,7 @@ export default function AssessmentPage() {
                         <h2 className={styles.sectionTitle}>{t('assessment.history')}</h2>
                         <div className={styles.dashboardGrid}>
                             {history.slice(0, 4).map((h, i) => (
-                                <Card key={i} className={styles.actionCard}>
+                                <Card as="button" key={h.id || i} className={styles.actionCard} onClick={() => router.push(`/reports?view=journey&type=assessment&entry=${encodeURIComponent('assessment:' + h.id)}`)} style={{ textAlign: 'left', font: 'inherit' }}>
                                     <div className={styles.actionIcon} style={{ color: 'var(--aura-aurora-3)' }}>
                                         <CheckCircle2 size={20} />
                                     </div>
@@ -281,6 +269,7 @@ export default function AssessmentPage() {
                                 </Card>
                             ))}
                         </div>
+                        <Button variant="ghost" onClick={() => router.push('/reports?view=journey&type=assessment')}>{copy.viewJourney}</Button>
                     </>
                 )}
             </div>

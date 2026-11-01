@@ -36,7 +36,7 @@ As cópias JSON/ZIP locais não ganharam encriptação com esta correção. Pres
 
 Usar uma conta de teste e conteúdo fictício para confirmar: entrada/saída, humor/sono e persistência após recarregar, avaliação e histórico, chat e falha de rede, reprodução de meditações, relatório/diálogo de impressão, perfil/preferências, teclado e ecrã estreito. Recuperação e eliminação pela interface devem ser verificadas sem alterar contas pessoais. Os testes de API já realizados não substituem essa lista.
 
-Continuam pendentes a contabilização real de meditações, a análise mensal com IA e os restantes pontos em `PROJECT_STATUS.md`.
+A contabilização de meditações e a reabertura de relatórios foram implementadas em 01/11/2026, na web e no mobile; ver [PROGRESS.md](PROGRESS.md). A análise mensal com IA continua pendente.
 
 ## Correção de hidratação e configuração TypeScript
 

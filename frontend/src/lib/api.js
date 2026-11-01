@@ -108,12 +108,19 @@ export const api = {
         const lang = typeof window !== 'undefined' ? localStorage.getItem('aura_locale') || 'pt' : 'pt';
         return fetchApi(`/questionnaires?lang=${lang}`);
     },
-    getQuestionnaire: (qId) => {
-        const lang = typeof window !== 'undefined' ? localStorage.getItem('aura_locale') || 'pt' : 'pt';
+    getQuestionnaire: (qId, language) => {
+        const lang = language || (typeof window !== 'undefined' ? localStorage.getItem('aura_locale') || 'pt' : 'pt');
         return fetchApi(`/questionnaires/${qId}?lang=${lang}`);
     },
     submitAssessment: (userId, questionnaireId, answers, language = 'pt') => fetchApi('/assessments/submit', { method: 'POST', body: { user_id: userId, questionnaire_id: questionnaireId, answers, language } }),
     getHistory: (userId) => fetchApi(`/assessments/${userId}/history`),
+    getProgress: (timeZone) => fetchApi(`/progress?time_zone=${encodeURIComponent(timeZone)}`),
+    previewReport: (period, timeZone) => fetchApi(`/progress/report-preview?period=${period}&time_zone=${encodeURIComponent(timeZone)}`),
+    saveReport: (id, period, timeZone) => fetchApi('/progress/reports', { method: 'POST', body: { id, period, time_zone: timeZone } }),
+    deleteReport: (id) => fetchApi(`/progress/reports/${id}`, { method: 'DELETE' }),
+    completeMeditation: (session) => fetchApi('/progress/meditations', { method: 'POST', body: session }),
+    editReflection: (id, text) => fetchApi(`/progress/reflections/${id}`, { method: 'PATCH', body: { text } }),
+    deleteReflection: (id) => fetchApi(`/progress/reflections/${id}`, { method: 'DELETE' }),
 
     // Library
     getLibraryContent: () => fetchApi('/library/content'),

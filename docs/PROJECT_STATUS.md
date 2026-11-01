@@ -2,6 +2,10 @@
 
 > Prioridade confirmada pelo utilizador: projeto de PAP em desenvolvimento. Completar e estabilizar web, mobile e backend; adiar a publicação até o professor disponibilizar domínio e licenças. O mobile é testado num telemóvel físico através do Expo Go. Os passos de publicação abaixo são preparação futura, não ações a executar agora. Ver `docs/PROJECT_CONTEXT.md` e o modo Expo Go em `docs/SETUP.md`.
 
+## Progresso na web e no mobile — 01/11/2026
+
+Progresso passou a reunir Visão geral, O meu percurso e Relatórios. Foram acrescentados histórico pesquisável, detalhes dos inquéritos, edição de reflexões, práticas de meditação persistentes e snapshots de relatórios que podem ser reabertos nas duas aplicações. A migração `20261101_progress.sql` foi confirmada pelo utilizador e validada com contas temporárias no Supabase. Ver [PROGRESS.md](PROGRESS.md) para implementação, testes e limites da validação visual/Expo Go.
+
 ## Implementado em 26/10/2026
 
 - As rotas de humor, sono, reflexões, conversas e avaliações exigem um token validado e recusam IDs de outros utilizadores. O cliente Supabase de dados usa o token do pedido, para aplicar também RLS.

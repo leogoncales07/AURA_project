@@ -27,7 +27,7 @@ if (remote && values.S_URL && values.S_ANON) {
   result.supabase = {};
   const description = await request(`${values.S_URL}/rest/v1/`, { headers: { ...headers, Accept: 'application/openapi+json' } });
   if (description.response?.ok) result.supabase.userIdType = description.body.definitions?.users?.properties?.id?.format || description.body.definitions?.users?.properties?.id?.type || 'unknown';
-  for (const table of ['users', 'daily_logs', 'assessments', 'conversations', 'sleep_logs', 'reflections', 'app_settings']) {
+  for (const table of ['users', 'daily_logs', 'assessments', 'conversations', 'sleep_logs', 'reflections', 'app_settings', 'meditation_sessions', 'wellness_reports']) {
     // limit=0 checks schema availability without reading any user's records.
     const check = await request(`${values.S_URL}/rest/v1/${table}?select=*&limit=0`, { headers });
     result.supabase[table] = check.failure ? { networkError: check.failure } : { status: check.response.status, code: check.body?.code || null };

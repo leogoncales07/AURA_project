@@ -18,3 +18,5 @@ Nesse caso, confirmar os endereços em `.env`. No telemóvel, `localhost` refere
 `app.json` e `app.config.js` contêm a configuração Expo. A pasta Android local foi preservada. As alterações de configuração nativa e funcionalidades como áudio em segundo plano precisam de validação posterior numa build própria. Não é necessário publicar nas lojas para realizar esse teste.
 
 Consultar [instalação local](../docs/SETUP.md) e [pendências](../docs/PROJECT_STATUS.md).
+
+O separador Progresso inclui Visão geral, O meu percurso e Relatórios. Usa os mesmos dados e snapshots da web. As funções puras partilhadas ficam em `frontend/src/lib` e são incluídas pelo `metro.config.js`; manter a estrutura completa do repositório. Depois de atualizar esta configuração, reiniciar o Metro com `npm run start:go -- --clear`. Ver [funcionalidades e validação](../docs/PROGRESS.md).

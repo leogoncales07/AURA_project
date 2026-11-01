@@ -11,9 +11,13 @@ import { useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import SettingsModal from '../../components/SettingsModal';
+import { useRouter } from 'expo-router';
+import { progressCopy } from '../../lib/progress-utils.mjs';
 
 export default function AssessmentScreen() {
     const { t, locale } = useI18n();
+    const router = useRouter();
+    const copy = progressCopy(locale);
     const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
     const isDark = theme === 'dark';
@@ -83,7 +87,7 @@ export default function AssessmentScreen() {
         if (userId) loadData(userId);
     };
 
-    const riskColors = { low: colors.accentMint, moderate: colors.accentAmber, high: colors.accentPink, severe: colors.accentPink };
+    const riskColors = { low: colors.accentMint, moderate: colors.accentAmber, high: colors.accentPink, severe: colors.accentPink, critical: colors.accentPink };
 
     // ── RESULT VIEW ──
     if (result) {
@@ -107,11 +111,11 @@ export default function AssessmentScreen() {
                             </View>
                             <View style={[styles.riskBadge, { backgroundColor: riskColors[result.score_data?.risk_level] + '22', borderColor: riskColors[result.score_data?.risk_level] }]}>
                                 <Text style={[styles.riskText, { color: riskColors[result.score_data?.risk_level] }]}>
-                                    {t(`reports.risk${result.score_data?.risk_level?.charAt(0).toUpperCase() + result.score_data?.risk_level?.slice(1)}`) || result.score_data?.risk_level?.toUpperCase()}
+                                    {copy[`risk_${result.score_data?.risk_level}`] || result.score_data?.risk_level}
                                 </Text>
                             </View>
                             <Text style={{ fontWeight: '500', fontSize: 14, color: colors.textSecondary, marginTop: 12, textAlign: 'center', paddingHorizontal: 16 }}>
-                                {t(`assessment.riskDetails${result.score_data?.risk_level?.charAt(0).toUpperCase() + result.score_data?.risk_level?.slice(1)}`)}
+                                {copy.screeningNote}
                             </Text>
                         </View>
 
@@ -258,7 +262,7 @@ export default function AssessmentScreen() {
                         <>
                             <Text style={[styles.sectionLabel, { color: colors.textTertiary, marginTop: Spacing.xl }]}>{t('assessment.history')}</Text>
                             {history.slice(0, 5).map((h, i) => (
-                                <View key={i} style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                                <TouchableOpacity key={h.id || i} accessibilityRole="button" onPress={() => router.push({ pathname: '/(tabs)/reports', params: { view: 'journey', type: 'assessment', entry: 'assessment:' + h.id } })} style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                     <Text style={[styles.historyName, { color: colors.textPrimary }]}>{h.questionnaire}</Text>
                                     <Text style={[styles.historyScore, { color: colors.textSecondary }]}>{t('assessment.score')}: {h.total_score}</Text>
                                     <View style={[styles.riskBadgeSm, { backgroundColor: (riskColors[h.risk_level] || colors.primary) + '22', borderColor: riskColors[h.risk_level] || colors.primary }]}>
@@ -266,8 +270,9 @@ export default function AssessmentScreen() {
                                             {h.risk_level?.toUpperCase()}
                                         </Text>
                                     </View>
-                                </View>
+                                </TouchableOpacity>
                             ))}
+                            <TouchableOpacity accessibilityRole="button" onPress={() => router.push({ pathname: '/(tabs)/reports', params: { view: 'journey', type: 'assessment' } })} style={{ paddingVertical: 16 }}><Text style={{ color: colors.primary, fontWeight: '600' }}>{copy.viewJourney}</Text></TouchableOpacity>
                         </>
                     )}
                 </>

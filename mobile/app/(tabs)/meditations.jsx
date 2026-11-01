@@ -8,9 +8,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useI18n } from '../../i18n';
 import { useTheme, Fonts, Spacing, Radius } from '../../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BreathingTool from '../../components/BreathingTool';
 import MeditationPlayerModal from '../../components/MeditationPlayerModal';
 import SettingsModal from '../../components/SettingsModal';
+import { progressCopy } from '../../lib/progress-utils.mjs';
 
 const SESSION_COLORS = { accentBlue: '#4FC3F7', accentPink: '#FF6B9D', accentMint: '#30D158' };
 
@@ -20,7 +20,8 @@ const SESSIONS = [
 ];
 
 export default function MeditationsScreen() {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
+    const copy = progressCopy(locale);
     const { colors, theme } = useTheme();
     const insets = useSafeAreaInsets();
     const isDark = theme === 'dark';
@@ -28,6 +29,7 @@ export default function MeditationsScreen() {
     const [activeSession, setActiveSession] = useState(null);
     const [user, setUser] = useState(null);
     const [settingsVisible, setSettingsVisible] = useState(false);
+    const [durationMinutes, setDurationMinutes] = useState(3);
 
     useEffect(() => {
         api.getLibraryContent().then(result => {
@@ -62,6 +64,10 @@ export default function MeditationsScreen() {
                     <Text style={styles.avatarText}>{user?.name?.[0] || 'U'}</Text>
                 </TouchableOpacity>
             </View>
+            <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>{copy.duration}</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                {[1, 3, 5, 10].map(minutes => <TouchableOpacity key={minutes} accessibilityRole="button" accessibilityState={{ selected: minutes === durationMinutes }} onPress={() => setDurationMinutes(minutes)} style={{ padding: 13, flex: 1, alignItems: 'center', borderRadius: 12, backgroundColor: minutes === durationMinutes ? colors.primaryDim : colors.inputBg }}><Text style={{ color: minutes === durationMinutes ? colors.primary : colors.textSecondary }}>{minutes} min</Text></TouchableOpacity>)}
+            </View>
 
             {/* Featured card */}
             <View style={[styles.featuredCard, { backgroundColor: SESSION_COLORS.accentMint + '15', borderColor: SESSION_COLORS.accentMint + '30' }]}>
@@ -74,8 +80,9 @@ export default function MeditationsScreen() {
                         activeOpacity={0.8}
                         onPress={() => setActiveSession({
                             title: t('meditations.featuredTitle'),
+                            practice_id: 'box_breathing',
                             meta: t('meditations.featuredDesc'),
-                            durationMin: 5,
+                            durationMin: durationMinutes,
                             color: SESSION_COLORS.accentMint,
                             emoji: '🌬️',
                             audioUrl:
@@ -98,8 +105,9 @@ export default function MeditationsScreen() {
                     activeOpacity={0.8}
                     onPress={() => setActiveSession({
                         title: (s.titleText || t(`meditations.${s.title}`)),
+                        practice_id: s.title === 'sleepPrep' ? 'military_method' : s.title === 'deepFocus' ? 'body_scan' : s.title,
                         meta: (s.metaText || t(`meditations.${s.meta}`)),
-                        durationMin: s.durationMin || (s.title === 'sleepPrep' ? 12 : 15),
+                        durationMin: durationMinutes,
                         color: s.color,
                         emoji: s.emoji,
                         audioUrl: s.audioUrl
@@ -119,14 +127,15 @@ export default function MeditationsScreen() {
             ))}
 
             {/* Breathing exercise */}
-            <Text style={[styles.sectionLabel, { marginTop: Spacing.lg, color: colors.textTertiary }]}>Respição Guiada</Text>
-            <BreathingTool />
+            <Text style={[styles.sectionLabel, { marginTop: Spacing.lg, color: colors.textTertiary }]}>{copy.practice}</Text>
+            <TouchableOpacity accessibilityRole="button" onPress={() => setActiveSession({ practice_id: '478_breathing', title: '4–7–8', meta: copy.practice, durationMin: durationMinutes, color: colors.primary })} style={[styles.sessionCard, { backgroundColor: colors.card, borderColor: colors.border }]}><Text style={{ color: colors.primary, fontSize: 18 }}>4–7–8</Text><Text style={{ color: colors.textSecondary }}>{copy.practice}</Text></TouchableOpacity>
 
-            <MeditationPlayerModal
+            {activeSession && <MeditationPlayerModal
                 visible={!!activeSession}
                 session={activeSession}
+                userId={user?.id}
                 onClose={() => setActiveSession(null)}
-            />
+            />}
             <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
         </ScrollView>
     );

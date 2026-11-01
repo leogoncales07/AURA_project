@@ -74,6 +74,27 @@ try {
   success(await request('/assessments/submit', alice, { user_id: alice.id, questionnaire_id: 'PHQ-9', answers: Array(9).fill(0) }), 201);
   checks.push('mood_sleep_reflection_chat_assessment');
 
+  const progressVersion = await checked(alice.client.rpc('aura_progress_version'));
+  assert.equal(progressVersion, 1);
+  const practiceId = randomUUID();
+  const practice = { id: practiceId, user_id: alice.id, practice_id: 'box_breathing', title: 'Synthetic validation', duration_seconds: 60, practiced_seconds: 60 };
+  success(await request('/progress/meditations', alice, practice), 201);
+  success(await request('/progress/meditations', alice, practice), 201);
+  assert.equal(await count('meditation_sessions', alice.id), 1);
+  const journey = success(await request('/progress?time_zone=UTC', alice));
+  assert.ok(journey.entries.some(entry => entry.kind === 'reflection'));
+  assert.equal(journey.entries.filter(entry => entry.kind === 'meditation').length, 1);
+  const period = new Date().toISOString().slice(0, 7);
+  const reportId = randomUUID();
+  const report = success(await request('/progress/reports', alice, { id: reportId, period, time_zone: 'UTC' }), 201).report;
+  assert.equal(report.snapshot.meditationSessions, 1);
+  assert.equal(success(await request('/progress', alice)).reports[0].id, reportId);
+  assert.equal((await request(`/progress/reports/${reportId}`, bob, undefined, 'DELETE')).status, 404);
+  const reflection = journey.entries.find(entry => entry.kind === 'reflection');
+  success(await request(`/progress/reflections/${reflection.record.id}`, alice, { text: 'Synthetic edited reflection' }, 'PATCH'));
+  assert.equal((await request(`/progress/reflections/${reflection.record.id}`, bob, { text: 'Synthetic foreign edit' }, 'PATCH')).status, 404);
+  checks.push('journey_meditation_idempotency_and_saved_report');
+
   success(await request('/api/v1/account/profile', alice, { display_name: 'AURA synthetic validation', bio: 'Synthetic validation' }, 'PATCH'));
   success(await request('/api/v1/settings', alice, { theme: 'light', sleep_target_hours: 8 }, 'PATCH'));
   assert.equal(success(await request('/api/v1/settings', alice)).data.theme, 'light');
@@ -82,7 +103,7 @@ try {
   assert.equal((await request(`/companion/${alice.id}/logs`, bob)).status, 403);
   assert.equal((await request('/companion/log', bob, { user_id: alice.id, mood_score: 4 })).status, 403);
   assert.equal((await request(`/companion/${alice.id}/logs`, null)).status, 401);
-  for (const table of ['daily_logs', 'sleep_logs', 'reflections', 'conversations', 'assessments', 'app_settings']) {
+  for (const table of ['daily_logs', 'sleep_logs', 'reflections', 'conversations', 'assessments', 'app_settings', 'meditation_sessions', 'wellness_reports']) {
     const visible = await checked(bob.client.from(table).select('user_id').eq('user_id', alice.id));
     assert.equal(visible.length, 0, `RLS: ${table}`);
   }
@@ -94,6 +115,7 @@ try {
   assert.equal(exported.moodLogs.length, 1); assert.equal(exported.sleepLogs.length, 1);
   assert.equal(exported.reflections.length, 1); assert.equal(exported.assessments.length, 1);
   assert.equal(exported.conversations.length, 1); assert.equal(exported.settings.theme, 'light');
+  assert.equal(exported.meditations.length, 1); assert.equal(exported.reports.length, 1);
   assert.equal(exported.user.current_token_hash, undefined);
   checks.push('complete_export');
 
@@ -104,14 +126,17 @@ try {
   checks.push('refresh_and_authenticated_request');
 
   success(await request('/companion/log', bob, { user_id: bob.id, mood_score: 5 }));
+  success(await request('/progress/meditations', bob, { ...practice, id: randomUUID(), user_id: bob.id }), 201);
+  success(await request('/progress/reports', bob, { id: randomUUID(), period, time_zone: 'UTC' }), 201);
   success(await request('/api/v1/account/wellness-data', bob, { confirm: 'DELETE' }, 'DELETE'));
   assert.equal(await count('daily_logs', bob.id), 0);
+  assert.equal(await count('meditation_sessions', bob.id), 0); assert.equal(await count('wellness_reports', bob.id), 0);
   success(await request('/auth/me', bob));
   assert.equal(await count('daily_logs', alice.id), 1);
   checks.push('wellness_deletion_preserves_account_and_other_users');
 
   success(await request('/api/v1/account/delete', alice, { confirm: 'DELETE' }));
-  for (const table of ['daily_logs', 'sleep_logs', 'reflections', 'conversations', 'assessments', 'user_sessions', 'app_settings']) {
+  for (const table of ['daily_logs', 'sleep_logs', 'reflections', 'conversations', 'assessments', 'user_sessions', 'app_settings', 'meditation_sessions', 'wellness_reports']) {
     assert.equal(await count(table, alice.id), 0, `Account deletion: ${table}`);
   }
   const deleted = await admin.auth.admin.getUserById(alice.id);
