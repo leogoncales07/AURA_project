@@ -1,11 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const stateFile = path.join(root, 'tmp', 'aura-local-processes.json');
 const expoGo = process.argv.includes('--expo-go');
+const schoolDemo = process.argv.includes('--school-demo');
 const lan = expoGo || process.argv.includes('--lan');
 let lanAddress;
 if (lan) {
@@ -32,7 +34,7 @@ if (expoGo && !fs.existsSync(path.join(root, 'mobile/node_modules/expo/bin/cli')
 }
 const flags = process.allowedNodeEnvironmentFlags.has('--use-system-ca') ? ['--use-system-ca'] : [];
 const services = [
-  { name: 'API', cwd: 'backend', script: 'src/index.js', env: { PORT: '8000', AURA_BIND_HOST: lan ? '0.0.0.0' : '127.0.0.1', NODE_ENV: 'production', ...(lan ? { CORS_ORIGINS: `http://localhost:3000,http://${lanAddress}:3000` } : {}) } },
+  { name: 'API', cwd: 'backend', script: 'src/index.js', env: { PORT: '8000', AURA_BIND_HOST: lan ? '0.0.0.0' : '127.0.0.1', NODE_ENV: 'production', ...(schoolDemo ? { AURA_SCHOOL_DEMO: 'true', GEMINI_ENABLED: 'false' } : {}), ...(lan ? { CORS_ORIGINS: `http://localhost:3000,http://${lanAddress}:3000` } : {}) } },
   { name: 'Web', cwd: 'frontend', script: '.next/standalone/server.js', env: { PORT: '3000', HOSTNAME: lan ? '0.0.0.0' : '127.0.0.1', NODE_ENV: 'production' } },
 ];
 if (expoGo) services.push({
@@ -45,10 +47,19 @@ function stop(code = 0) {
   if (stopping) return;
   stopping = true;
   process.exitCode = code;
-  for (const child of children) child.kill('SIGTERM');
+  const active = [...children];
+  for (const child of active) {
+    if (process.platform === 'win32' && child.pid) {
+      spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
+    } else {
+      child.kill('SIGTERM');
+    }
+  }
+  try { fs.unlinkSync(stateFile); } catch {}
 }
 process.on('SIGINT', () => stop());
 process.on('SIGTERM', () => stop());
+process.on('SIGHUP', () => stop());
 for (const service of services) {
   const child = spawn(process.execPath, [...flags, service.script, ...(service.args || [])], {
     cwd: path.join(root, service.cwd), stdio: 'inherit', env: { ...process.env, ...service.env },
@@ -57,7 +68,24 @@ for (const service of services) {
   child.on('error', () => { console.error(`${service.name}: não foi possível iniciar.`); stop(1); });
   child.on('exit', code => { children.delete(child); if (!stopping) stop(code || 0); });
 }
+let monitor;
+if (process.platform === 'win32') {
+  monitor = spawn(process.execPath, [path.join(root, 'scripts/monitor-local-processes.mjs'), String(process.pid), stateFile, ...[...children].map(child => String(child.pid))], {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
+  monitor.unref();
+}
+fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+fs.writeFileSync(stateFile, `${JSON.stringify({
+  ownerPid: process.pid,
+  monitorPid: monitor?.pid || null,
+  startedAt: new Date().toISOString(),
+  services: [...children].map((child, index) => ({ name: services[index].name, pid: child.pid }))
+}, null, 2)}\n`, { flag: 'wx' });
 console.log('AURA local: http://localhost:3000 | API: http://localhost:8000/health');
 if (lan) console.log(`Telemóvel na mesma rede: API http://${lanAddress}:8000/health | Web http://${lanAddress}:3000`);
 if (expoGo) console.log('Leia o QR code do Metro com o Expo Go. Este arranque não publica a aplicação.');
+if (schoolDemo) console.log('MODO ESCOLAR: Gemini bloqueado no backend; use apenas a conta e os dados fictícios preparados.');
 console.log('Use Ctrl+C para parar os serviços deste arranque.');

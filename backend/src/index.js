@@ -22,6 +22,9 @@ const logger = pino({
 const port = process.env.PORT || 8000;
 const server = app.listen(port, process.env.AURA_BIND_HOST || '0.0.0.0', () => {
   logger.info(`App running on port ${port}...`);
+  if (process.env.AURA_SCHOOL_DEMO === 'true') {
+    logger.warn('School demo mode is active: external AI generation is disabled');
+  }
 });
 
 let shuttingDown = false;

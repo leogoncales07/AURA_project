@@ -86,7 +86,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.set('Cache-Control', 'no-store').json({ status: 'ok', service: 'aura-api' });
+  res.set('Cache-Control', 'no-store').json({
+    status: 'ok',
+    service: 'aura-api',
+    schoolDemo: process.env.AURA_SCHOOL_DEMO === 'true'
+  });
 });
 
 // 3) ERROR HANDLING

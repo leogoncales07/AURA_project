@@ -8,7 +8,7 @@ A recuperação por e-mail foi confirmada pelo Leonardo: recebeu a mensagem e co
 
 O domínio `aura.pt` **não está registado pelo utilizador** e ainda não há conta de alojamento. Não existem serviços públicos publicados nesta etapa. Os exemplos de produção usam URLs que terão de ser substituídos por endereços reais do alojamento.
 
-Nesta preparação, Next.js e eslint-config-next foram atualizados para **15.5.28**. Foram corrigidas também dependências transitivas e a instalação do backend foi sincronizada com o lockfile. Resultado: auditorias `npm audit --omit=dev` de backend e frontend sem vulnerabilidades conhecidas reportadas, **33 testes aprovados**, nova validação no Supabase real aprovada e build standalone com ficheiros estáticos, áudio, páginas legais e CORS verificados.
+Nesta preparação, Next.js e eslint-config-next foram atualizados para **15.5.28**. Foram corrigidas também dependências transitivas e a instalação do backend foi sincronizada com o lockfile. Resultado atual: **52 testes aprovados**, validação anterior no Supabase real aprovada e build standalone com ficheiros estáticos, páginas legais e CORS verificados. Os MP3 de origem não documentada foram retirados; os exercícios funcionam sem som enquanto os candidatos originais aguardam audição.
 
 ## Testar neste computador, sem Docker
 
@@ -54,6 +54,16 @@ Se já existir um Metro aberto, pode mantê-lo e iniciar apenas API/web em modo 
 Um bundle Android validado verifica a compilação JavaScript e dos assets. A reprodução em segundo plano, permissões e alterações de configuração nativa devem também ser testadas posteriormente numa build própria, respeitando as limitações do Expo Go. Esta etapa não exige publicação nas lojas.
 
 Com os serviços a correr, pode verificar a instalação com `node scripts/check-local.mjs`.
+
+### Demonstração escolar segura
+
+Para a apresentação, usar `START_SCHOOL_DEMO.bat` ou:
+
+```sh
+node scripts/start-local.mjs --school-demo --expo-go
+```
+
+Este comando força o bloqueio do Gemini apenas nos processos iniciados, sem reescrever o `.env`. Validar noutro terminal com `node scripts/check-local.mjs --school-demo`. Usar `Ctrl+C` para terminar; se o terminal Windows for fechado, `STOP_AURA.bat` encerra somente os PIDs registados pelo lançador atual. O procedimento completo, incluindo conta fictícia, rede local e encerramento, está em `docs/SCHOOL_DEMO_RUNBOOK.md`.
 
 ## Contentores de teste
 
@@ -113,7 +123,7 @@ O teste de entrega ao e-mail pessoal passou. Isso não comprova entrega a todos 
 
 ### Mobile e domínio
 
-Preencher `mobile/.env` com os dois URLs públicos HTTPS de `mobile/.env.production.example`. As variáveis públicas Expo não podem conter chaves administrativas. Só depois criar a build nativa e testar áudio, permissões, lembretes, recuperação de sessão e links legais num dispositivo físico.
+Preencher `mobile/.env` com os dois URLs públicos HTTPS de `mobile/.env.production.example`. As variáveis públicas Expo não podem conter chaves administrativas. Só depois criar a build nativa e testar permissões, lembretes, recuperação de sessão e links legais num dispositivo físico. Se os candidatos originais de áudio forem aprovados e instalados, testar também reprodução, repetição e ecrã bloqueado numa build nativa.
 
 Pode começar com o subdomínio HTTPS disponibilizado pelo alojamento, sem comprar um domínio. Quando existir um domínio registado e controlado pelo utilizador, ligar o DNS e atualizar web, backend, mobile e URLs do Supabase. Não usar `aura.pt` como destino real enquanto a sua propriedade não estiver confirmada.
 

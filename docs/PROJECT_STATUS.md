@@ -1,5 +1,21 @@
 # AURA — estado da preparação para produção
 
+## Preparação de publicação — 06/11/2026
+
+Foi criado `docs/RELEASE_PLAN.md`, separando demonstração escolar, teste público e lançamento nas lojas. A página inicial passou a ter uma secção móvel configurável: sem listagens oficiais mostra apenas que as aplicações estão em preparação; os links só aparecem para URLs HTTPS válidos de Google Play ou App Store. Foram também retiradas da apresentação pública afirmações de terapeuta, acompanhamento médico, precisão clínica e efeitos instantâneos nos cinco idiomas, incluindo a app móvel. Os exercícios foram reescritos como adaptações educativas, ganharam avisos de segurança e as referências estão registadas em `docs/CONTENT_REFERENCES.md`. Os MP3 de origem não documentada deixaram de ser distribuídos; candidatos originais aguardam audição.
+
+Os atalhos inseguros de demonstração foram removidos da web e do mobile: já não existe token falso nem palavra-passe de demonstração no cliente. Foi acrescentado `AURA_SCHOOL_DEMO=true`, que impede chamadas ao Gemini no backend, um modelo de configuração em `backend/.env.school.example` e a verificação `npm run check:school-demo`. A apresentação deve usar uma conta Supabase dedicada com dados totalmente fictícios e palavra-passe mantida fora do repositório.
+
+O chat passou a informar, antes da primeira mensagem e nos cinco idiomas, que as respostas são automáticas, podem estar erradas e não provêm de um profissional de saúde ou serviço de emergência. Foram também removidas das traduções restantes expressões como «avaliações clínicas» e «meditações baseadas em evidências», que não estavam sustentadas por uma validação formal do produto.
+
+Foi gerado `docs/DEPENDENCY_LICENSES.md` e o inventário detalhado `docs/dependency-license-inventory.json` a partir dos lockfiles. Foram encontrados 995 pacotes/versões de produção e 75 dependências diretas. Nenhuma licença comercial precisa de ser comprada apenas para usar Next.js, React, Express ou Expo; 28 componentes transitivos com MPL, LGPL, CC-BY ou expressão alternativa ficaram corretamente sinalizados para cumprimento/revisão antes da distribuição final. O relatório pode ser repetido com `node scripts/audit-dependency-licenses.mjs`.
+
+Foi acrescentado o gate `npm run check:release`, separado do modo escolar. Depois da quarentena dos MP3, ele valida 29 condições e mantém corretamente a publicação bloqueada: 23 ainda dependem de configuração HTTPS, decisões do responsável, domínio/loja escolhida, finalização legal ou direitos de conteúdo. `docs/content-rights.json` mantém uma única decisão de áudio pendente, em vez de tratar os ficheiros retirados como conteúdo distribuído; `docs/release-decisions.json` mantém decisões externas explicitamente vazias; `docs/INCIDENT_RESPONSE.md` fornece o procedimento operacional inicial. O gate nunca imprime os valores das chaves.
+
+Foram gerados três candidatos de áudio originais, sem voz nem amostras de terceiros, em `tmp/aura-audio-candidates`. São loops WAV de 30 segundos para balanceamento, foco e sono, com cerca de 1,44 MB cada. `scripts/validate-audio-candidates.mjs` confirmou formato PCM, duração, hashes, amplitude sem clipping, offset DC baixo e continuidade da repetição. Os MP3 de origem desconhecida foram retirados de `frontend/public` e `mobile/assets`, movidos para `tmp/aura-audio-quarantine` e deixaram de ser referenciados pelo código. Os exercícios funcionam sem som até existir audição e aprovação humana; a proveniência está em `docs/AUDIO_PROVENANCE.md`.
+
+Foi criado `START_SCHOOL_DEMO.bat` e o guião `docs/SCHOOL_DEMO_RUNBOOK.md`. O lançador força o bloqueio do Gemini no processo, sem alterar o `.env`; `check-local --school-demo` confirmou API, build standalone, ficheiros estáticos, páginas legais, CORS e ausência dos áudios em quarentena. Em Windows, os PIDs criados ficam num estado temporário e `STOP_AURA.bat` encerra apenas essa execução. Foram validados tanto o encerramento explícito como a limpeza automática dos filhos quando o processo pai desaparece; as portas 3000 e 8000 ficaram livres.
+
 > Prioridade confirmada pelo utilizador: projeto de PAP em desenvolvimento. Completar e estabilizar web, mobile e backend; adiar a publicação até o professor disponibilizar domínio e licenças. O mobile é testado num telemóvel físico através do Expo Go. Os passos de publicação abaixo são preparação futura, não ações a executar agora. Ver `docs/PROJECT_CONTEXT.md` e o modo Expo Go em `docs/SETUP.md`.
 
 ## Progresso na web e no mobile — 01/11/2026
@@ -15,7 +31,7 @@ Progresso passou a reunir Visão geral, O meu percurso e Relatórios. Foram acre
 - Cadastro sem sessão exige confirmação por e-mail. Recuperação inclui envio de link e página `/reset-password` para guardar a nova palavra-passe.
 - Eliminação chama Supabase Auth Admin, verifica a versão da migração e usa um trigger transacional para remover os dados associados. Os ficheiros legados deste servidor também são limpos. Exportação inclui conversas e preferências, sem o hash interno do token.
 - `/account` redireciona para `/settings`; a chamada órfã a `/reports/generate` foi removida. Os ecrãs de relatórios usam logs e avaliações, tratam erros, ordenam cronologicamente e não contam logs como meditações.
-- Painéis e sono deixam de inventar medições para dias sem dados. O dashboard mobile atualiza ao regressar ao separador; a web recebe eventos de alteração de dados. O catálogo de meditações mobile lê os metadados do backend e usa os áudios incluídos na app.
+- Painéis e sono deixam de inventar medições para dias sem dados. O dashboard mobile atualiza ao regressar ao separador; a web recebe eventos de alteração de dados. O catálogo de meditações mobile lê os metadados do backend; a reprodução dos antigos MP3 foi posteriormente desativada por falta de proveniência.
 - Áudio iOS em segundo plano declarado no projeto nativo. Lembretes locais são opcionais, configuráveis e cancelados ao sair; a rotina não apaga notificações de outras funcionalidades.
 - Links de privacidade e termos e aviso de finalidade de bem-estar. Os textos legais são **rascunhos**, não documentos finais de lançamento.
 

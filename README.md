@@ -23,6 +23,8 @@ Neste computador, as dependências e os ficheiros de ambiente já estão configu
 
 - **Web e API:** abrir `START_APP.bat`.
 - **Expo Go, API e web na rede local:** abrir `START_MOBILE.bat`, manter computador/telemóvel na mesma rede Wi-Fi e ler o QR code.
+- **Apresentação escolar segura:** abrir `START_SCHOOL_DEMO.bat`; este modo bloqueia o Gemini no backend. Ver `docs/SCHOOL_DEMO_RUNBOOK.md`.
+- **Encerrar uma execução local no Windows:** usar `Ctrl+C` ou `STOP_AURA.bat` se o terminal tiver sido fechado.
 - Parar um arranque anterior com `Ctrl+C` antes de iniciar outro, para libertar as portas.
 
 Os lançadores usam a build web existente. Depois de alterar o código web, executar `npm.cmd --prefix frontend run build`; para desenvolvimento com atualização automática, consultar o [README da web](frontend/README.md).

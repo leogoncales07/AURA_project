@@ -213,6 +213,11 @@ export default function ChatPage() {
                       </div>
                     </header>
 
+                    <div className={styles.aiDisclosure} role="note">
+                      <strong>{t('chat.disclosureTitle')}</strong>
+                      <span>{t('chat.disclosure')}</span>
+                    </div>
+
                     <main className={styles.chatArea}>
                         {messages.length === 0 && !sending && (
                             <div className={styles.emptyState}>

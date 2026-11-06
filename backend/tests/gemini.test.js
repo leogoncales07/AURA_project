@@ -2,11 +2,11 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateText } from '../src/services/geminiService.js';
 
-const original = { fetch: globalThis.fetch, key: process.env.G_KEY, model: process.env.GEMINI_MODEL, enabled: process.env.GEMINI_ENABLED };
+const original = { fetch: globalThis.fetch, key: process.env.G_KEY, model: process.env.GEMINI_MODEL, enabled: process.env.GEMINI_ENABLED, schoolDemo: process.env.AURA_SCHOOL_DEMO };
 const contents = [{ role: 'user', parts: [{ text: 'Synthetic test' }] }];
 after(() => {
   globalThis.fetch = original.fetch;
-  for (const [key, value] of [['G_KEY', original.key], ['GEMINI_MODEL', original.model], ['GEMINI_ENABLED', original.enabled]]) {
+  for (const [key, value] of [['G_KEY', original.key], ['GEMINI_MODEL', original.model], ['GEMINI_ENABLED', original.enabled], ['AURA_SCHOOL_DEMO', original.schoolDemo]]) {
     if (value === undefined) delete process.env[key]; else process.env[key] = value;
   }
 });
@@ -18,6 +18,9 @@ test('no remote request when Gemini is disabled or not configured', async () => 
   process.env.G_KEY = 'test-secret'; process.env.GEMINI_ENABLED = 'false';
   assert.equal((await generateText({ contents })).reason, 'disabled');
   delete process.env.GEMINI_ENABLED;
+  process.env.AURA_SCHOOL_DEMO = 'true';
+  assert.equal((await generateText({ contents })).reason, 'disabled');
+  delete process.env.AURA_SCHOOL_DEMO;
 });
 test('uses the existing key in a header, caps output and parses all visible parts', async () => {
   process.env.G_KEY = 'test-secret'; process.env.GEMINI_MODEL = 'gemini-2.5-flash';

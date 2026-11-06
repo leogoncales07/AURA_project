@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import AuraLogo from '@/components/AuraLogo';
 import styles from './page.module.css';
 import Button from '@/components/Button';
@@ -23,7 +22,6 @@ export default function LoginPage() {
     const [forgotMsg, setForgotMsg] = useState('');
     const [forgotErr, setForgotErr] = useState('');
     const [forgotLoading, setForgotLoading] = useState(false);
-    const router = useRouter();
     const { t } = useI18n();
     const { login } = useAuth();
 
@@ -63,27 +61,6 @@ export default function LoginPage() {
             setError(`Connection error: ${err.message}. Check if the backend server is running.`);
             setLoading(false);
         }
-    };
-
-    const handleDemoLogin = async () => {
-        setLoading(true);
-        setError('');
-        
-        console.log("Loading presentation demo user...");
-        const mockToken = "presentation-demo-token";
-        const mockUser = {
-            id: "demo-presenter-123",
-            email: "demo@aura.com",
-            name: "Demo User",
-            display_name: "Aura Demo"
-        };
-        
-        // Ensure data is saved before moving
-        localStorage.setItem('aura_token', mockToken);
-        localStorage.setItem('aura_user', JSON.stringify(mockUser));
-        
-        // Use hard navigation as a failsafe
-        window.location.href = '/dashboard';
     };
 
     return (
@@ -146,15 +123,6 @@ export default function LoginPage() {
                         >
                             {loading ? t('login.loading') : t('login.submit')}
                         </Button>
-
-                        <button
-                            type="button"
-                            className={styles.demoBtn}
-                            onClick={handleDemoLogin}
-                            disabled={loading}
-                        >
-                            {t('login.demoButton')}
-                        </button>
 
                         <div className={styles.forgotPasswordWrapper}>
                             <button

@@ -159,10 +159,27 @@
 .sourceLabel {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: var(--text-xs);
   color: var(--aura-ghost);
   margin-bottom: 32px;
+}
+
+.sourceLabel a {
+  color: var(--aura-aurora-1);
+  text-underline-offset: 3px;
+}
+
+.safetyNote {
+  margin: -20px 0 36px;
+  padding: 12px 14px;
+  color: var(--aura-muted);
+  background: var(--bg-pill);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  line-height: 1.6;
 }
 
 .modalDesc {

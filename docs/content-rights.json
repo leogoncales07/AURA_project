@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "exercise-audio-decision",
+      "files": [
+        "scripts/generate-audio-candidates.mjs",
+        "scripts/validate-audio-candidates.mjs",
+        "docs/AUDIO_PROVENANCE.md"
+      ],
+      "sha256": null,
+      "status": "unverified-mp3-files-quarantined-original-candidates-awaiting-approval",
+      "evidence": "docs/AUDIO_PROVENANCE.md",
+      "distributionAllowed": false
+    },
+    {
+      "id": "aura-brand-assets",
+      "files": [
+        "frontend/src/app/icon.png",
+        "frontend/public/aura-ai-icon.jpg",
+        "frontend/public/aura-ai-logo.png",
+        "frontend/public/aura-logo-dark.png",
+        "frontend/public/aura-logo-light.png",
+        "frontend/public/aura-logo-white.png",
+        "frontend/public/aura-logo.jpg",
+        "frontend/public/logo.png",
+        "mobile/assets/images/icon.png",
+        "mobile/assets/images/android-icon-background.png",
+        "mobile/assets/images/android-icon-foreground.png",
+        "mobile/assets/images/android-icon-monochrome.png",
+        "mobile/assets/images/favicon.png",
+        "mobile/assets/images/splash-icon.png"
+      ],
+      "sha256": null,
+      "status": "authorship-to-confirm",
+      "evidence": null,
+      "distributionAllowed": false
+    },
+    {
+      "id": "educational-practices",
+      "files": [
+        "backend/src/controllers/libraryController.js",
+        "frontend/src/app/meditations/page.js"
+      ],
+      "sha256": null,
+      "status": "aura-adaptation-with-references",
+      "evidence": "docs/CONTENT_REFERENCES.md",
+      "distributionAllowed": true
+    },
+    {
+      "id": "software-dependencies",
+      "files": [
+        "backend/package-lock.json",
+        "frontend/package-lock.json",
+        "mobile/package-lock.json"
+      ],
+      "sha256": null,
+      "status": "inventory-created-review-pending",
+      "evidence": "docs/DEPENDENCY_LICENSES.md",
+      "distributionAllowed": false
+    }
+  ]
+}

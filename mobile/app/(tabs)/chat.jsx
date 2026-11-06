@@ -196,6 +196,11 @@ export default function ChatScreen() {
                     </TouchableOpacity>
                 </View>
 
+                <View style={[styles.aiDisclosure, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                    <Text style={[styles.aiDisclosureTitle, { color: colors.textPrimary }]}>{t('chat.disclosureTitle')}</Text>
+                    <Text style={[styles.aiDisclosureText, { color: colors.textSecondary }]}>{t('chat.disclosure')}</Text>
+                </View>
+
                 {/* Messages */}
                 <FlatList
                     ref={listRef}
@@ -343,6 +348,9 @@ const styles = StyleSheet.create({
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
     botName: { ...Fonts.serif, fontWeight: '500', fontSize: 18, letterSpacing: 0.5 },
     botStatus: { ...Fonts.semibold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
+    aiDisclosure: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: 1 },
+    aiDisclosureTitle: { ...Fonts.semibold, fontSize: 12, marginBottom: 2 },
+    aiDisclosureText: { ...Fonts.regular, fontSize: 11, lineHeight: 16 },
 
     botAvatar: {
         width: 40, height: 40, borderRadius: 20,

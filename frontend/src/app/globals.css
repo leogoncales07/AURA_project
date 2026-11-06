@@ -1,6 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
-
 :root {
+  /* Local system stacks keep builds and page loads independent of font CDNs. */
+  --font-fraunces: Georgia, 'Times New Roman', serif;
+  --font-dm-sans: 'Segoe UI', Arial, sans-serif;
+  --font-outfit: 'Segoe UI', Arial, sans-serif;
+
   /* System Foundations: Light Mode */
   --bg-background: #ffffff;
   --bg-sidebar: rgba(245, 245, 247, 0.88);

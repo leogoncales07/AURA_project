@@ -126,7 +126,7 @@ export default function IntakePage() {
           </div>
           <h2 className={styles.summaryTitle}>your sanctuary is ready.</h2>
           <p className={styles.summaryDesc}>
-            we've tuned aura to your frequency. your journey to mental clarity and emotional balance begins now.
+            we&apos;ve tuned aura to your frequency. your journey to mental clarity and emotional balance begins now.
           </p>
           <Button 
             variant="primary" 

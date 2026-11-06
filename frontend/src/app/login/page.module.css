@@ -124,28 +124,6 @@
   margin-top: 8px;
 }
 
-.demoBtn {
-  width: 100%;
-  background: transparent;
-  border: 1px solid var(--aura-border);
-  color: var(--aura-muted);
-  border-radius: var(--radius-full);
-  padding: 12px;
-  font-size: var(--text-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 200ms ease;
-}
-
-.demoBtn:hover {
-  background: var(--bg-pill);
-  color: var(--aura-white);
-  border-color: var(--aura-border-hover);
-  transform: translateY(-1px);
-}
-
 .forgotPasswordWrapper {
   text-align: center;
 }

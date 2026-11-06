@@ -20,21 +20,21 @@ const DEFAULT_LIBRARY_CONTENT = {
     meditations: {
         box_breathing: {
             name: 'Box Breathing (4-4-4-4)',
-            description: 'A simple exercise to calm your nervous system.',
-            audioUrl: '/audio/balance.mp3',
+            description: 'A paced breathing exercise that uses four equal counts.',
             steps: [
                 'Exhale all the air from your lungs through your mouth.',
                 'Slowly breathe in through your nose, counting to 4.',
                 'Hold your breath, counting to 4.',
                 'Slowly exhale through your mouth, counting to 4.',
                 'Hold your breath again, counting to 4.',
-                'Repeat for 4 cycles or until you feel calmer.'
+                'Repeat for up to 4 cycles, without forcing any breath hold.'
             ],
-            source: 'Mayo Clinic'
+            source: 'AURA educational adaptation',
+            references: [{ title: 'Royal National Orthopaedic Hospital — Breathing Techniques', url: 'https://www.rnoh.nhs.uk/patients-and-visitors/patient-information-guides/breathing-techniques' }]
         },
         '478_breathing': {
             name: '4-7-8 Breathing Technique',
-            description: 'Deep breathing that reduces anxiety and slows your body down.',
+            description: 'A counted breathing exercise that focuses attention on the breath.',
             steps: [
                 'Exhale completely through your mouth, making a soft "whoosh" sound.',
                 'Close your mouth and breathe in through your nose, counting to 4.',
@@ -42,25 +42,26 @@ const DEFAULT_LIBRARY_CONTENT = {
                 'Exhale completely through your mouth, counting to 8.',
                 'Repeat the cycle three more times, for a total of four full breaths.'
             ],
-            source: 'Harvard Health'
+            source: 'AURA educational adaptation',
+            references: [{ title: 'NHS Every Mind Matters — Meditation and sleep', url: 'https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/how-to-fall-asleep-faster-and-sleep-better/how-can-meditation-help-with-sleep/' }]
         },
         body_scan: {
             name: 'Progressive Body Scan',
-            description: 'Mindfulness practice to notice physical sensations and relax.',
-            audioUrl: '/audio/focus.mp3',
+            description: 'A mindfulness practice for noticing physical sensations without needing to change them.',
             steps: [
                 'Sit or lie down comfortably. Close your eyes.',
                 'Start at your toes and notice any tension or sensation.',
                 'Move your attention to your feet, ankles, legs, and knees.',
                 'Move up to your thighs, hips, and lower back.',
                 'Now notice your chest, shoulders, arms, and hands.',
-                'Finally, feel your neck, jaw, and forehead. Let the tension dissolve.'
+                'Finally, notice your neck, jaw, and forehead, then return attention to the whole body.'
             ],
-            source: 'Mayo Clinic'
+            source: 'AURA educational adaptation',
+            references: [{ title: 'US Department of Veterans Affairs — Body Scan', url: 'https://www.va.gov/wholehealthlibrary/passport/chapter-4.asp' }]
         },
         '54321_grounding': {
             name: '5-4-3-2-1 Grounding Method',
-            description: 'Helps calm anxiety by focusing on the present moment.',
+            description: 'A sensory attention exercise for reconnecting with the present surroundings.',
             steps: [
                 'Identify 5 things you can see around you.',
                 'Identify 4 things you can touch.',
@@ -68,35 +69,36 @@ const DEFAULT_LIBRARY_CONTENT = {
                 'Identify 2 smells you notice.',
                 'Identify 1 taste or something you can taste.'
             ],
-            source: 'Mayo Clinic Health System'
+            source: 'AURA educational adaptation',
+            references: [{ title: 'Hampshire Hospitals NHS — 5-4-3-2-1 grounding', url: 'https://www.hampshirehospitals.nhs.uk/our-services/az-departments-and-specialties/maternity-hampshire-hospitals/baby-loss-bereavement-support/help-and-support/self-help' }]
         }
     },
     sleep_methods: {
         military_method: {
-            name: 'Military Sleep Method',
-            description: 'Technique to fall asleep quickly with body and mental relaxation.',
-            audioUrl: '/audio/sleep.mp3',
+            name: 'Relaxation for Sleep',
+            description: 'A gentle sequence for unwinding before sleep, without promising a specific result.',
             steps: [
-                'Relax your entire face, including forehead, eyelids, jaw, and tongue.',
-                'Drop your shoulders as much as possible. Relax your upper and lower arms.',
-                'Exhale and relax your chest.',
-                'Relax your legs, thighs, calves, ankles, and feet.',
-                'Clear your mind for 10 seconds by imagining a calm scene, like a still lake.',
-                'If thoughts arise, tell yourself "do not think, do not think, do not think" for 10 seconds.'
+                'Choose a comfortable position and let your breathing remain natural.',
+                'Notice your face, jaw, and shoulders and soften any effort you can release comfortably.',
+                'Move your attention through your arms, hands, legs, and feet without forcing them to relax.',
+                'Picture a familiar, peaceful place or return your attention to the sound of your breathing.',
+                'If thoughts appear, notice them and gently bring attention back to the exercise.'
             ],
-            source: 'Sleep Foundation'
+            source: 'AURA educational adaptation',
+            references: [{ title: 'NHS — Insomnia and sleep habits', url: 'https://www.nhs.uk/conditions/insomnia/' }]
         },
         stimulus_control: {
-            name: 'Stimulus Control Therapy',
-            description: 'Strategies to strengthen the association between bed and sleep.',
+            name: 'Sleep Routine and Bed Association',
+            description: 'General sleep-habit suggestions for associating bedtime with sleep.',
             steps: [
                 'Use your bed only for sleep and intimacy. Do not work or watch TV in bed.',
                 'Go to bed only when you are actually sleepy.',
-                'If you don\'t fall asleep in 20 minutes, get up and move to another room.',
+                'If you remain awake for a while, get up and move to another quiet place instead of watching the clock.',
                 'Do a quiet activity, such as reading, until you feel sleepy again.',
                 'Maintain a consistent wake time every day.'
             ],
-            source: 'Mayo Clinic'
+            source: 'AURA educational adaptation',
+            references: [{ title: 'East London NHS Foundation Trust — CBT for insomnia', url: 'https://www.elft.nhs.uk/sites/default/files/2022-08/cbt-for-insomnia.pdf' }]
         }
     }
 };
@@ -210,7 +212,7 @@ export default function MeditationsPage() {
                                 </div>
                                 <div className={styles.cardInfo}>
                                     <h3>{item.name}</h3>
-                                    <p>{item.source}</p>
+                                    <p>{item.description}</p>
                                 </div>
                                 <ChevronRight size={16} className={styles.arrowIcon} />
                             </div>
@@ -228,7 +230,7 @@ export default function MeditationsPage() {
                                 </div>
                                 <div className={styles.cardInfo}>
                                     <h3>{item.name}</h3>
-                                    <p>{item.source}</p>
+                                    <p>{item.description}</p>
                                 </div>
                                 <ChevronRight size={16} className={styles.arrowIcon} />
                             </div>
@@ -247,13 +249,18 @@ export default function MeditationsPage() {
                         <div className={styles.modalHeader}>
                             <div className={styles.modalBadge}>{t('meditations.validated')}</div>
                             <h2 id="practice-detail-title">{selectedItem?.name || ''}</h2>
-                            <p className={styles.sourceLabel}>
-                                <Info size={14} /> {t('meditations.source', { source: selectedItem?.source || '' })}
-                            </p>
+                            {(selectedItem?.references || []).length > 0 && <div className={styles.sourceLabel}>
+                                <Info size={14} aria-hidden="true" />
+                                <span>{t('meditations.references')}</span>
+                                {(selectedItem.references || []).map(reference => (
+                                    <a key={reference.url} href={reference.url} target="_blank" rel="noreferrer">{reference.title}</a>
+                                ))}
+                            </div>}
                         </div>
 
                         <div className={styles.modalBody}>
                             <p className={styles.modalDesc}>{selectedItem?.description || ''}</p>
+                            <p className={styles.safetyNote}>{t('meditations.safety')}</p>
                             
                             <div className={styles.stepsContainer}>
                                 <h3>{t('meditations.followGuide')}</h3>

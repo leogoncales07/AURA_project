@@ -252,6 +252,55 @@
   transition: transform 300ms var(--ease-spring);
 }
 
+.mobileApps {
+  width: calc(100% - 48px);
+  max-width: 760px;
+  margin: 0 auto 120px;
+  padding: 56px 40px;
+  text-align: center;
+  background: var(--aura-depth);
+  border: 1px solid var(--aura-border);
+  border-radius: var(--radius-lg);
+}
+
+.storeIcon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--aura-aurora-1);
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: var(--radius-md);
+}
+
+.storeLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.storeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 22px;
+  color: var(--aura-white);
+  background: var(--bg-pill);
+  border: 1px solid var(--aura-border-hover);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: transform 200ms ease, background 200ms ease;
+}
+
+.storeLink:hover {
+  transform: translateY(-2px);
+  background: rgba(16, 185, 129, 0.12);
+}
+
 .featureItem:hover .iconCircle {
   transform: scale(1.08);
 }
@@ -281,6 +330,11 @@
 
   .features {
     padding: 80px 24px;
+  }
+
+  .mobileApps {
+    margin-bottom: 80px;
+    padding: 40px 24px;
   }
 
   .title {

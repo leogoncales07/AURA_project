@@ -6,6 +6,7 @@ import AuraLogo from "@/components/AuraLogo";
 import styles from "./page.module.css";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import StoreLinks from "@/components/StoreLinks";
 import { useI18n } from "@/i18n";
 
 import { useEffect, useState } from "react";
@@ -89,6 +90,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <StoreLinks />
 
       <footer style={{ 
         padding: '80px 40px', 

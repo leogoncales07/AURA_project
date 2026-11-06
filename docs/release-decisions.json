@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "serviceOwner": null,
+  "publicContactEmail": null,
+  "publicContactAddress": null,
+  "publicMinimumAge": null,
+  "domain": null,
+  "domainOwnershipConfirmed": false,
+  "trademarkSearchConfirmed": false,
+  "retentionDays": null,
+  "backupRetentionDays": null,
+  "hostingProvider": null,
+  "hostingRegion": null,
+  "dpaReviewed": {
+    "supabase": false,
+    "hosting": false,
+    "googleGemini": false
+  },
+  "geminiPublicUse": null,
+  "geminiEeaPaidServiceConfirmed": false,
+  "legalReviewStatus": "draft",
+  "targetStores": [],
+  "googlePlayAccountOwner": null,
+  "appleDeveloperAccountOwner": null,
+  "mobileIdentifiersConfirmed": false
+}

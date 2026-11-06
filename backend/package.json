@@ -10,6 +10,8 @@
     "test:database": "node --test tests/database/migration.test.js",
     "test:live": "node --use-system-ca scripts/verify-live-flow.js --run",
     "check:production": "node --use-system-ca scripts/check-production.js",
+    "check:school-demo": "node scripts/check-school-demo.js",
+    "check:release": "node scripts/check-release-readiness.js",
     "backup:legacy": "node scripts/backup-legacy-data.js"
   },
   "keywords": [],

@@ -86,7 +86,7 @@ test('health checks work without authentication or database requests', async () 
   requests = [];
   const result = await call('/health', undefined, null);
   assert.equal(result.status, 200);
-  assert.deepEqual(result.body, { status: 'ok', service: 'aura-api' });
+  assert.deepEqual(result.body, { status: 'ok', service: 'aura-api', schoolDemo: false });
   assert.equal(requests.length, 0);
 });
 test('progress is authenticated, owner scoped and saves immutable idempotent records', async () => {

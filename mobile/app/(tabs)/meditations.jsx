@@ -15,8 +15,8 @@ import { progressCopy } from '../../lib/progress-utils.mjs';
 const SESSION_COLORS = { accentBlue: '#4FC3F7', accentPink: '#FF6B9D', accentMint: '#30D158' };
 
 const SESSIONS = [
-    { emoji: '🌬️', title: 'sleepPrep', meta: 'sleepPrepMeta', color: SESSION_COLORS.accentBlue, audioUrl: require('../../assets/audio/sleep.mp3') },
-    { emoji: '🎯', title: 'deepFocus', meta: 'deepFocusMeta', color: SESSION_COLORS.accentPink, audioUrl: require('../../assets/audio/focus.mp3') },
+    { emoji: '🌬️', title: 'sleepPrep', meta: 'sleepPrepMeta', color: SESSION_COLORS.accentBlue, audioUrl: null },
+    { emoji: '🎯', title: 'deepFocus', meta: 'deepFocusMeta', color: SESSION_COLORS.accentPink, audioUrl: null },
 ];
 
 export default function MeditationsScreen() {
@@ -35,9 +35,8 @@ export default function MeditationsScreen() {
         api.getLibraryContent().then(result => {
             const library = result.data?.content || result.data;
             if (!library) return;
-            const assets = { '/audio/balance.mp3': require('../../assets/audio/balance.mp3'), '/audio/focus.mp3': require('../../assets/audio/focus.mp3'), '/audio/sleep.mp3': require('../../assets/audio/sleep.mp3') };
-            const rows = Object.entries({ ...library.meditations, ...library.sleep_methods }).filter(([, entry]) => assets[entry.audioUrl]);
-            if (rows.length) setSessions(rows.map(([id, entry]) => ({ title: id, titleText: entry.name, metaText: entry.description, color: SESSION_COLORS.accentMint, emoji: '♫', durationMin: 5, audioUrl: assets[entry.audioUrl] })));
+            const rows = Object.entries({ ...library.meditations, ...library.sleep_methods });
+            if (rows.length) setSessions(rows.map(([id, entry]) => ({ title: id, titleText: entry.name, metaText: entry.description, color: SESSION_COLORS.accentMint, emoji: '♫', durationMin: 5, audioUrl: null })));
         });
         AsyncStorage.getItem('aura_user').then((stored) => {
             if (stored) setUser(JSON.parse(stored));
@@ -68,6 +67,9 @@ export default function MeditationsScreen() {
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
                 {[1, 3, 5, 10].map(minutes => <TouchableOpacity key={minutes} accessibilityRole="button" accessibilityState={{ selected: minutes === durationMinutes }} onPress={() => setDurationMinutes(minutes)} style={{ padding: 13, flex: 1, alignItems: 'center', borderRadius: 12, backgroundColor: minutes === durationMinutes ? colors.primaryDim : colors.inputBg }}><Text style={{ color: minutes === durationMinutes ? colors.primary : colors.textSecondary }}>{minutes} min</Text></TouchableOpacity>)}
             </View>
+            <Text style={[styles.safetyNote, { color: colors.textSecondary, backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                {t('meditations.safety')}
+            </Text>
 
             {/* Featured card */}
             <View style={[styles.featuredCard, { backgroundColor: SESSION_COLORS.accentMint + '15', borderColor: SESSION_COLORS.accentMint + '30' }]}>
@@ -85,8 +87,7 @@ export default function MeditationsScreen() {
                             durationMin: durationMinutes,
                             color: SESSION_COLORS.accentMint,
                             emoji: '🌬️',
-                            audioUrl:
-                                require('../../assets/audio/balance.mp3')
+                            audioUrl: null
                         })}
                     >
                         <Text style={styles.startBtnText}>▶ {t('meditations.start')}</Text>
@@ -161,6 +162,7 @@ const styles = StyleSheet.create({
     featuredTitle: { ...Fonts.bold, fontSize: 20, marginBottom: 6 },
     featuredDesc: { ...Fonts.regular, fontSize: 13, lineHeight: 20, marginBottom: Spacing.md },
     featuredEmoji: { fontSize: 64, marginLeft: Spacing.sm },
+    safetyNote: { ...Fonts.regular, fontSize: 12, lineHeight: 18, padding: Spacing.sm, borderRadius: Radius.md, borderWidth: 1, marginBottom: Spacing.lg },
     startBtn: {
         borderRadius: Radius.full,
         paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, alignSelf: 'flex-start',

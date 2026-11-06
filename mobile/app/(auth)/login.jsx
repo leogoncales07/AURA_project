@@ -21,7 +21,6 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [demoLoading, setDemoLoading] = useState(false);
     const [error, setError] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
 
@@ -57,27 +56,6 @@ export default function LoginScreen() {
             console.error('Login error:', err);
             setError(t('login.networkError') || 'Network error connecting to backend');
             setLoading(false);
-        }
-    };
-
-    const handleDemo = async () => {
-        setError('');
-        setDemoLoading(true);
-        try {
-            const { data, error: apiError } = await api.login('demo@aura.com', 'demo123456');
-            if (data?.access_token) {
-                await AsyncStorage.setItem('aura_token', data.access_token);
-                const demoUser = data.user || { id: 'demo-user-id', name: 'Demo User', email: 'demo@aura.com' };
-                await AsyncStorage.setItem('aura_user', JSON.stringify(demoUser));
-                router.replace('/(tabs)/dashboard');
-            } else {
-                setError(t('login.demoFailed') + ' (Network issue)');
-                setDemoLoading(false);
-            }
-        } catch (err) {
-            console.error('Demo login error:', err);
-            setError('Could not reach backend for Demo. Please check internet connection.');
-            setDemoLoading(false);
         }
     };
 
@@ -219,23 +197,6 @@ export default function LoginScreen() {
                                 )}
                             </TouchableOpacity>
 
-                            {/* Demo button */}
-                            <TouchableOpacity
-                                style={[styles.btnOutline, demoLoading && styles.btnDisabled, {
-                                    borderColor: colors.primary,
-                                    backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(16,185,129,0.06)',
-                                }]}
-                                onPress={handleDemo}
-                                disabled={demoLoading}
-                                activeOpacity={0.8}
-                            >
-                                {demoLoading ? (
-                                    <ActivityIndicator color={colors.primary} size="small" />
-                                ) : (
-                                    <Text style={[styles.btnOutlineText, { color: colors.textPrimary }]}>{t('login.demoButton')}</Text>
-                                )}
-                            </TouchableOpacity>
-
                             <TouchableOpacity 
                                 style={{ alignItems: 'center', marginTop: Spacing.md }} 
                                 onPress={handleForgotPassword}
@@ -317,12 +278,6 @@ const styles = StyleSheet.create({
     },
     btnDisabled: { opacity: 0.6 },
     btnPrimaryText: { ...Fonts.semibold, color: '#fff', fontSize: 16 },
-
-    btnOutline: {
-        borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center',
-        minHeight: 52, marginBottom: Spacing.sm, borderWidth: 1,
-    },
-    btnOutlineText: { ...Fonts.semibold, fontSize: 15 },
 
     footer: {
         flexDirection: 'row', justifyContent: 'center',

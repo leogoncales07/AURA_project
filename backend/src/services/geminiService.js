@@ -1,6 +1,8 @@
 // Shared Gemini transport. Never put API keys or user content in diagnostic logs.
 export async function generateText({ contents, systemInstruction, maxOutputTokens = 512, temperature = 0.6 }) {
-  if (!process.env.G_KEY || process.env.GEMINI_ENABLED === 'false') return { text: null, reason: 'disabled' };
+  if (process.env.AURA_SCHOOL_DEMO === 'true' || !process.env.G_KEY || process.env.GEMINI_ENABLED === 'false') {
+    return { text: null, reason: 'disabled' };
+  }
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(model)) return { text: null, reason: 'configuration' };
   const generationConfig = { temperature, maxOutputTokens: Math.max(64, Math.min(2048, maxOutputTokens)) };

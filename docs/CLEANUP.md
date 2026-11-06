@@ -6,7 +6,7 @@ Foram retirados 87 ficheiros obsoletos ou sem utilização: backend e diagnósti
 
 Os documentos antes chamados `DEPLOYMENT.md`, `PROJECT_CONTEXT.md` e `backend/PRODUCTION_READINESS.md` estão agora em `docs/SETUP.md`, `docs/PROJECT_CONTEXT.md` e `docs/PROJECT_STATUS.md`. Os READMEs genéricos foram substituídos por instruções específicas da AURA. `AURA.code-workspace` abre a raiz inteira do projeto.
 
-Foram preservados os `.env`, os JSON legados, os backups dos dados, as migrações SQL, os testes atuais, as dependências instaladas, a build web e a pasta Android local. Os áudios de web e mobile permanecem em ambas as aplicações porque cada uma os empacota/serve de forma diferente.
+Foram preservados os `.env`, os JSON legados, os backups dos dados, as migrações SQL, os testes atuais, as dependências instaladas, a build web e a pasta Android local. Posteriormente, os MP3 de origem não documentada foram retirados das aplicações e preservados apenas em `tmp/aura-audio-quarantine`, que não entra nas builds.
 
 ## Recuperação local
 
@@ -18,8 +18,8 @@ A limpeza da árvore local não remove ficheiros já existentes no histórico Gi
 
 ## Verificação após a limpeza
 
-- 33 testes locais aprovados, incluindo os seis testes SQL.
+- 52 testes locais atuais aprovados; os seis testes SQL continuam disponíveis separadamente.
 - Build Next.js e preparação standalone aprovadas; exportação do bundle Android aprovada.
-- Arranque local verificado: API, login, ficheiros estáticos, áudio, páginas legais e CORS. As rotas de demonstração removidas devolvem 404.
+- Arranque local verificado: API, login, ficheiros estáticos, ausência dos áudios em quarentena, páginas legais e CORS. As rotas de demonstração removidas devolvem 404.
 - Os sete ficheiros protegidos (três de ambiente e quatro JSON de dados) mantiveram os hashes originais. A cópia de recuperação foi verificada por SHA-256.
 - Referências de documentação e caminhos usados na preparação de cópias de código verificados. Os processos de verificação foram terminados; não foi efetuada publicação nem teste nativo no telemóvel nesta limpeza.
