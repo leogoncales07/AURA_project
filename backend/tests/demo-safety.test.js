@@ -28,3 +28,17 @@ test('web and mobile clients contain no built-in demo credential or fake token',
     assert.doesNotMatch(source, unsafe, relativePath);
   }
 });
+
+test('mobile daily reminder verifies permission, restores safely and offers a local test', async () => {
+  const notifications = await fs.readFile(path.join(projectRoot, 'mobile/lib/notifications.js'), 'utf8');
+  const layout = await fs.readFile(path.join(projectRoot, 'mobile/app/(tabs)/_layout.jsx'), 'utf8');
+  const settings = await fs.readFile(path.join(projectRoot, 'mobile/components/SettingsModal.jsx'), 'utf8');
+
+  assert.match(notifications, /getPermissionsAsync/);
+  assert.match(notifications, /setNotificationChannelAsync/);
+  assert.match(notifications, /SchedulableTriggerInputTypes\.DAILY/);
+  assert.match(notifications, /export async function restoreDailyReminder/);
+  assert.match(notifications, /export async function sendTestReminder/);
+  assert.match(layout, /restoreDailyReminder/);
+  assert.match(settings, /sendTestReminder/);
+});

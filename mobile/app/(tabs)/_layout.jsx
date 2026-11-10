@@ -5,7 +5,7 @@ import { useI18n } from '../../i18n';
 import { Feather } from '@expo/vector-icons';
 import { useEffect } from 'react';
 import { api } from '../../lib/api';
-import { scheduleDailyMoodReminder, cancelDailyMoodReminder } from '../../lib/notifications';
+import { restoreDailyReminder, cancelDailyMoodReminder } from '../../lib/notifications';
 
 const TAB_ICONS = {
     dashboard:   'grid',
@@ -37,7 +37,7 @@ export default function TabsLayout() {
             const p = result.data.data;
             if (p.theme && p.theme !== 'system') setTheme(p.theme);
             if (p.language) setLocale(p.language);
-            if (p.push_enabled) await scheduleDailyMoodReminder(p.daily_reminder_time || '21:00');
+            if (p.push_enabled) await restoreDailyReminder(p.daily_reminder_time || '21:00', p.language || 'pt');
             else await cancelDailyMoodReminder();
         }).catch(() => {});
     }, [setLocale, setTheme]);

@@ -32,6 +32,19 @@ for (const [directory, entries] of Object.entries(groups)) {
     });
   }
 }
+await fs.writeFile(path.join(destination, 'SOURCE_RELEASE_NOTICE.md'), `# AURA — source release notice
+
+This is a clean source copy, not proof that the application is approved for public launch.
+
+Before deployment, fill the production environment outside Git and run:
+
+\`\`\`sh
+cd backend
+npm run check:release
+\`\`\`
+
+The result must be \`ready: true\`. Do not remove blockers merely to pass the check; resolve the corresponding domain, store, legal, supplier, content-rights and configuration decisions. Verify this copy with \`node scripts/verify-release.mjs .\`.
+`, 'utf8');
 const configured = dotenv.parse(await fs.readFile(path.join(root, 'backend/.env')).catch(() => ''));
 const protectedValues = ['G_KEY', 'S_SERV', 'S_ANON', 'O_PASS', 'DATABASE_URL']
   .map(key => configured[key]).filter(value => value && value.length >= 20);

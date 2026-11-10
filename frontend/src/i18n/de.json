@@ -228,6 +228,8 @@
 
         "notificationsTitle": "Benachrichtigungen",
         "notificationsSubtitle": "Bleibe im Gleichgewicht mit achtsamen Hinweisen.",
+        "mobileRemindersOnly": "Erinnerungen in der mobilen App",
+        "mobileRemindersDescription": "Die tägliche Erinnerung ist eine lokale Benachrichtigung auf dem Telefon. Wählen Sie die Uhrzeit, erlauben Sie Benachrichtigungen und verwenden Sie die Testschaltfläche in den Einstellungen der mobilen App. Wochenberichte und automatische E-Mails sind noch nicht implementiert.",
         "pushNotifications": "Push-Benachrichtigungen",
         "masterPushToggle": "Push-Benachrichtigungen aktivieren",
         "dailyReminder": "Tägliche Erinnerung",

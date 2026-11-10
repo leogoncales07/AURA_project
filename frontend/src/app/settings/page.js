@@ -40,14 +40,14 @@ const INITIAL_STATE = {
     twoFactor: false
   },
   notifications: {
-    pushMaster: true,
+    pushMaster: false,
     reminderTime: '08:00',
     weeklyReportDay: 'Monday',
-    streakAlerts: true,
-    milestones: true,
-    emailSummary: true,
+    streakAlerts: false,
+    milestones: false,
+    emailSummary: false,
     emailTips: false,
-    emailProduct: true,
+    emailProduct: false,
     intensity: 2 // 1: minimal, 2: balanced, 3: full
   },
   wellness: {
@@ -410,68 +410,10 @@ export default function SettingsPage() {
               <p className={styles.sectionSubtitle}>{t('settings.notificationsSubtitle')}</p>
             </div>
 
-            <SettingCard title={t('settings.pushNotifications')}>
-              <AuraToggleRow 
-                label={t('settings.masterPushToggle')} 
-                checked={settings.notifications.pushMaster} 
-                onChange={(val) => updateSetting('notifications', 'pushMaster', val)} 
-              />
-              {settings.notifications.pushMaster && (
-                <>
-                  <AuraSettingRow label={t('settings.dailyReminder')}>
-                    <Input 
-                      type="time" 
-                      value={settings.notifications.reminderTime}
-                      onChange={(val) => updateSetting('notifications', 'reminderTime', val)}
-                    />
-                  </AuraSettingRow>
-                  <AuraSettingRow label={t('settings.weeklyReport')}>
-                    <AuraSelect 
-                      value={settings.notifications.weeklyReportDay}
-                      onChange={(val) => updateSetting('notifications', 'weeklyReportDay', val)}
-                      options={[
-                        { value: 'Monday', label: t('settings.monday') },
-                        { value: 'Sunday', label: t('settings.sunday') }
-                      ]}
-                      width="140px"
-                    />
-                  </AuraSettingRow>
-                  <AuraToggleRow 
-                    label={t('settings.streakAlerts')} 
-                    checked={settings.notifications.streakAlerts} 
-                    onChange={(val) => updateSetting('notifications', 'streakAlerts', val)} 
-                  />
-                </>
-              )}
-            </SettingCard>
-
-            <SettingCard title={t('settings.reminderIntensity')}>
-              <div style={{ padding: '8px 0' }}>
-                <AuraSlider 
-                  min={1} 
-                  max={3} 
-                  step={1}
-                  value={settings.notifications.intensity} 
-                  onChange={(val) => updateSetting('notifications', 'intensity', val)} 
-                  leftLabel={t('settings.gentle')}
-                  rightLabel={t('settings.consistent')}
-                  showValue={true}
-                  stops={[1, 2, 3]}
-                />
-              </div>
-            </SettingCard>
-
-            <SettingCard title={t('settings.emailNotifications')}>
-              <AuraToggleRow 
-                label={t('settings.weeklySummary')} 
-                checked={settings.notifications.emailSummary} 
-                onChange={(val) => updateSetting('notifications', 'emailSummary', val)} 
-              />
-              <AuraToggleRow 
-                label={t('settings.productUpdates')} 
-                checked={settings.notifications.emailProduct} 
-                onChange={(val) => updateSetting('notifications', 'emailProduct', val)} 
-              />
+            <SettingCard title={t('settings.mobileRemindersOnly')}>
+              <p style={{ margin: 0, padding: '8px 0', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                {t('settings.mobileRemindersDescription')}
+              </p>
             </SettingCard>
           </section>
 

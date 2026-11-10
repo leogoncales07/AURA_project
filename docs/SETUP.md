@@ -95,7 +95,16 @@ Para preparar uma cópia de código para um repositório novo:
 node scripts/prepare-release.mjs
 ```
 
-O comando cria uma pasta em `tmp/aura-release`, com ficheiros selecionados de backend, web e mobile e um manifesto SHA-256. Exclui `.git`, `.env` reais, JSON legados, backups, módulos instalados e builds locais. Também verifica se alguma das chaves configuradas no backend apareceu por engano na cópia. Não enviar o repositório original com o seu histórico antes de rever os ficheiros legados já versionados. Usar um repositório **privado novo**, criado a partir desta cópia limpa, para o primeiro teste.
+O comando cria uma pasta em `tmp/aura-release`, com ficheiros selecionados de backend, web e mobile, `SOURCE_RELEASE_NOTICE.md` e um manifesto SHA-256. Exclui `.git`, `.env` reais, JSON legados, backups, módulos instalados, builds locais e os áudios retirados por falta de proveniência. Também verifica se alguma das chaves configuradas no backend apareceu por engano na cópia.
+
+Para repetir a verificação a partir do projeto ou usando o verificador incluído na própria cópia:
+
+```sh
+node scripts/verify-release.mjs tmp/aura-release/<data-da-copia>
+node tmp/aura-release/<data-da-copia>/scripts/verify-release.mjs tmp/aura-release/<data-da-copia>
+```
+
+O resultado deve indicar `verified: true`. Isso confirma a integridade e as exclusões técnicas, mas **não** autoriza a publicação pública: o gate `npm run check:release`, as decisões humanas e os testes finais continuam obrigatórios. Não enviar o repositório original com o seu histórico antes de rever os ficheiros legados já versionados. Usar um repositório **privado novo**, criado a partir desta cópia limpa, para o primeiro teste.
 
 Uma opção para esse teste é [Render](https://render.com/docs/deploy-node-express-app), que suporta backend Express e [Next.js](https://render.com/docs/deploy-nextjs-app). A criação da conta e a ligação ao repositório exigem participação do utilizador. O plano [Free](https://render.com/docs/free) é adequado apenas à demonstração: tem limitações e não é recomendado pelo fornecedor para produção. Não foi escolhido nem ativado um plano nesta sessão.
 

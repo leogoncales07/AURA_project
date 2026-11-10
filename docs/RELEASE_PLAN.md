@@ -26,7 +26,8 @@ Este documento separa o que é necessário para apresentar a PAP do que só é n
 
 ## Fase 2 — teste público controlado
 
-- [ ] Criar uma cópia limpa com `node scripts/prepare-release.mjs` e colocá-la num repositório privado novo.
+- [x] Criar e verificar uma cópia limpa com `node scripts/prepare-release.mjs`.
+- [ ] Criar um repositório privado novo e enviar apenas a cópia limpa aprovada.
 - [ ] Publicar web e API num alojamento HTTPS de teste; Render é uma opção, não uma obrigação.
 - [ ] Configurar URLs de produção, CORS, recuperação de palavra-passe e redirecionamentos Supabase.
 - [ ] Configurar SMTP próprio para mensagens de autenticação.

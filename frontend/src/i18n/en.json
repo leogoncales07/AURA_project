@@ -259,6 +259,8 @@
 
         "notificationsTitle": "Notifications",
         "notificationsSubtitle": "Stay balanced with mindful alerts.",
+        "mobileRemindersOnly": "Mobile app reminders",
+        "mobileRemindersDescription": "The daily reminder is a local phone notification. Choose the time, grant permission and use the test button in the mobile app Settings. Weekly reports and automated emails are not implemented yet.",
         "pushNotifications": "Push Notifications",
         "masterPushToggle": "Master Push Toggle",
         "dailyReminder": "Daily Reminder",

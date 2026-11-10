@@ -220,6 +220,8 @@
 
         "notificationsTitle": "Notificaciones",
         "notificationsSubtitle": "Mantén el equilibrio con alertas conscientes.",
+        "mobileRemindersOnly": "Recordatorios en la aplicación móvil",
+        "mobileRemindersDescription": "El recordatorio diario es una notificación local del teléfono. Configure la hora, autorice las notificaciones y use el botón de prueba en los ajustes de la aplicación móvil. Los informes semanales y correos automáticos aún no están implementados.",
         "pushNotifications": "Notificaciones Push",
         "masterPushToggle": "Activar Notificaciones Push",
         "dailyReminder": "Recordatorio Diario",

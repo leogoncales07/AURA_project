@@ -12,7 +12,7 @@ import LegalNotice from './LegalNotice';
 import { useTheme, Spacing, Radius } from '../constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, clearSession } from '../lib/api';
-import { cancelDailyMoodReminder, configureDailyReminder } from '../lib/notifications';
+import { cancelDailyMoodReminder, configureDailyReminder, sendTestReminder } from '../lib/notifications';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -353,11 +353,23 @@ export default function SettingsModal({ visible, onClose }) {
     };
     const saveReminder = async (enabled) => {
         if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(reminderTime)) { Alert.alert('Erro', 'Use HH:MM, por exemplo 21:00.'); return; }
-        if (enabled && !await configureDailyReminder(reminderTime)) { Alert.alert('Notificações', 'Ative as notificações nas definições do dispositivo.'); return; }
+        if (enabled && !await configureDailyReminder(reminderTime, locale)) { Alert.alert('Notificações', 'Ative as notificações nas definições do dispositivo.'); return; }
         if (!enabled) await cancelDailyMoodReminder();
         const result = await api.updateUserSettings({ push_enabled: enabled, daily_reminder_time: reminderTime });
         if (result.error) { await cancelDailyMoodReminder(); Alert.alert('Erro', result.error); return; }
         setReminderEnabled(enabled);
+    };
+
+    const testReminder = async () => {
+        try {
+            if (!await sendTestReminder(locale)) {
+                Alert.alert('Notificações', 'Ative as notificações nas definições do dispositivo.');
+                return;
+            }
+            Alert.alert('Teste agendado', 'A notificação de teste deve aparecer dentro de alguns segundos.');
+        } catch {
+            Alert.alert('Erro', 'Não foi possível agendar a notificação de teste neste dispositivo.');
+        }
     };
 
     const isDark = theme === 'dark';
@@ -523,6 +535,13 @@ export default function SettingsModal({ visible, onClose }) {
                     <TextInput accessibilityLabel="Hora do lembrete / Reminder time" value={reminderTime} onChangeText={setReminderTime} maxLength={5} placeholder="21:00" style={{ color: colors.textPrimary, flex: 1, padding: 12 }} />
                     <DestructiveButton label="Guardar / Save" colors={colors} onPress={() => saveReminder(reminderEnabled)} />
                 </View>
+                <SettingRow
+                    label="Testar notificação / Test notification"
+                    description="Agenda um teste local dentro de alguns segundos."
+                    colors={colors}
+                    isLast
+                    right={<DestructiveButton label="Testar" colors={colors} onPress={testReminder} />}
+                />
             </SettingCard>
 
             {/* ── DATA & PRIVACY ──────────────────────────────── */}

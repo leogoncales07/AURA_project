@@ -258,6 +258,8 @@
 
         "notificationsTitle": "Notificações",
         "notificationsSubtitle": "Mantém o equilíbrio com alertas conscientes.",
+        "mobileRemindersOnly": "Lembretes na aplicação móvel",
+        "mobileRemindersDescription": "O lembrete diário é uma notificação local do telemóvel. Configure a hora, autorize as notificações e use o botão de teste nas Definições da aplicação móvel. Relatórios semanais e e-mails automáticos ainda não estão implementados.",
         "pushNotifications": "Notificações Push",
         "masterPushToggle": "Ativar Notificações Push",
         "dailyReminder": "Lembrete Diário",

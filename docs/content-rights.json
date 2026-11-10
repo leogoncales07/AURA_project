@@ -32,8 +32,8 @@
         "mobile/assets/images/splash-icon.png"
       ],
       "sha256": null,
-      "status": "authorship-to-confirm",
-      "evidence": null,
+      "status": "ai-generated-by-project-owner-tool-terms-to-confirm",
+      "evidence": "docs/BRAND_ASSET_PROVENANCE.md",
       "distributionAllowed": false
     },
     {
@@ -55,8 +55,8 @@
         "mobile/package-lock.json"
       ],
       "sha256": null,
-      "status": "inventory-created-review-pending",
-      "evidence": "docs/DEPENDENCY_LICENSES.md",
+      "status": "inventory-and-third-party-notices-created-final-artifact-review-pending",
+      "evidence": "docs/THIRD_PARTY_NOTICES.md",
       "distributionAllowed": false
     }
   ]

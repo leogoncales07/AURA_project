@@ -18,6 +18,10 @@ test('content-rights manifest identifies existing files and current hashes', asy
     assert.equal(typeof asset.distributionAllowed, 'boolean');
     assert.ok(asset.files.length > 0);
 
+    if (asset.evidence) {
+      await fs.access(path.join(projectRoot, asset.evidence));
+    }
+
     for (const relativePath of asset.files) {
       const data = await fs.readFile(path.join(projectRoot, relativePath));
       if (asset.sha256) {

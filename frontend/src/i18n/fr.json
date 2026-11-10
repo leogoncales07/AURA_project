@@ -220,6 +220,8 @@
 
         "notificationsTitle": "Notifications",
         "notificationsSubtitle": "Restez équilibré grâce à des rappels attentionnés.",
+        "mobileRemindersOnly": "Rappels dans l’application mobile",
+        "mobileRemindersDescription": "Le rappel quotidien est une notification locale du téléphone. Choisissez l’heure, autorisez les notifications et utilisez le bouton de test dans les réglages de l’application mobile. Les rapports hebdomadaires et e-mails automatiques ne sont pas encore disponibles.",
         "pushNotifications": "Notifications Push",
         "masterPushToggle": "Activer les Notifications Push",
         "dailyReminder": "Rappel Quotidien",
