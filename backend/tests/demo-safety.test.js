@@ -42,3 +42,17 @@ test('mobile daily reminder verifies permission, restores safely and offers a lo
   assert.match(layout, /restoreDailyReminder/);
   assert.match(settings, /sendTestReminder/);
 });
+
+test('approved procedural soundscapes are referenced by web and mobile without legacy MP3s', async () => {
+  const web = await fs.readFile(path.join(projectRoot, 'frontend/src/app/meditations/page.js'), 'utf8');
+  const mobile = await fs.readFile(path.join(projectRoot, 'mobile/app/(tabs)/meditations.jsx'), 'utf8');
+  const combined = `${web}\n${mobile}`;
+
+  for (const file of [
+    'balance-gentle-rain-loop.wav',
+    'focus-waterfall-loop.wav',
+    'sleep-brown-wind-loop.wav'
+  ]) assert.match(combined, new RegExp(file.replaceAll('.', '\\.'), 'i'), file);
+
+  assert.doesNotMatch(combined, /\.(?:mp3)\b/i);
+});

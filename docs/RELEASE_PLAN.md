@@ -9,7 +9,7 @@ Este documento separa o que é necessário para apresentar a PAP do que só é n
 - [x] Preparar links opcionais para Google Play e App Store; sem URL oficial, a web mostra apenas «disponível brevemente».
 - [x] Retirar da página inicial afirmações de acompanhamento médico, terapeuta, precisão clínica e efeito instantâneo.
 - [x] Identificar o chat como IA automática, em todos os idiomas, antes da primeira mensagem e indicar que não é um profissional de saúde nem um serviço de emergência.
-- [ ] Aprovar e instalar os candidatos originais de `tmp/aura-audio-candidates`, ou manter os exercícios sem som; os MP3 de origem desconhecida já foram colocados em quarentena. Ver `docs/AUDIO_PROVENANCE.md`.
+- [x] Aprovar e instalar os ambientes procedurais originais de chuva, cachoeira e vento/brown noise; os MP3 de origem desconhecida permanecem em quarentena. Ver `docs/AUDIO_PROVENANCE.md`.
 - [x] Rever os exercícios e guardar as referências consultadas sem sugerir parceria com as instituições citadas; ver `docs/CONTENT_REFERENCES.md`.
 - [ ] Usar apenas contas fictícias e evitar dados reais de colegas durante a apresentação.
 - [x] Preparar `START_SCHOOL_DEMO.bat` e a verificação `check-local --school-demo`; este modo bloqueia o Gemini sem alterar o `.env` e exclui os áudios em quarentena.
@@ -33,7 +33,7 @@ Este documento separa o que é necessário para apresentar a PAP do que só é n
 - [ ] Configurar SMTP próprio para mensagens de autenticação.
 - [ ] Finalizar política de privacidade e termos, incluindo Supabase e Gemini.
 - [ ] Testar cadastro, confirmação, recuperação, exportação e eliminação com contas temporárias.
-- [ ] Criar um procedimento curto de incidentes e de rotação de chaves.
+- [x] Criar um procedimento curto de incidentes e de rotação de chaves em `docs/INCIDENT_RESPONSE.md`.
 
 ## Fase 3 — lojas e lançamento
 
@@ -51,10 +51,10 @@ Este documento separa o que é necessário para apresentar a PAP do que só é n
 
 | Conteúdo | Estado atual | Ação antes de distribuir |
 | --- | --- | --- |
-| `balance.mp3` | retirado da app e colocado em quarentena local | ouvir/aprovar o candidato WAV ou manter sem som |
-| `focus.mp3` | retirado da app e colocado em quarentena local | ouvir/aprovar o candidato WAV ou manter sem som |
-| `sleep.mp3` | retirado da app e colocado em quarentena local | ouvir/aprovar o candidato WAV ou manter sem som |
-| logótipos e ícones AURA | autoria a confirmar | registar quem criou e guardar os originais |
+| `balance.mp3` | retirado da app e colocado em quarentena local | substituído pelo ambiente original de chuva aprovado |
+| `focus.mp3` | retirado da app e colocado em quarentena local | substituído pelo ambiente original de cachoeira aprovado |
+| `sleep.mp3` | retirado da app e colocado em quarentena local | substituído pelo ambiente original de vento/brown noise aprovado |
+| logótipos e ícones AURA | declarados pelo responsável como gerados com IA | identificar a ferramenta/plano e confirmar os respetivos termos |
 | exercícios de respiração/atenção | revistos como adaptações educativas | manter o registo em `docs/CONTENT_REFERENCES.md` atualizado |
 | dependências de código | inventário automático em `docs/DEPENDENCY_LICENSES.md` | rever itens sinalizados e incluir os textos/avisos completos na distribuição final |
 

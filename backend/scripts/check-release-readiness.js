@@ -74,12 +74,12 @@ if (decisions.geminiPublicUse === 'enabled') {
 
 for (const asset of rights.assets) {
   let hashesMatch = true;
-  if (asset.sha256) {
-    for (const file of asset.files) {
-      const data = await fs.readFile(resolveFromProject(file)).catch(() => null);
-      const hash = data ? crypto.createHash('sha256').update(data).digest('hex').toUpperCase() : null;
-      if (hash !== asset.sha256.toUpperCase()) hashesMatch = false;
-    }
+  for (const file of asset.files) {
+    const expectedHash = asset.sha256ByFile?.[file] || asset.sha256;
+    if (!expectedHash) continue;
+    const data = await fs.readFile(resolveFromProject(file)).catch(() => null);
+    const hash = data ? crypto.createHash('sha256').update(data).digest('hex').toUpperCase() : null;
+    if (hash !== expectedHash.toUpperCase()) hashesMatch = false;
   }
   add(`rights-${asset.id}`, asset.distributionAllowed === true && hashesMatch, `${asset.id}: ${asset.status}; evidence: ${asset.evidence || 'missing'}.`);
 }

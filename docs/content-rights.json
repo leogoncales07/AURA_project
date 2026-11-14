@@ -4,14 +4,25 @@
     {
       "id": "exercise-audio-decision",
       "files": [
-        "scripts/generate-audio-candidates.mjs",
-        "scripts/validate-audio-candidates.mjs",
-        "docs/AUDIO_PROVENANCE.md"
+        "frontend/public/audio/balance-gentle-rain-loop.wav",
+        "frontend/public/audio/focus-waterfall-loop.wav",
+        "frontend/public/audio/sleep-brown-wind-loop.wav",
+        "mobile/assets/audio/balance-gentle-rain-loop.wav",
+        "mobile/assets/audio/focus-waterfall-loop.wav",
+        "mobile/assets/audio/sleep-brown-wind-loop.wav"
       ],
       "sha256": null,
-      "status": "unverified-mp3-files-quarantined-original-candidates-awaiting-approval",
+      "sha256ByFile": {
+        "frontend/public/audio/balance-gentle-rain-loop.wav": "F02BFA11CD744D6E9AED63F79F36E6B6419A9FB0F2B2B8C1BA82191663CED824",
+        "frontend/public/audio/focus-waterfall-loop.wav": "3207C9D6F8CA764554242F6C8668C695A087C85CD39310051F4A386D97D9335A",
+        "frontend/public/audio/sleep-brown-wind-loop.wav": "735ECE55193CAB9271B673ECB2513B8D29662936F3C2D6D3CD83C70CC036EA92",
+        "mobile/assets/audio/balance-gentle-rain-loop.wav": "F02BFA11CD744D6E9AED63F79F36E6B6419A9FB0F2B2B8C1BA82191663CED824",
+        "mobile/assets/audio/focus-waterfall-loop.wav": "3207C9D6F8CA764554242F6C8668C695A087C85CD39310051F4A386D97D9335A",
+        "mobile/assets/audio/sleep-brown-wind-loop.wav": "735ECE55193CAB9271B673ECB2513B8D29662936F3C2D6D3CD83C70CC036EA92"
+      },
+      "status": "approved-original-procedural-no-third-party-samples",
       "evidence": "docs/AUDIO_PROVENANCE.md",
-      "distributionAllowed": false
+      "distributionAllowed": true
     },
     {
       "id": "aura-brand-assets",

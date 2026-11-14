@@ -28,7 +28,7 @@ const sourceText = (await Promise.all(inspectedSources.map(async relativePath =>
   text: await fs.readFile(path.join(projectRoot, relativePath), 'utf8')
 }))));
 const unsafeDemoCredential = /presentation-demo-token|demo123456|demo@aura\.com|demo-presenter/i;
-const quarantinedAudioReference = /(?:balance|focus|sleep)\.mp3|\/audio\//i;
+const quarantinedAudioReference = /(?:balance|focus|sleep)\.mp3/i;
 
 const checks = {
   schoolModeEnabled: values.AURA_SCHOOL_DEMO === 'true',

@@ -16,6 +16,15 @@ import AccessibleDialog from '@/components/AccessibleDialog';
 import { useAuth } from '@/context/AuthContext';
 import { progressCopy } from '@/lib/progress-copy.mjs';
 
+const PRACTICE_AUDIO = {
+    box_breathing: '/audio/balance-gentle-rain-loop.wav',
+    '478_breathing': '/audio/sleep-brown-wind-loop.wav',
+    body_scan: '/audio/focus-waterfall-loop.wav',
+    '54321_grounding': '/audio/balance-gentle-rain-loop.wav',
+    military_method: '/audio/sleep-brown-wind-loop.wav',
+    stimulus_control: '/audio/sleep-brown-wind-loop.wav',
+};
+
 const DEFAULT_LIBRARY_CONTENT = {
     meditations: {
         box_breathing: {
@@ -104,7 +113,7 @@ const DEFAULT_LIBRARY_CONTENT = {
 };
 
 const identifiedContent = data => Object.fromEntries(Object.entries(data).map(([category, items]) => [category,
-    Object.fromEntries(Object.entries(items).map(([id, item]) => [id, { ...item, practice_id: id }]))]));
+    Object.fromEntries(Object.entries(items).map(([id, item]) => [id, { ...item, practice_id: id, audioUrl: PRACTICE_AUDIO[id] || null }]))]));
 export default function MeditationsPage() {
     const { t, locale } = useI18n();
     const { user } = useAuth();

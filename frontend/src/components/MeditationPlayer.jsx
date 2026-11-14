@@ -13,7 +13,7 @@ const formatTime = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(s
 export default function MeditationPlayer({ session, userId, onClose }) {
   const { t, locale } = useI18n();
   const copy = progressCopy(locale);
-  const [playing, setPlaying] = useState(true);
+  const [playing, setPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [complete, setComplete] = useState(false);
   const [audioError, setAudioError] = useState(false);

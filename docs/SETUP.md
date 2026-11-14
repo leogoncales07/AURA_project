@@ -8,7 +8,7 @@ A recuperação por e-mail foi confirmada pelo Leonardo: recebeu a mensagem e co
 
 O domínio `aura.pt` **não está registado pelo utilizador** e ainda não há conta de alojamento. Não existem serviços públicos publicados nesta etapa. Os exemplos de produção usam URLs que terão de ser substituídos por endereços reais do alojamento.
 
-Nesta preparação, Next.js e eslint-config-next foram atualizados para **15.5.28**. Foram corrigidas também dependências transitivas e a instalação do backend foi sincronizada com o lockfile. Resultado atual: **52 testes aprovados**, validação anterior no Supabase real aprovada e build standalone com ficheiros estáticos, páginas legais e CORS verificados. Os MP3 de origem não documentada foram retirados; os exercícios funcionam sem som enquanto os candidatos originais aguardam audição.
+Nesta preparação, Next.js e eslint-config-next foram atualizados para **15.5.28**. Foram corrigidas também dependências transitivas e a instalação do backend foi sincronizada com o lockfile. A validação anterior no Supabase real foi aprovada e a build standalone inclui ficheiros estáticos, páginas legais e CORS verificados. Os MP3 de origem não documentada foram retirados; os ambientes procedurais originais de chuva, cachoeira e vento/brown noise foram aprovados e instalados na web e no mobile.
 
 ## Testar neste computador, sem Docker
 
@@ -128,11 +128,11 @@ A build já prepara `.next/standalone` com `public` e `.next/static`. `PORT` e `
 
 Após conhecer o URL HTTPS da web, autorizar `<URL_WEB>/reset-password` em Authentication → URL Configuration no Supabase. Definir o Site URL e `PASSWORD_RESET_URL` para os endereços reais, e repetir o teste de recuperação nesse ambiente.
 
-O teste de entrega ao e-mail pessoal passou. Isso não comprova entrega a todos os utilizadores: o SMTP predefinido do Supabase é destinado a testes e tem restrições de destinatários e de volume. Antes de abrir o cadastro ao público, configurar um fornecedor SMTP no Supabase e testar um destinatário externo. Usar o Gmail como contacto legal não configura um remetente SMTP.
+O teste de entrega ao e-mail pessoal passou. Isso não comprova entrega a todos os utilizadores: o SMTP predefinido do Supabase é destinado a testes e tem restrições de destinatários e de volume. Para os testes locais neste computador, autorizar `http://127.0.0.1:3000/reset-password` em Supabase Auth → URL Configuration → Redirect URLs. Antes de abrir o cadastro ao público, configurar um fornecedor SMTP no Supabase e testar um destinatário externo. Usar o Gmail como contacto legal não configura um remetente SMTP.
 
 ### Mobile e domínio
 
-Preencher `mobile/.env` com os dois URLs públicos HTTPS de `mobile/.env.production.example`. As variáveis públicas Expo não podem conter chaves administrativas. Só depois criar a build nativa e testar permissões, lembretes, recuperação de sessão e links legais num dispositivo físico. Se os candidatos originais de áudio forem aprovados e instalados, testar também reprodução, repetição e ecrã bloqueado numa build nativa.
+Preencher `mobile/.env` com os dois URLs públicos HTTPS de `mobile/.env.production.example`. As variáveis públicas Expo não podem conter chaves administrativas. Só depois criar a build nativa e testar permissões, lembretes, recuperação de sessão e links legais num dispositivo físico. Testar também reprodução, repetição e ecrã bloqueado dos ambientes de áudio numa build nativa.
 
 Pode começar com o subdomínio HTTPS disponibilizado pelo alojamento, sem comprar um domínio. Quando existir um domínio registado e controlado pelo utilizador, ligar o DNS e atualizar web, backend, mobile e URLs do Supabase. Não usar `aura.pt` como destino real enquanto a sua propriedade não estiver confirmada.
 

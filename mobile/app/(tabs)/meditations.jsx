@@ -14,9 +14,18 @@ import { progressCopy } from '../../lib/progress-utils.mjs';
 
 const SESSION_COLORS = { accentBlue: '#4FC3F7', accentPink: '#FF6B9D', accentMint: '#30D158' };
 
+const PRACTICE_AUDIO = {
+    box_breathing: require('../../assets/audio/balance-gentle-rain-loop.wav'),
+    '478_breathing': require('../../assets/audio/sleep-brown-wind-loop.wav'),
+    body_scan: require('../../assets/audio/focus-waterfall-loop.wav'),
+    '54321_grounding': require('../../assets/audio/balance-gentle-rain-loop.wav'),
+    military_method: require('../../assets/audio/sleep-brown-wind-loop.wav'),
+    stimulus_control: require('../../assets/audio/sleep-brown-wind-loop.wav'),
+};
+
 const SESSIONS = [
-    { emoji: '🌬️', title: 'sleepPrep', meta: 'sleepPrepMeta', color: SESSION_COLORS.accentBlue, audioUrl: null },
-    { emoji: '🎯', title: 'deepFocus', meta: 'deepFocusMeta', color: SESSION_COLORS.accentPink, audioUrl: null },
+    { emoji: '🌬️', title: 'sleepPrep', meta: 'sleepPrepMeta', color: SESSION_COLORS.accentBlue, audioUrl: PRACTICE_AUDIO.military_method },
+    { emoji: '🎯', title: 'deepFocus', meta: 'deepFocusMeta', color: SESSION_COLORS.accentPink, audioUrl: PRACTICE_AUDIO.body_scan },
 ];
 
 export default function MeditationsScreen() {
@@ -36,7 +45,7 @@ export default function MeditationsScreen() {
             const library = result.data?.content || result.data;
             if (!library) return;
             const rows = Object.entries({ ...library.meditations, ...library.sleep_methods });
-            if (rows.length) setSessions(rows.map(([id, entry]) => ({ title: id, titleText: entry.name, metaText: entry.description, color: SESSION_COLORS.accentMint, emoji: '♫', durationMin: 5, audioUrl: null })));
+            if (rows.length) setSessions(rows.map(([id, entry]) => ({ title: id, titleText: entry.name, metaText: entry.description, color: SESSION_COLORS.accentMint, emoji: '♫', durationMin: 5, audioUrl: PRACTICE_AUDIO[id] || null })));
         });
         AsyncStorage.getItem('aura_user').then((stored) => {
             if (stored) setUser(JSON.parse(stored));
@@ -87,7 +96,7 @@ export default function MeditationsScreen() {
                             durationMin: durationMinutes,
                             color: SESSION_COLORS.accentMint,
                             emoji: '🌬️',
-                            audioUrl: null
+                            audioUrl: PRACTICE_AUDIO.box_breathing
                         })}
                     >
                         <Text style={styles.startBtnText}>▶ {t('meditations.start')}</Text>
@@ -129,7 +138,7 @@ export default function MeditationsScreen() {
 
             {/* Breathing exercise */}
             <Text style={[styles.sectionLabel, { marginTop: Spacing.lg, color: colors.textTertiary }]}>{copy.practice}</Text>
-            <TouchableOpacity accessibilityRole="button" onPress={() => setActiveSession({ practice_id: '478_breathing', title: '4–7–8', meta: copy.practice, durationMin: durationMinutes, color: colors.primary })} style={[styles.sessionCard, { backgroundColor: colors.card, borderColor: colors.border }]}><Text style={{ color: colors.primary, fontSize: 18 }}>4–7–8</Text><Text style={{ color: colors.textSecondary }}>{copy.practice}</Text></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" onPress={() => setActiveSession({ practice_id: '478_breathing', title: '4–7–8', meta: copy.practice, durationMin: durationMinutes, color: colors.primary, audioUrl: PRACTICE_AUDIO['478_breathing'] })} style={[styles.sessionCard, { backgroundColor: colors.card, borderColor: colors.border }]}><Text style={{ color: colors.primary, fontSize: 18 }}>4–7–8</Text><Text style={{ color: colors.textSecondary }}>{copy.practice}</Text></TouchableOpacity>
 
             {activeSession && <MeditationPlayerModal
                 visible={!!activeSession}

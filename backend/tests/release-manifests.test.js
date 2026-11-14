@@ -24,9 +24,10 @@ test('content-rights manifest identifies existing files and current hashes', asy
 
     for (const relativePath of asset.files) {
       const data = await fs.readFile(path.join(projectRoot, relativePath));
-      if (asset.sha256) {
+      const expectedHash = asset.sha256ByFile?.[relativePath] || asset.sha256;
+      if (expectedHash) {
         const hash = crypto.createHash('sha256').update(data).digest('hex').toUpperCase();
-        assert.equal(hash, asset.sha256, relativePath);
+        assert.equal(hash, expectedHash.toUpperCase(), relativePath);
       }
     }
   }

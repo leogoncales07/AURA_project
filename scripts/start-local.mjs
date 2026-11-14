@@ -9,6 +9,33 @@ const stateFile = path.join(root, 'tmp', 'aura-local-processes.json');
 const expoGo = process.argv.includes('--expo-go');
 const schoolDemo = process.argv.includes('--school-demo');
 const lan = expoGo || process.argv.includes('--lan');
+
+const processIsAlive = pid => {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === 'EPERM';
+  }
+};
+
+if (fs.existsSync(stateFile)) {
+  let previous;
+  try { previous = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch {}
+  if (processIsAlive(previous?.ownerPid)) {
+    console.error(`A AURA já parece estar em execução (PID ${previous.ownerPid}). Use STOP_AURA.bat antes de iniciar novamente.`);
+    process.exit(1);
+  }
+  try {
+    fs.unlinkSync(stateFile);
+    console.log('Foi removido um estado temporário obsoleto de uma execução anterior.');
+  } catch (error) {
+    console.error(`Não foi possível remover o estado temporário obsoleto: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 let lanAddress;
 if (lan) {
   const addresses = Object.entries(os.networkInterfaces()).flatMap(([name, rows]) => (rows || [])
@@ -34,7 +61,7 @@ if (expoGo && !fs.existsSync(path.join(root, 'mobile/node_modules/expo/bin/cli')
 }
 const flags = process.allowedNodeEnvironmentFlags.has('--use-system-ca') ? ['--use-system-ca'] : [];
 const services = [
-  { name: 'API', cwd: 'backend', script: 'src/index.js', env: { PORT: '8000', AURA_BIND_HOST: lan ? '0.0.0.0' : '127.0.0.1', NODE_ENV: 'production', ...(schoolDemo ? { AURA_SCHOOL_DEMO: 'true', GEMINI_ENABLED: 'false' } : {}), ...(lan ? { CORS_ORIGINS: `http://localhost:3000,http://${lanAddress}:3000` } : {}) } },
+  { name: 'API', cwd: 'backend', script: 'src/index.js', env: { PORT: '8000', AURA_BIND_HOST: lan ? '0.0.0.0' : '127.0.0.1', NODE_ENV: 'production', ...(schoolDemo ? { AURA_SCHOOL_DEMO: 'true', GEMINI_ENABLED: 'false' } : {}), ...(lan ? { CORS_ORIGINS: `http://localhost:3000,http://127.0.0.1:3000,http://${lanAddress}:3000` } : {}) } },
   { name: 'Web', cwd: 'frontend', script: '.next/standalone/server.js', env: { PORT: '3000', HOSTNAME: lan ? '0.0.0.0' : '127.0.0.1', NODE_ENV: 'production' } },
 ];
 if (expoGo) services.push({

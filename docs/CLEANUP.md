@@ -18,7 +18,7 @@ A limpeza da árvore local não remove ficheiros já existentes no histórico Gi
 
 ## Verificação após a limpeza
 
-- 52 testes locais atuais aprovados; os seis testes SQL continuam disponíveis separadamente.
+- 54 testes locais atuais aprovados; os seis testes SQL continuam disponíveis separadamente.
 - Build Next.js e preparação standalone aprovadas; exportação do bundle Android aprovada.
 - Arranque local verificado: API, login, ficheiros estáticos, ausência dos áudios em quarentena, páginas legais e CORS. As rotas de demonstração removidas devolvem 404.
 - Os sete ficheiros protegidos (três de ambiente e quatro JSON de dados) mantiveram os hashes originais. A cópia de recuperação foi verificada por SHA-256.
